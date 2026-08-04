@@ -1,6 +1,32 @@
 const WHATSAPP = "573003671548";
 const EMAIL = "kaemento@gmail.com";
 
+const trackWhatsappClick = ({ source, url }) => {
+  if (typeof window.gtag !== "function") return;
+
+  window.gtag("event", "whatsapp_click", {
+    event_category: "engagement",
+    event_label: source,
+    link_url: url,
+    transport_type: "beacon",
+  });
+};
+
+document.addEventListener("click", (event) => {
+  if (!(event.target instanceof Element)) return;
+
+  const whatsappLink = event.target.closest('a[href*="wa.me/"]');
+  if (!whatsappLink) return;
+
+  trackWhatsappClick({
+    source:
+      whatsappLink.getAttribute("aria-label") ||
+      whatsappLink.textContent?.trim() ||
+      "whatsapp_link",
+    url: whatsappLink.href,
+  });
+});
+
 const menuButton = document.querySelector(".menu");
 const navigation = document.querySelector(".nav nav");
 
@@ -75,6 +101,10 @@ quoteForm?.addEventListener("submit", (event) => {
   ].join("\n");
 
   const whatsappUrl = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`;
+  trackWhatsappClick({
+    source: "quote_form",
+    url: whatsappUrl,
+  });
   const opened = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
   if (!opened) {
     window.location.href = `mailto:${EMAIL}?subject=${encodeURIComponent("Solicitud de cotización")}&body=${encodeURIComponent(text)}`;
