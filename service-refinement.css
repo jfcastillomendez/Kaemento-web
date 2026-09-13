@@ -70,3 +70,22 @@
 @media(max-width:360px){
   .service-refined .detail-hero .detail-copy {min-height:580px}
 }
+
+/* Size headings against their text column, not the whole viewport. */
+.service-refined .detail-hero .detail-copy {container-type:inline-size;gap:0}
+.service-refined .detail-hero .detail-copy h1 {font-size:clamp(26px,10cqi,52px);line-height:1.08;text-wrap:balance;overflow-wrap:normal;hyphens:none;margin:0 0 24px}
+.service-refined .detail-hero .detail-copy .eyebrow {margin:0 0 20px}
+.service-refined .detail-hero .detail-copy .breadcrumbs {margin:0 0 24px}
+.service-refined .detail-hero .detail-copy > p:not(.eyebrow):not(.breadcrumbs) {margin:0;line-height:1.65}
+.service-refined .detail-hero .detail-copy .actions {margin-top:26px}
+@media(max-width:1000px){
+  .service-refined .detail-hero .detail-copy {min-height:470px}
+  .service-refined .detail-hero .detail-copy h1 {font-size:clamp(30px,7.4cqi,48px)}
+}
+@media(max-width:720px){
+  .service-refined .detail-hero .detail-copy {min-height:500px;padding:34px 24px}
+  .service-refined .detail-hero .detail-copy h1 {font-size:clamp(26px,10.5cqi,36px);margin-bottom:20px}
+  .service-refined .detail-hero .detail-copy .breadcrumbs {margin-bottom:20px}
+  .service-refined .detail-hero .detail-copy .eyebrow {margin-bottom:16px}
+  .service-refined .detail-hero .detail-copy .actions {margin-top:24px}
+}
