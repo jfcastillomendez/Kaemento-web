@@ -1,0 +1,28 @@
+/* A compact team mention, separate from the main commercial panels. */
+.home-team.section { padding: 64px 5.5vw; display: grid; grid-template-columns: .9fr 1.6fr; align-items: center; gap: 48px; border-bottom: 1px solid var(--line); }
+.home-team-intro h2 { font-size: clamp(30px, 3vw, 44px); line-height: 1.1; letter-spacing: -.035em; margin-bottom: 22px; }
+.home-team-intro .eyebrow { margin-bottom: 22px; }
+.home-team-intro > p:not(.eyebrow) { max-width: 380px; font-size: 14px; line-height: 1.8; }
+.home-team-intro a { font-size: 13px; border-bottom: 1px solid var(--line); padding-bottom: 5px; }
+.home-team-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.home-team-grid figure { margin: 0; min-width: 0; }
+.home-team-grid img { display: block; width: 100%; height: auto; aspect-ratio: 4/5; object-fit: contain; }
+.home-team-grid figcaption { padding-top: 15px; }
+.home-team-grid h3 { font-size: 15px; line-height: 1.35; font-weight: 500; margin-bottom: 8px; }
+.home-team-grid p { font-size: 12px; line-height: 1.6; margin: 0; color: var(--muted); }
+.home-team-note { font-size: 10px; line-height: 1.6; color: var(--muted); margin: 18px 0 0; }
+@media (max-width: 1000px) { .home-team.section { grid-template-columns: 1fr; gap: 28px; } }
+@media (max-width: 560px) { .home-team.section { padding: 44px 5.5vw; } .home-team-grid { gap: 10px; } .home-team-grid h3 { font-size: 12px; } .home-team-grid p { font-size: 11px; } }
+
+/* Five roles in one restrained row; swipe the portraits on small screens. */
+.home-team.section { grid-template-columns: 1fr; gap: 28px; }
+.home-team-intro { max-width: 650px; }
+.home-team-intro > p:not(.eyebrow) { max-width: 600px; }
+.home-team-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); max-width: 1040px; }
+@media (max-width: 720px) {
+  .home-team-grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 12px; }
+  .home-team-grid figure { flex: 0 0 42%; scroll-snap-align: start; }
+}
+.home-team.section { grid-template-columns: minmax(0, .75fr) minmax(0, 2fr); }
+.home-team > div, .home-team-grid { min-width: 0; }
+@media (max-width: 1000px) { .home-team.section { grid-template-columns: minmax(0, 1fr); } }

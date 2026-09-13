@@ -1,0 +1,16 @@
+/* Contextual photography, scoped to the new editorial blocks. */
+.context-visual.section { padding-top: 0; }
+.context-visual figure, .context-facade-wide { margin: 0; }
+.context-visual figure { border: 1px solid var(--line); background: var(--cream); }
+.context-visual img, .context-facade-wide img { display: block; width: 100%; height: auto; object-fit: contain; }
+.context-visual figcaption { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; padding: 32px 36px; }
+.context-visual h2 { font-size: clamp(28px, 3vw, 42px); line-height: 1.15; margin: 0; }
+.context-visual .eyebrow { margin: 0 0 14px; }
+.context-visual figcaption p { line-height: 1.7; margin-top: 0; }
+.context-visual small, .context-facade-wide figcaption { color: var(--muted); font-size: 12px; line-height: 1.6; }
+.context-facade-wide { margin: 36px 0 48px; }
+.context-facade-wide figcaption { padding-top: 14px; }
+@media (max-width: 720px) {
+  .context-visual figcaption { grid-template-columns: 1fr; gap: 20px; padding: 24px; }
+  .context-facade-wide { margin: 28px 0 36px; }
+}
