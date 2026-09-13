@@ -1,3 +1,12 @@
+// KAEMENTO visual refinement layer
+if (!document.querySelector('link[data-kae-visual-refinement]')) {
+  const refinement = document.createElement('link');
+  refinement.rel = 'stylesheet';
+  refinement.href = '/visual-refinement.css?v=2.0';
+  refinement.dataset.kaeVisualRefinement = 'true';
+  document.head.appendChild(refinement);
+}
+
 const WHATSAPP = "573003671548";
 const EMAIL = "kaemento@gmail.com";
 
