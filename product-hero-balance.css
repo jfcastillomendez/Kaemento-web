@@ -30,3 +30,22 @@
   .detail-hero > .detail-image.product-sheet {height:300px;padding:16px}
   .detail-hero > .detail-image.product-sheet img {max-height:268px}
 }
+
+/* Size headings against their text column, not the whole viewport. */
+.detail-hero:has(> .product-sheet) .detail-copy {container-type:inline-size;gap:0}
+.detail-hero:has(> .product-sheet) .detail-copy h1 {font-size:clamp(26px,10cqi,52px);line-height:1.08;text-wrap:balance;overflow-wrap:normal;hyphens:none;margin:0 0 24px}
+.detail-hero:has(> .product-sheet) .detail-copy .eyebrow {margin:0 0 20px}
+.detail-hero:has(> .product-sheet) .detail-copy .breadcrumbs {margin:0 0 24px}
+.detail-hero:has(> .product-sheet) .detail-copy > p:not(.eyebrow):not(.breadcrumbs) {margin:0;line-height:1.65}
+.detail-hero:has(> .product-sheet) .detail-copy .actions {margin-top:26px}
+@media(max-width:1000px){
+  .detail-hero:has(> .product-sheet) .detail-copy {min-height:470px}
+  .detail-hero:has(> .product-sheet) .detail-copy h1 {font-size:clamp(30px,7.4cqi,48px)}
+}
+@media(max-width:720px){
+  .detail-hero:has(> .product-sheet) .detail-copy {min-height:500px;padding:34px 24px}
+  .detail-hero:has(> .product-sheet) .detail-copy h1 {font-size:clamp(26px,10.5cqi,36px);margin-bottom:20px}
+  .detail-hero:has(> .product-sheet) .detail-copy .breadcrumbs {margin-bottom:20px}
+  .detail-hero:has(> .product-sheet) .detail-copy .eyebrow {margin-bottom:16px}
+  .detail-hero:has(> .product-sheet) .detail-copy .actions {margin-top:24px}
+}
