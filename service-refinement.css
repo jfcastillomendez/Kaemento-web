@@ -1,0 +1,91 @@
+/* Scoped to the five service pages in this review. */
+.service-refined .detail-hero {
+  display:grid;
+  grid-template-columns:minmax(0, .9fr) minmax(0, 1.1fr);
+  height:680px;
+  min-height:680px;
+  width:min(1320px,94vw);
+  margin:36px auto 80px;
+  overflow:visible;
+}
+.service-refined .detail-hero .detail-copy {
+  min-width:0;
+  min-height:0;
+  padding:44px clamp(28px,3.5vw,50px);
+  justify-content:center;
+}
+.service-refined .detail-copy h1 {font-size:clamp(36px,3.6vw,52px);line-height:1.06;overflow-wrap:anywhere}
+.service-refined .detail-copy .breadcrumbs {margin-bottom:24px}
+.service-refined .detail-copy .actions {gap:12px;flex-wrap:wrap}
+.service-refined .detail-hero > .service-visual {
+  display:grid;
+  place-items:center;
+  margin:0;
+  min-width:0;
+  min-height:0;
+  padding:clamp(24px,3vw,44px);
+  background:#f7f3ed;
+}
+.service-refined .service-visual img {
+  display:block;
+  width:auto;
+  height:auto;
+  max-width:100%;
+  max-height:500px;
+  object-fit:contain;
+  filter:none;
+  opacity:1;
+}
+.service-refined .service-editorial {background:#faf7f1;border-top:1px solid #dfd6ca;border-bottom:1px solid #dfd6ca}
+.service-editorial h2 {max-width:960px}
+.service-editorial-intro {max-width:720px;margin:24px 0 42px;color:#666056}
+.service-card-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;align-items:stretch}
+.service-card {display:flex;flex-direction:column;margin:0;min-width:0;background:#f0e9de;border:1px solid #dfd6ca}
+.service-card-media {aspect-ratio:4/3;display:grid;place-items:center;background:#e9e2d7;min-width:0}
+.service-card-media img {display:block;width:100%;height:100%;aspect-ratio:4/3;object-fit:contain;filter:none}
+.service-card figcaption {padding:28px;display:grid;grid-template-rows:auto 3.5em 1fr;gap:16px;flex:1}
+.service-card figcaption .eyebrow {margin:0}
+.service-card h3 {font-size:25px;line-height:1.15;margin:0}
+.service-card p {font-size:16px;line-height:1.65;margin:0}
+@media(max-width:1000px){
+  .service-refined .detail-hero {grid-template-columns:minmax(0,1fr);height:auto;min-height:0;margin:28px auto 64px}
+  .service-refined .detail-hero .detail-copy {min-height:500px;padding:44px 6vw}
+  .service-refined .detail-copy h1 {font-size:44px}
+  .service-refined .detail-hero > .service-visual {height:380px;padding:32px}
+  .service-refined .service-visual img {max-height:316px}
+  .service-card-grid {gap:16px}
+  .service-card figcaption {padding:20px;grid-template-rows:auto 4.6em 1fr}
+  .service-card h3 {font-size:22px}
+}
+@media(max-width:720px){
+  .service-refined .detail-hero {width:calc(100% - 28px);margin:22px auto 48px}
+  .service-refined .detail-hero .detail-copy {min-height:520px;padding:36px 24px}
+  .service-refined .detail-copy h1 {font-size:clamp(30px,8.3vw,40px)}
+  .service-refined .detail-hero > .service-visual {height:280px;padding:22px}
+  .service-refined .service-visual img {max-height:236px}
+  .service-card-grid {grid-template-columns:minmax(0,1fr);gap:24px}
+  .service-card figcaption {grid-template-rows:auto auto 1fr;padding:24px;gap:14px}
+  .service-editorial-intro {margin-bottom:32px}
+}
+@media(max-width:360px){
+  .service-refined .detail-hero .detail-copy {min-height:580px}
+}
+
+/* Size headings against their text column, not the whole viewport. */
+.service-refined .detail-hero .detail-copy {container-type:inline-size;gap:0}
+.service-refined .detail-hero .detail-copy h1 {font-size:clamp(26px,10cqi,52px);line-height:1.08;text-wrap:balance;overflow-wrap:normal;hyphens:none;margin:0 0 24px}
+.service-refined .detail-hero .detail-copy .eyebrow {margin:0 0 20px}
+.service-refined .detail-hero .detail-copy .breadcrumbs {margin:0 0 24px}
+.service-refined .detail-hero .detail-copy > p:not(.eyebrow):not(.breadcrumbs) {margin:0;line-height:1.65}
+.service-refined .detail-hero .detail-copy .actions {margin-top:26px}
+@media(max-width:1000px){
+  .service-refined .detail-hero .detail-copy {min-height:470px}
+  .service-refined .detail-hero .detail-copy h1 {font-size:clamp(30px,7.4cqi,48px)}
+}
+@media(max-width:720px){
+  .service-refined .detail-hero .detail-copy {min-height:500px;padding:34px 24px}
+  .service-refined .detail-hero .detail-copy h1 {font-size:clamp(26px,10.5cqi,36px);margin-bottom:20px}
+  .service-refined .detail-hero .detail-copy .breadcrumbs {margin-bottom:20px}
+  .service-refined .detail-hero .detail-copy .eyebrow {margin-bottom:16px}
+  .service-refined .detail-hero .detail-copy .actions {margin-top:24px}
+}
