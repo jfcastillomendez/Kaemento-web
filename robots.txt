@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://kaemento.com/sitemap.xml
+Sitemap: https://www.kaemento.com/sitemap.xml

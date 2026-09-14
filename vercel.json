@@ -1,0 +1,14 @@
+{
+  "redirects": [
+    {
+      "source": "/catalogos/experiencia-kaemento-2025.pdf",
+      "destination": "/catalogos/experiencia-kaemento-2026.pdf",
+      "permanent": true
+    },
+    {
+      "source": "/catalogos/catalogo-microcemento-kaemento.pdf",
+      "destination": "/catalogos/catalogo-comercial-microcemento-kaemento-2026.pdf",
+      "permanent": true
+    }
+  ]
+}

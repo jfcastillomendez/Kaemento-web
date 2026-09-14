@@ -1,0 +1,26 @@
+/* Shared navigation and focused landing additions; approved heroes are unchanged. */
+[hidden]{display:none!important}
+.nav .submenu{width:290px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 130px);overflow-y:auto;overscroll-behavior:contain}
+.nav .submenu a{white-space:normal;overflow-wrap:break-word;line-height:1.4}
+.nav .submenu-toggle{min-width:28px;min-height:36px;cursor:pointer}
+.nav a:focus-visible,.nav button:focus-visible{outline:2px solid #947044;outline-offset:4px}
+.privacy-footer{padding:24px 6%;font-size:12px}.privacy-footer a,.privacy-consent a{text-decoration:underline;text-underline-offset:3px}
+.privacy-consent{display:flex!important;align-items:flex-start;gap:12px;line-height:1.6;font-size:13px;margin:22px 0}.privacy-consent input{flex:none;width:18px!important;height:18px!important;margin-top:3px;accent-color:#967044}
+.micro-cta{gap:14px;margin-top:28px;flex-wrap:wrap}.detail-body>.micro-cta{grid-column:1/-1}
+.kit-list{padding-left:20px;line-height:1.8;margin:24px 0}.custom-tones{max-width:1000px;margin-top:48px;padding-top:36px;border-top:1px solid #ffffff30}.custom-tones h3{font-size:28px}.custom-tones p{line-height:1.75;color:#ddd5ca}.custom-tones .outline-button{color:#f5eee5;border-color:#9b8b77}.micro-related{margin-top:64px}.micro-quote{background:#eee7dd}.micro-quote .fields{display:grid;grid-template-columns:1fr 1fr;gap:22px}.micro-quote form{max-width:880px;margin-top:32px}.micro-quote label{display:flex;flex-direction:column;gap:8px;font-size:14px}.micro-quote .privacy-consent{flex-direction:row}.micro-quote input,.micro-quote select,.micro-quote textarea{width:100%;min-width:0;padding:13px;border:1px solid #b4aa9a;background:#faf7f2;color:#272420;font:inherit}.micro-quote textarea{min-height:110px}.micro-quote .full{grid-column:1/-1}.policy{padding-top:150px}.policy .wrap{max-width:950px}.policy h1{font-size:clamp(34px,5vw,64px)}.policy h2{font-size:28px;margin:36px 0 12px}.policy p{line-height:1.8}.policy a{text-decoration:underline}
+.breadcrumbs a{text-decoration:underline;text-underline-offset:3px}.eyebrow{color:#896035}.eyebrow.light,#colores .eyebrow,.detail-copy .eyebrow{color:#d6ae78}
+@media(max-width:1100px){.nav{gap:14px}.nav>nav{gap:14px}.nav>nav>a,.nav-group>a{font-size:11px}}
+@media(max-width:900px){.nav .menu{display:flex}.nav>nav{display:none;position:absolute;top:100%;left:0;right:0;width:100%;background:#faf7f2;color:#282521;padding:20px 24px;max-height:calc(100dvh - 90px);overflow-y:auto;overscroll-behavior:contain;flex-direction:column;align-items:stretch;gap:12px}.nav>nav.open{display:flex}.nav>nav>a,.nav-group>a{font-size:14px}.nav .nav-group{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between}.nav .submenu{position:static;box-shadow:none;flex-basis:100%;width:100%;max-height:none;padding:8px 0 8px 16px;display:none!important;visibility:visible;opacity:1;transform:none}.nav .submenu-open .submenu{display:flex!important;flex-direction:column}.nav .submenu a{padding:10px 0}.nav .nav-cta{align-self:flex-start}}
+@media(max-width:540px){.micro-quote .fields{grid-template-columns:1fr}.micro-cta{display:flex;flex-direction:column;align-items:stretch}.micro-cta a{text-align:center;justify-content:space-between;max-width:100%;font-size:12px}.custom-tones h3{font-size:25px}.policy{padding-top:110px}}
+/* Accessible versions of the existing gold and muted-text palette. */
+.section h2 em,.policy h1 em{color:#896035}
+.section .eyebrow,.service-list>article>span,.product .num,.product>a,.home-downloads>a>span:last-child,.process-steps article>span,.visual-card-content>small,.fact-grid article>small,.related-grid a>small{color:#79532b}
+.page-hero .eyebrow,.signature-section .eyebrow,.micro-top h2 em,.gallery article>small,.contact-note>span{color:#d2ae7c}
+.signature-section h2 em,#colores h2 em{color:#c59b68}
+.cta .eyebrow{color:#54391f}.cta h2 em{color:#71502e}
+.section-head>p,.showcase-head>p,.source-note,#gallery-count,.product>small,.home-team-grid figcaption p,.home-team-note,.fact-grid article>p,.kae-video-card figcaption>p,.kae-video-note{color:#636059}
+.contact-note p,.contact-note p a,.quote .form-note,.footer-bottom,.footer-bottom a{color:#b3ada3}
+.micro-quote label{color:#3c3831}.micro-quote .form-note{color:#635e55}
+.whatsapp,.whatsapp b{color:#241e17}
+.section .eyebrow.light,.feature .eyebrow,.gallery-intro .eyebrow{color:#d2ae7c}
+#proyectos h2 em,.quote h2 em,.feature h2 em{color:#c59b68}

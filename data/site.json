@@ -1,0 +1,78 @@
+{
+  "email": "kaemento@gmail.com",
+  "futureEmail": "comercial@kaemento.com",
+  "futureEmailEnabled": false,
+  "phone": "573003671548",
+  "services": [
+    [
+      "proyectos-arquitectonicos-obras-civiles",
+      "Arquitectura y obras civiles"
+    ],
+    [
+      "mantenimiento-edificaciones",
+      "Mantenimiento de edificaciones"
+    ],
+    [
+      "fachadas-impermeabilizacion",
+      "Fachadas e impermeabilización"
+    ],
+    [
+      "pisos-alto-trafico",
+      "Pisos industriales y alto tráfico"
+    ],
+    [
+      "garajes-sotanos",
+      "Garajes y sótanos"
+    ],
+    [
+      "bodegas-centros-logisticos",
+      "Bodegas y centros logísticos"
+    ],
+    [
+      "microcemento-arquitectonico",
+      "Microcemento arquitectónico"
+    ],
+    [
+      "index",
+      "Ver todos los servicios"
+    ]
+  ],
+  "products": [
+    [
+      "microcemento-kaemento",
+      "Microcemento KAEMENTO"
+    ],
+    [
+      "boquilla-magica",
+      "Boquilla Mágica"
+    ],
+    [
+      "roof-planter-system",
+      "Roof & Planter System"
+    ],
+    [
+      "garage-system",
+      "Garage System"
+    ],
+    [
+      "facade-protect",
+      "Facade Protect"
+    ],
+    [
+      "micro-high-traffic",
+      "Micro High Traffic"
+    ],
+    [
+      "level-protect",
+      "Level Protect"
+    ],
+    [
+      "micro-coat",
+      "Micro Coat"
+    ],
+    [
+      "index",
+      "Ver todos los productos"
+    ]
+  ]
+}

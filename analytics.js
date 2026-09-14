@@ -1,0 +1,42 @@
+/* Only technical context reaches Google. Google tags live in an isolated document
+   with no access to form DOM, WhatsApp URLs or user-entered content. */
+(() => {
+  const allowed = new Set(['page_view','whatsapp_click','microcemento_cta_click','microcemento_whatsapp_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start','generate_lead']);
+  // Explicit, page-scoped test signal; never persist it or copy the full query.
+  const debugSignal = new URLSearchParams(location.search).get('gtm_debug');
+  const debugSession = ['127.0.0.1', 'localhost'].includes(location.hostname) && /^(?:x|[0-9]{1,16})$/.test(debugSignal || '');
+  const keys = ['utm_source','utm_medium','utm_campaign','utm_content'];
+  const cleanPath = location.pathname.replace(/[^a-zA-Z0-9/_\-.]/g,'').slice(0,160);
+  const context = { page_path: cleanPath, page_location: 'https://www.kaemento.com' + cleanPath };
+  // Only campaign slugs, never arbitrary query values (emails, phones, sentences).
+  function campaign(value) { return value && /^[a-z][a-z0-9_-]{0,63}$/i.test(value) && !/\d{7,}/.test(value) ? value : undefined; }
+  try {
+    const search = new URLSearchParams(location.search);
+    const saved = JSON.parse(sessionStorage.getItem('kaemento-campaign') || '{}');
+    keys.forEach(key => { const value = campaign(search.get(key) || saved[key]); if (value) context[key] = value; });
+    sessionStorage.setItem('kaemento-campaign', JSON.stringify(Object.fromEntries(keys.filter(k=>context[k]).map(k=>[k,context[k]]))));
+    if (document.referrer) context.source_host = new URL(document.referrer).hostname;
+  } catch (_) { /* Storage is optional. */ }
+  window.dataLayer = window.dataLayer || [];
+  let frame, ready = false;
+  const queue = [];
+  function send(event, values = {}) {
+    if (!allowed.has(event)) return;
+    const payload = { ...context };
+    if (/^[a-z0-9_-]{1,80}$/.test(values.button_id || '')) payload.button_id = values.button_id;
+    if (values.lead_stage === 'whatsapp_handoff') payload.lead_stage = 'whatsapp_handoff';
+    window.dataLayer.push({event, ...payload});
+    const message = {type:'kaemento-event', event, params:payload};
+    if (ready) frame.contentWindow.postMessage(message, location.origin); else queue.push(message);
+  }
+  window.kaementoTrack = send;
+  // Deliberately no general-purpose gtag forwarding API in the parent page.
+  window.addEventListener('message', event => {
+    if (event.origin !== location.origin || event.source !== frame?.contentWindow || event.data !== 'kaemento-analytics-ready') return;
+    ready = true; queue.splice(0).forEach(m=>frame.contentWindow.postMessage(m,location.origin));
+  });
+  document.addEventListener('DOMContentLoaded', () => {
+    frame=document.createElement('iframe'); frame.src='/analytics-bridge.html' + (debugSession ? '?gtm_debug=' + encodeURIComponent(debugSignal) : ''); frame.hidden=true; frame.referrerPolicy='no-referrer'; frame.title='Medición técnica'; frame.setAttribute('aria-hidden','true'); document.body.appendChild(frame);
+    send('page_view');
+  });
+})();
