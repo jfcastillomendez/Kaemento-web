@@ -1,7 +1,8 @@
+// generate_lead is disabled until a real receiving integration confirms delivery.
 /* Only technical context reaches Google. Google tags live in an isolated document
    with no access to form DOM, WhatsApp URLs or user-entered content. */
 (() => {
-  const allowed = new Set(['page_view','whatsapp_click','microcemento_cta_click','microcemento_whatsapp_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start','generate_lead']);
+  const allowed = new Set(['page_view','phone_click','whatsapp_click','microcemento_cta_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start']);
   // Explicit, page-scoped test signal; never persist it or copy the full query.
   const debugSignal = new URLSearchParams(location.search).get('gtm_debug');
   const debugSession = ['127.0.0.1', 'localhost'].includes(location.hostname) && /^(?:x|[0-9]{1,16})$/.test(debugSignal || '');

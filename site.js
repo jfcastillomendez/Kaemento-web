@@ -38,6 +38,13 @@ document.querySelectorAll("[data-filter]").forEach(b=>b.setAttribute("aria-press
 
 const isMicrocemento = location.pathname === '/productos/microcemento-kaemento.html';
 const track = (event, buttonId, extra={}) => window.kaementoTrack?.(event, {button_id:buttonId,...extra});
+const whatsappClicks = new Map();
+function trackWhatsApp(buttonId) {
+  const now = performance.now();
+  if (now - (whatsappClicks.get(buttonId) ?? -Infinity) < 1000) return;
+  whatsappClicks.set(buttonId, now);
+  track('whatsapp_click', buttonId);
+}
 // Capture the explicit CTA before other click handlers. Do not prevent navigation
 // or stop propagation: automatic Google events keep their existing behavior.
 document.addEventListener('click', event => {
@@ -49,7 +56,8 @@ document.addEventListener('click', event => {
   if (!(event.target instanceof Element)) return;
   const a=event.target.closest('a[href]'); if(!a)return;
   const id=a.id || (a.classList.contains('whatsapp')?'whatsapp-floating':'link-'+[...document.querySelectorAll('a[href]')].indexOf(a));
-  if(a.href.startsWith('https://wa.me/573003671548')) {track('whatsapp_click',id); if(isMicrocemento)track('microcemento_whatsapp_click',id);}
+  if(a.href.startsWith('https://wa.me/573003671548')) trackWhatsApp(id);
+  if(a.protocol==='tel:')track('phone_click',id);
   if(!isMicrocemento)return;
   if(a.pathname.endsWith('/catalogo-comercial-microcemento-kaemento-2026.pdf'))track('microcemento_catalog_download',id);
   if(a.pathname.endsWith('/manual-aplicacion-microcemento-kaemento.pdf'))track('microcemento_manual_download',id);
@@ -74,9 +82,8 @@ document.querySelectorAll('form').forEach(form => {
     // Personal data is used exclusively to prepare the user-reviewed WhatsApp message.
     const url=`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(lines.join('\n'))}`;
     window.open(url,'_blank','noopener,noreferrer');
-    track('whatsapp_click',micro?'microcemento-form':'quote-form');
-    if(micro)track('microcemento_whatsapp_click','microcemento-form');
-    track('generate_lead',micro?'microcemento-form':'quote-form',{lead_stage:'whatsapp_handoff'});
+    trackWhatsApp(micro?'microcemento-form':'quote-form');
+    // Opening WhatsApp is not a confirmed lead. A future receiver must confirm delivery first.
     let status=form.querySelector('[role=status]');
     if(!status){status=document.createElement('p');status.setAttribute('role','status');form.appendChild(status);}
     status.textContent='Solicitud preparada. Revise el mensaje en WhatsApp antes de enviarlo. Si su navegador bloqueó la ventana, permita ventanas emergentes y vuelva a pulsar el botón.';

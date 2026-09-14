@@ -1,3 +1,4 @@
+// generate_lead is disabled until a real receiving integration confirms delivery.
 // The flag is local and explicit. Ordinary browsing never enables debug mode.
 const debugSignal = new URLSearchParams(location.search).get('gtm_debug');
 const debugSession = ['127.0.0.1', 'localhost'].includes(location.hostname) && /^(?:x|[0-9]{1,16})$/.test(debugSignal || '');
@@ -8,7 +9,7 @@ gtag('js', new Date());
 gtag('config','G-XYVF450MJE',{...debugOptions,send_page_view:false,page_location:'https://www.kaemento.com/',page_referrer:'',allow_google_signals:false,allow_ad_personalization_signals:false});
 gtag('config','AW-18358591293',{...debugOptions,send_page_view:false,page_location:'https://www.kaemento.com/',page_referrer:'',allow_ad_personalization_signals:false});
 // An Ads conversion label can be connected here after it is confirmed. No placeholder send_to.
-const allowedEvents=new Set(['page_view','whatsapp_click','microcemento_cta_click','microcemento_whatsapp_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start','generate_lead']);
+const allowedEvents=new Set(['page_view','phone_click','whatsapp_click','microcemento_cta_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start']);
 window.addEventListener('message',event=>{
  if(event.origin!==location.origin || event.source!==parent || event.data?.type!=='kaemento-event' || !allowedEvents.has(event.data.event))return;
  const p=event.data.params || {}, safe={};
