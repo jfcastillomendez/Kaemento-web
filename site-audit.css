@@ -24,3 +24,8 @@
 .whatsapp,.whatsapp b{color:#241e17}
 .section .eyebrow.light,.feature .eyebrow,.gallery-intro .eyebrow{color:#d2ae7c}
 #proyectos h2 em,.quote h2 em,.feature h2 em{color:#c59b68}
+
+/* Audit follow-up: preserve layout and improve only failing text contrasts. */
+#colores.material-palette-section .eyebrow,#colores.material-palette-section h2 em{color:#79532b}
+.process-video-copy h2 em{color:#d2ae7c}
+#colores-boquilla figcaption p,.facade-service-note{color:#636059}
