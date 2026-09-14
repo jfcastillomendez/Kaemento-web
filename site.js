@@ -84,3 +84,52 @@ document.querySelectorAll('form').forEach(form => {
   // Attach handler before enabling submission. Without JS there are no live form fields.
   form.querySelector('button').type='submit';form.hidden=false;
 });
+
+// Quote links land on the fields, even when lazy images above finish loading.
+// Keep the existing hashes and analytics listeners unchanged.
+(() => {
+  const targets = {'#cotizar-microcemento':'microcemento-form', '#cotizar':'quote-form'};
+  const normalizePath = path => path === '/' ? '/index.html' : path;
+  let cancelAlignment = () => {};
+  function revealQuote(hash) {
+    const form = document.getElementById(targets[hash]);
+    if (!form || form.hidden) return;
+    cancelAlignment();
+    const header = document.querySelector('header.nav');
+    let frame = 0;
+    const align = () => {
+      frame = 0;
+      const offset = (header?.getBoundingClientRect().height || 0) + 24;
+      const delta = form.getBoundingClientRect().top - offset;
+      if (Math.abs(delta) > 2) window.scrollTo({top: Math.max(0, window.scrollY + delta), behavior:'instant'});
+    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(align); };
+    // Stop immediately when the visitor takes control; never pull them back.
+    const events = ['wheel','touchstart','pointerdown','keydown'];
+    const observer = new ResizeObserver(schedule);
+    let timer;
+    const cleanup = () => {
+      observer.disconnect();clearTimeout(timer);cancelAnimationFrame(frame);
+      events.forEach(name => window.removeEventListener(name, cleanup, true));
+    };
+    cancelAlignment = cleanup;
+    observer.observe(document.querySelector('main') || document.body);
+    events.forEach(name => window.addEventListener(name, cleanup, {capture:true,passive:true}));
+    timer = setTimeout(cleanup, 5000);
+    align();schedule();
+  }
+  document.addEventListener('click', event => {
+    if (!(event.target instanceof Element) || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const link = event.target.closest('a[href]');
+    if (!link || link.target === '_blank' || !targets[link.hash] || link.origin !== location.origin || normalizePath(link.pathname) !== normalizePath(location.pathname)) return;
+    if (!document.getElementById(targets[link.hash])) return;
+    event.preventDefault();
+    if (location.hash !== link.hash) history.pushState(null, '', link.hash);
+    revealQuote(link.hash);
+  });
+  window.addEventListener('hashchange', () => revealQuote(location.hash));
+  if (targets[location.hash]) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => revealQuote(location.hash), {once:true});
+    else requestAnimationFrame(() => revealQuote(location.hash));
+  }
+})();
