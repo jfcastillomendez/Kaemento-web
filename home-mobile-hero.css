@@ -1,0 +1,8 @@
+.home-hero-mobile-visual{display:none}
+@media(max-width:720px){
+ .hero#inicio{padding-bottom:0;background-image:none}
+ .hero#inicio::after{display:none}
+ .hero#inicio .home-hero-mobile-visual{display:block;flex:none;width:100%;margin:0;background:#292722}
+ .hero#inicio .home-hero-mobile-visual img{display:block;width:100%;height:auto;object-fit:contain}
+ .hero#inicio .hero-meta{position:static;flex:none;width:100%;backdrop-filter:none;background:#292722}
+}
