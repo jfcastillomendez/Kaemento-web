@@ -133,3 +133,18 @@ document.querySelectorAll('form').forEach(form => {
     else requestAnimationFrame(() => revealQuote(location.hash));
   }
 })();
+
+// Keep the mobile floating shortcut clear of visible quote fields and keyboard focus.
+(() => {
+  const forms = [...document.querySelectorAll('#quote-form, #microcemento-form')];
+  if (!forms.length) return;
+  const visible = new Set();
+  const update = () => document.body.classList.toggle('quote-form-active', visible.size > 0 || forms.some(form => form.contains(document.activeElement)));
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => entry.isIntersecting ? visible.add(entry.target) : visible.delete(entry.target));
+    update();
+  }, {rootMargin:'48px 0px 48px 0px', threshold:0});
+  forms.forEach(form => observer.observe(form));
+  document.addEventListener('focusin', update);
+  document.addEventListener('focusout', () => requestAnimationFrame(update));
+})();

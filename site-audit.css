@@ -29,3 +29,5 @@
 #colores.material-palette-section .eyebrow,#colores.material-palette-section h2 em{color:#79532b}
 .process-video-copy h2 em{color:#d2ae7c}
 #colores-boquilla figcaption p,.facade-service-note{color:#636059}
+
+@media(max-width:900px){body.quote-form-active .whatsapp{display:none!important}}
