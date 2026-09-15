@@ -914,3 +914,32 @@ summary:focus-visible{
 section[id]{scroll-margin-top:90px}.service-list h3 a:hover{color:var(--sand)}
 @media(max-width:900px){.nav nav{gap:14px}.nav{padding-left:22px;padding-right:22px}}
 @media(max-width:720px){.nav-group{display:grid;grid-template-columns:1fr auto}.submenu-toggle{padding:13px 10px}.submenu{grid-column:1/-1;position:static;width:auto;padding:0 0 8px 14px;border:0;box-shadow:none;background:transparent;display:none!important;opacity:1;visibility:visible;transform:none}.nav-group.submenu-open .submenu{display:grid!important}.submenu:before{display:none}.submenu a{padding:10px 8px;font-size:12px}.nav nav{max-height:calc(100dvh - 72px);overflow:auto}#productos .product-media.official{height:140px}}
+
+/* Product cards: preserve complete words and give copy room at every width. */
+#productos .product {
+  container-type: inline-size;
+  grid-template-columns: 140px minmax(0, 1fr);
+  grid-template-areas: "num small" "media title" "media desc" ". link";
+  gap: 0 24px;
+  padding: 28px;
+}
+#productos .product-media { width: 140px; }
+#productos .product h3 {
+  font-size: 32px;
+  line-height: 1.12;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
+#productos .product a { flex-direction: row; margin-top: 12px; }
+@container (max-width: 440px) {
+  #productos .product h3 { grid-column: 1 / -1; grid-row: 3; }
+  #productos .product p { grid-column: 1 / -1; grid-row: 4; }
+  #productos .product a { grid-column: 1 / -1; grid-row: 5; }
+  #productos .product-media { grid-column: 1 / -1; grid-row: 2; }
+}
+@media (max-width: 720px) {
+  #productos .product { padding: 24px; grid-template-columns: 30px minmax(0, 1fr); gap: 0 12px; }
+  #productos .product h3 { font-size: 30px; }
+  #productos .product-media.official { width: 120px; height: 150px; margin: 20px 0 8px; }
+}
