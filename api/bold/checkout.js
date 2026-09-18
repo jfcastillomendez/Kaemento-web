@@ -1,10 +1,9 @@
 const { createHash, randomBytes } = require('node:crypto');
 
 // Price, currency and tax are authoritative on the server. No customer data here.
-const PRODUCT_ID = 'microcemento-kaemento-launch';
 const UNIT_AMOUNT = 365500;
 const CURRENCY = 'COP';
-const DESCRIPTION = 'Microcemento KAEMENTO - Kit completo - Lanzamiento';
+const variants = require('../../bold-config.js');
 
 module.exports = function checkout(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -24,12 +23,10 @@ module.exports = function checkout(req, res) {
       if (Buffer.byteLength(body) > 1024) return reply(413, { error: 'Solicitud no válida.' });
       body = JSON.parse(body);
     }
-    if (!body || typeof body !== 'object' || Array.isArray(body) ||
-        Object.keys(body).length !== 2 || body.productId !== PRODUCT_ID ||
-        !Object.hasOwn(body, 'quantity') || !Number.isInteger(body.quantity) ||
-        body.quantity < 1 || body.quantity > 20) {
-      return reply(400, { error: 'Selecciona entre 1 y 20 kits.' });
-    }
+    const selection = variants.normalize(body);
+    if (!selection) return reply(400, { error: 'Revisa la cantidad, el color y el sellador seleccionados.' });
+    const description = variants.description(selection);
+    if (description.length > 100) return reply(400, { error: 'Selección no válida.' });
     const apiKey = process.env.BOLD_IDENTITY_KEY;
     const secretKey = process.env.BOLD_SECRET_KEY;
     if (!apiKey?.trim() || !secretKey?.trim()) {
@@ -40,7 +37,7 @@ module.exports = function checkout(req, res) {
     const integritySignature = createHash('sha256')
       .update(`${orderId}${amount}${CURRENCY}${secretKey}`, 'utf8').digest('hex');
     return reply(200, { orderId, amount, currency: CURRENCY, apiKey,
-      integritySignature, tax: 'vat-19', description: DESCRIPTION });
+      integritySignature, tax: 'vat-19', description, selection });
   } catch (_) {
     // Never log the request, environment, signature input or provider credentials.
     return reply(400, { error: 'No pudimos preparar el pago. Intenta nuevamente.' });

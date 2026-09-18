@@ -8,6 +8,7 @@ Arquitectura conservada: HTML/CSS/JS estático, sin framework, sin instalación 
 ## Archivos
 
 - `api/bold/checkout.js`: endpoint POST y catálogo fijo de servidor.
+- `bold-config.js`: reglas compartidas de variantes, fórmulas y descripción, sin secretos.
 - `bold-checkout.js`, `bold-checkout.css`: selector, precio, carga única del SDK, checkout y estados accesibles.
 - `index.html`, `productos/microcemento-kaemento.html`: bloque de compra añadido sin reemplazar CTAs existentes.
 - `pagos/resultado.html`, `pagos/resultado.js`: estados informativos del retorno.
@@ -21,10 +22,10 @@ Arquitectura conservada: HTML/CSS/JS estático, sin framework, sin instalación 
 ## Flujo
 
 1. El visitante selecciona de 1 a 20 kits. Precio regular por kit: COP 430000; lanzamiento: COP 365500 (15 % menos), IVA incluido.
-2. El navegador carga una sola vez `https://checkout.bold.co/library/boldPaymentButton.js` y envía únicamente `{productId: "microcemento-kaemento-launch", quantity: 1}` a `POST /api/bold/checkout`.
+2. El navegador carga una sola vez `https://checkout.bold.co/library/boldPaymentButton.js` y envía producto, cantidad, modalidad, color/fórmula y sellador. Estándar: `{productId: "microcemento-kaemento-launch", quantity: 1, colorMode: "standard", color: "arena", sealer: "mate"}`. Mezcla: `{productId: "microcemento-kaemento-launch", quantity: 2, colorMode: "mix", color1: "arena", color2: "gris-cemento", percentage1: 70, percentage2: 30, sealer: "mate"}` a `POST /api/bold/checkout`.
 3. El servidor rechaza producto desconocido, cantidades que no sean enteros de 1 a 20 y campos adicionales (incluido `amount`). Calcula `365500 * quantity` y crea una referencia `KAE-MICRO-<timestamp>-<random>` menor de 60 caracteres.
 4. Firma SHA-256 de `orderId + amount + "COP" + BOLD_SECRET_KEY`, sin separadores. No se vuelve a sumar IVA. `tax` es `vat-19`.
-5. Devuelve exclusivamente orderId, amount, currency, apiKey (identidad pública), integritySignature, tax y description. Respuesta sin caché.
+5. Devuelve exclusivamente orderId, amount, currency, apiKey (identidad pública), integritySignature, tax, description y selection (variante normalizada). Respuesta sin caché.
 6. `BoldCheckout` abre con `renderMode: "embedded"`. Si el método falla, se intenta el modo estándar documentado, omitiendo renderMode y reutilizando la misma orden firmada. Sin eventos de cierre inventados ni lógica apoyada en el DOM interno de Bold.
 7. Si `open()` termina sin error se registra una vez `begin_checkout`. Esto mide apertura solicitada del checkout; no prueba que Bold haya aprobado el pago. Los errores posteriores internos de la pasarela y el cierre no tienen callback documentado utilizado por esta implementación.
 8. Bold retorna a `window.location.origin + "/pagos/resultado"`. Se reconocen approved, pending/processing, rejected/failed y un estado neutral para valores desconocidos. No se interpreta ni se envía el orderId a Google.
@@ -84,7 +85,7 @@ Sin variables, comprar muestra el error controlado. Este adaptador no sustituye 
 
 - Unitarias: 7 grupos aprobados (precios 1/2/20, IVA incluido, SHA-256 exacto, 100 referencias únicas, validaciones, variables ausentes y filtrado de ambos niveles de Analytics).
 - Navegador: 8 combinaciones de Inicio/Microcemento × 320/390/768/1440; sin overflow ni errores JavaScript.
-- SDK simulado: envío solo productId/quantity; cantidades 1 y 2; doble clic sin doble orden/evento; una carga de SDK por documento; fallback estándar reutiliza la orden; recuperación de errores; fallo al cargar SDK no crea orden.
+- SDK simulado: envío exclusivo de campos permitidos de producto, cantidad y variante; cantidades 1 y 2; doble clic sin doble orden/evento; una carga de SDK por documento; fallback estándar reutiliza la orden; recuperación de errores; fallo al cargar SDK no crea orden.
 - Retorno simulado: approved, rejected, failed, pending, processing y parámetros desconocidos/maliciosos. No `purchase`, no `generate_lead`, no datos del query string en Analytics.
 
 **Pendiente:** pagos reales simulados por Bold, etiqueta Modo de pruebas, retorno real del proveedor y comportamiento embedded en dispositivos reales. No equivalen a los escenarios de SDK simulado. Requieren el par de llaves de prueba del comercio.
@@ -99,7 +100,19 @@ Sin variables, comprar muestra el error controlado. Este adaptador no sustituye 
 6. Revisar Network, fuente, consola y archivos públicos: ninguna respuesta debe contener BOLD_SECRET_KEY. No copiar capturas o logs de las variables de Vercel.
 7. Revisar `begin_checkout` en la capa/puente existente; no configurar conversiones nuevas en Ads. Nunca disparar purchase usando el query string.
 
-## Deployment de revisión
+## Configurador estándar y mezcla (revisión local posterior)
+
+Colores cerrados: extra-blanco, arena, gris-cemento, negro, terracota. Selladores: mate/brillante. Sin selección automática de color ni sellador. Ambas modalidades son obligatorias y accesibles por teclado.
+
+Mezcla requiere tonos distintos y porcentajes numéricos de 10 a 90 en pasos de 10, con suma 100. El modo estándar acepta únicamente `color`; campos de mezcla sobrantes y campos no previstos se rechazan. El endpoint valida todo **antes** de crear orderId/firma y conserva el precio de COP 365500 para cada kit. La descripción incluye fórmula, sellador y cantidad, con máximo 100 caracteres.
+
+`begin_checkout` contiene `item_variant` (p. ej. `arena:70+gris-cemento:30`) y `sealer_type`, filtrados de nuevo en ambos niveles de medición. No se manda texto libre, credenciales ni referencias de pedido.
+
+El retorno recupera la selección en `sessionStorage` por orderId, como información temporal y no prueba de pago. Se guardan hasta 20 selecciones, sin claves ni firmas. En otro navegador, al cerrar la sesión o si el almacenamiento está bloqueado, se muestra que el detalle no está disponible y se remite al comprobante Bold. No se inventa una selección ni se usa la de otro pedido.
+
+Pruebas locales ampliadas: 11 grupos unitarios aprobados, incluyendo las 10 combinaciones estándar/sellador y las 360 mezclas; cantidades y fórmulas manipuladas rechazadas. Navegador: Inicio y Microcemento en 320/390/768/1440, selección obligatoria, tonos distintos, fórmula natural, envío exacto, descripción, resultado y evento sin duplicados. Cambio de mezcla a estándar omite los campos ocultos. SDK simulado, sin llaves Bold conectadas ni cobros. Esta revisión se sincroniza en codex/bold-microcemento-launch para Vercel Preview y conserva la misma versión en localhost:8137. No se publica producción.
+
+## Deployment de revisión anterior
 
 Vercel confirmó build/deployment **success**, entorno **Preview**, para el commit inicial `1c6e70b`:
 

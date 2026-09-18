@@ -2,6 +2,13 @@
 /* Only technical context reaches Google. Google tags live in an isolated document
    with no access to form DOM, WhatsApp URLs or user-entered content. */
 (() => {
+function validCheckoutVariant(value) {
+  const colors = ['extra-blanco','arena','gris-cemento','negro','terracota'];
+  if (colors.includes(value)) return true;
+  if (typeof value !== 'string') return false;
+  const match = /^([a-z-]+):(10|20|30|40|50|60|70|80|90)\+([a-z-]+):(10|20|30|40|50|60|70|80|90)$/.exec(value);
+  return !!match && colors.includes(match[1]) && colors.includes(match[3]) && match[1] !== match[3] && Number(match[2]) + Number(match[4]) === 100;
+}
   const allowed = new Set(['page_view','phone_click','whatsapp_click','microcemento_cta_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start','begin_checkout']);
   // Explicit, page-scoped test signal; never persist it or copy the full query.
   const debugSignal = new URLSearchParams(location.search).get('gtm_debug');
@@ -28,10 +35,12 @@
     if (values.lead_stage === 'whatsapp_handoff') payload.lead_stage = 'whatsapp_handoff';
     if (event === 'begin_checkout') {
       const quantity = values.items?.[0]?.quantity;
-      if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20 ||
+      const color = values.items?.[0]?.item_variant, sealer = values.items?.[0]?.sealer_type;
+      if (!validCheckoutVariant(color) || !['mate','brillante'].includes(sealer) ||
+          !Number.isInteger(quantity) || quantity < 1 || quantity > 20 ||
           values.currency !== 'COP' || values.value !== 365500 * quantity) return;
       payload.currency = 'COP'; payload.value = 365500 * quantity;
-      payload.items = [{ item_id: 'microcemento-kaemento', item_name: 'Microcemento KAEMENTO', price: 365500, quantity }];
+      payload.items = [{ item_id: 'microcemento-kaemento', item_name: 'Microcemento KAEMENTO', price: 365500, quantity, item_variant: color, sealer_type: sealer }];
     }
     window.dataLayer.push({event, ...payload});
     const message = {type:'kaemento-event', event, params:payload};

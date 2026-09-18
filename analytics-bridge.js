@@ -1,3 +1,10 @@
+function validCheckoutVariant(value) {
+  const colors = ['extra-blanco','arena','gris-cemento','negro','terracota'];
+  if (colors.includes(value)) return true;
+  if (typeof value !== 'string') return false;
+  const match = /^([a-z-]+):(10|20|30|40|50|60|70|80|90)\+([a-z-]+):(10|20|30|40|50|60|70|80|90)$/.exec(value);
+  return !!match && colors.includes(match[1]) && colors.includes(match[3]) && match[1] !== match[3] && Number(match[2]) + Number(match[4]) === 100;
+}
 // generate_lead is disabled until a real receiving integration confirms delivery.
 // The flag is local and explicit. Ordinary browsing never enables debug mode.
 const debugSignal = new URLSearchParams(location.search).get('gtm_debug');
@@ -20,10 +27,12 @@ window.addEventListener('message',event=>{
  if(p.lead_stage==='whatsapp_handoff')safe.lead_stage=p.lead_stage;
  if (event.data.event === 'begin_checkout') {
    const quantity = p.items?.[0]?.quantity;
-   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20 ||
+   const color = p.items?.[0]?.item_variant, sealer = p.items?.[0]?.sealer_type;
+   if (!validCheckoutVariant(color) || !['mate','brillante'].includes(sealer) ||
+       !Number.isInteger(quantity) || quantity < 1 || quantity > 20 ||
        p.currency !== 'COP' || p.value !== 365500 * quantity) return;
    safe.currency = 'COP'; safe.value = 365500 * quantity;
-   safe.items = [{ item_id: 'microcemento-kaemento', item_name: 'Microcemento KAEMENTO', price: 365500, quantity }];
+   safe.items = [{ item_id: 'microcemento-kaemento', item_name: 'Microcemento KAEMENTO', price: 365500, quantity, item_variant: color, sealer_type: sealer }];
  }
  gtag('event',event.data.event,safe);
 });
