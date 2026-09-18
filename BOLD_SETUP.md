@@ -99,6 +99,14 @@ Sin variables, comprar muestra el error controlado. Este adaptador no sustituye 
 6. Revisar Network, fuente, consola y archivos públicos: ninguna respuesta debe contener BOLD_SECRET_KEY. No copiar capturas o logs de las variables de Vercel.
 7. Revisar `begin_checkout` en la capa/puente existente; no configurar conversiones nuevas en Ads. Nunca disparar purchase usando el query string.
 
+## Deployment de revisión
+
+Vercel confirmó build/deployment **success**, entorno **Preview**, para el commit inicial `1c6e70b`:
+
+https://kaemento-5pqs39u4b-jfcastillomendez-6248s-projects.vercel.app
+
+La preview requiere sesión Vercel; el conector disponible respondió 403 al solicitar acceso temporal. Esto no valida el endpoint remoto ni el pago real: esas comprobaciones permanecen pendientes. La preview local en localhost:8137 y el handler ejecutado por las pruebas sí fueron verificados. No se configuraron llaves ni se publicó main.
+
 ## Paso posterior a producción
 
 Solo después de completar las pruebas y de recibir autorización expresa:
