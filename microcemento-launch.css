@@ -1,0 +1,51 @@
+/* Campaign-only styles: institutional hero and approved checkout controls are unchanged. */
+[data-launch-block][hidden]{display:none!important}
+.launch-panel{margin:clamp(32px,5vw,72px) auto;padding:clamp(24px,4vw,64px);width:calc(100% - 48px);max-width:1320px;background:#f5efe5;color:#292720}
+.launch-home{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,5vw,72px);align-items:center}
+.launch-home figure{margin:0;height:100%;min-height:460px}
+.launch-home img{display:block;width:100%;height:100%;object-fit:cover;max-height:660px}
+.launch-panel h2,.launch-config-intro h2{font-family:"Cormorant Garamond",Georgia,serif;font-weight:400;font-size:clamp(32px,4vw,58px);line-height:1.08;letter-spacing:-.025em;margin:16px 0 22px}
+.launch-panel h2 em{color:#957448;font-weight:400}
+.launch-panel p,.launch-config-intro p{line-height:1.65}
+.launch-label,.launch-badge{font-size:11px!important;letter-spacing:.12em;line-height:1.5!important}
+.launch-badge{display:inline-block;border:1px solid #b89a71;padding:9px 12px;margin:0 0 22px}
+.launch-price{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 15px;margin:22px 0 12px}
+.launch-price del{font-size:17px;opacity:.7}
+.launch-price strong{font-size:clamp(32px,3.3vw,46px);line-height:1.1;font-weight:500;letter-spacing:-.035em;white-space:nowrap}
+.launch-price span{font-size:12px}
+.launch-limit{font-size:13px;margin:8px 0;line-height:1.5}
+.launch-duration{font-size:11px;opacity:.8;margin:6px 0 20px}
+.launch-actions{display:flex;flex-wrap:wrap;align-items:center;gap:22px;margin-top:26px}
+.launch-button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:15px 20px;background:#292720;color:#fff9ef;font-size:11px;letter-spacing:.07em;text-decoration:none}
+.launch-link,.launch-manuals a{font-size:12px;text-underline-offset:5px}
+.launch-button:focus-visible,.launch-link:focus-visible{outline:2px solid #b28a51;outline-offset:5px}
+.detail-hero.launch-hero:has(>.product-sheet){height:auto;min-height:660px;align-items:stretch}
+.detail-hero.launch-hero .detail-copy{padding:36px clamp(24px,3.2vw,52px);min-height:0}
+.detail-hero.launch-hero .detail-copy h1{margin-bottom:12px}
+.detail-hero.launch-hero .detail-copy .breadcrumbs{margin-bottom:18px}
+.detail-hero.launch-hero .detail-copy .eyebrow{margin-bottom:16px}
+.detail-hero.launch-hero .detail-copy > .launch-subheadline{font-size:23px;line-height:1.2;margin-bottom:12px;color:#d6b481;font-family:"Cormorant Garamond",Georgia,serif}
+.detail-hero.launch-hero .detail-copy > .launch-intro{font-size:13px;line-height:1.65}
+.launch-hero-offer{margin-top:24px;padding-top:20px;border-top:1px solid #ffffff35}
+.launch-hero-offer .launch-label{margin:0}
+.launch-hero-offer .launch-price{margin:12px 0}
+.launch-hero-offer .launch-button{background:#d5bb93;color:#211f1b;margin-top:4px}
+.detail-hero.launch-hero .detail-copy .actions{margin-top:22px;gap:14px}
+.detail-hero.launch-hero .detail-copy .actions a{font-size:11px}
+.launch-stages{list-style:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:0;margin:36px 0;gap:20px}
+.launch-stages li{border-top:1px solid #b39468;padding-top:18px;min-width:0}
+.launch-stages li>span{font-family:Georgia,serif;font-size:26px;color:#987447}
+.launch-stages h3{font-family:inherit;font-size:11px;letter-spacing:.04em;line-height:1.5;min-height:34px;margin:18px 0 12px}
+.launch-stages p{font-size:13px;margin:0}
+.launch-technical{font-size:12px;max-width:860px;color:#625c51}
+.launch-closing{font-family:"Cormorant Garamond",Georgia,serif;font-size:28px;margin:24px 0 12px}
+.launch-manuals{display:flex;flex-wrap:wrap;gap:16px 28px;margin-top:24px}
+.launch-config-intro{max-width:720px;margin-bottom:32px}
+.launch-config-intro h2{font-size:clamp(32px,4vw,46px)}
+.launch-config-intro p{font-size:14px}
+.launch-trust{border-top:1px solid #c7baa6;margin-top:28px;padding-top:20px;font-size:12px}
+.launch-trust strong{font-weight:500}
+.launch-trust ul{display:flex;flex-wrap:wrap;gap:10px 22px;list-style:none;padding:0;margin:14px 0}
+#comprar-microcemento{scroll-margin-top:115px}
+@media(max-width:900px){.launch-home{grid-template-columns:1fr}.launch-home figure{min-height:0;height:340px}.launch-stages{grid-template-columns:1fr}.launch-stages li{display:grid;grid-template-columns:40px 1fr;column-gap:15px}.launch-stages h3{margin:4px 0 8px;min-height:0}.launch-stages p{grid-column:2}.launch-panel{padding:28px}.launch-home h2{font-size:44px}}
+@media(max-width:480px){.launch-panel{width:calc(100% - 32px);padding:24px 20px}.launch-home h2{font-size:36px}.launch-home figure{height:240px}.launch-actions{align-items:flex-start;flex-direction:column}.launch-price strong{font-size:36px}.launch-price span{flex-basis:100%}.launch-stages{gap:22px}.detail-hero.launch-hero .detail-copy{padding:30px 24px}.launch-trust ul{display:grid;grid-template-columns:1fr 1fr}.launch-system h2{font-size:34px}}

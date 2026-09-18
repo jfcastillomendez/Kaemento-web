@@ -16,7 +16,7 @@ gtag('js', new Date());
 gtag('config','G-XYVF450MJE',{...debugOptions,send_page_view:false,page_location:'https://www.kaemento.com/',page_referrer:'',allow_google_signals:false,allow_ad_personalization_signals:false});
 gtag('config','AW-18358591293',{...debugOptions,send_page_view:false,page_location:'https://www.kaemento.com/',page_referrer:'',allow_ad_personalization_signals:false});
 // An Ads conversion label can be connected here after it is confirmed. No placeholder send_to.
-const allowedEvents=new Set(['page_view','phone_click','whatsapp_click','microcemento_cta_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start','begin_checkout']);
+const allowedEvents=new Set(['page_view','phone_click','whatsapp_click','microcemento_cta_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start','begin_checkout','select_promotion','view_promotion']);
 window.addEventListener('message',event=>{
  if(event.origin!==location.origin || event.source!==parent || event.data?.type!=='kaemento-event' || !allowedEvents.has(event.data.event))return;
  const p=event.data.params || {}, safe={};
@@ -25,6 +25,10 @@ window.addEventListener('message',event=>{
  if(typeof p.page_path==='string'&&/^\/[a-z0-9/_\-.]*$/i.test(p.page_path)){safe.page_path=p.page_path;safe.page_location='https://www.kaemento.com'+p.page_path;}
  if(typeof p.source_host==='string'&&/^[a-z0-9.-]+$/i.test(p.source_host))safe.page_referrer='https://'+p.source_host+'/';
  if(p.lead_stage==='whatsapp_handoff')safe.lead_stage=p.lead_stage;
+ if (['select_promotion','view_promotion'].includes(event.data.event)) {
+   if (p.promotion_name !== 'microcemento_kaemento_launch_2026') return;
+   safe.promotion_name = 'microcemento_kaemento_launch_2026';
+ }
  if (event.data.event === 'begin_checkout') {
    const quantity = p.items?.[0]?.quantity;
    const color = p.items?.[0]?.item_variant, sealer = p.items?.[0]?.sealer_type;

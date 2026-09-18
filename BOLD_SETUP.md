@@ -148,3 +148,14 @@ Solo después de completar las pruebas y de recibir autorización expresa:
 - https://vercel.com/docs/functions/runtimes/node-js
 
 No se cambiaron formularios, WhatsApp, imágenes, SEO de las páginas existentes, sitemap, robots, navegación, campañas ni configuración de Google Ads/GA4/GTM. Única extensión de medición: `begin_checkout` filtrado por el puente actual.
+
+
+## Campaña de lanzamiento 2026 (solo Preview hasta aprobación)
+
+La presentación está centralizada en `microcemento-launch-config.js`: enabled, regularPrice, launchPrice, discount, maxCustomers y durationDays. Los bloques tienen respaldo HTML para lectura sin JavaScript. La campaña comienza al publicarse en producción, no al crear este Preview. Registrar entonces la fecha de inicio y retirar la promoción al cumplirse 30 días o 30 pedidos confirmados, lo primero que ocurra. No hay contador, webhook ni cuota automática.
+
+Desactivación: cambiar `enabled` a false oculta los bloques promocionales y detiene los eventos de promoción. Esto NO cambia el precio de venta, el endpoint ni impide compras. El cierre comercial exige un cambio coordinado y probado del precio en backend y checkout (actualmente 365500), sus textos HTML y la validación Analytics de begin_checkout. No cambiar solo el precio de presentación. Hasta implementar webhook y almacenamiento persistente, el equipo debe verificar manualmente las compras confirmadas y cerrar la oferta.
+
+La futura fuente persistente debe validar pedidos pagados por webhook idempotente antes de contabilizar cupos. No usar aperturas de checkout ni la página de resultado como confirmación. Las claves y la lógica aprobada de Bold no se modifican en esta campaña.
+
+Solo se añaden select_promotion y view_promotion con promotion_name fijo microcemento_kaemento_launch_2026, filtrado también en analytics-bridge. view_promotion se emite una vez por carga cuando el configurador entra en pantalla. No se emiten purchase ni generate_lead.
