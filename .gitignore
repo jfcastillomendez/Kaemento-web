@@ -1,1 +1,8 @@
 .DS_Store
+
+# Credentials and local tooling
+.env
+.env.*
+!.env.example
+.vercel/
+node_modules/

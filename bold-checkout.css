@@ -1,0 +1,29 @@
+/* Scoped launch offer: reuse KAEMENTO typography, palette and existing page layout. */
+.kae-purchase { margin-top: 32px; padding: clamp(22px, 4vw, 38px); border: 1px solid var(--line); background: var(--cream, #f7f1e8); color: var(--ink, #22221f); }
+.kae-purchase .kae-purchase-heading { font-family: "Cormorant Garamond", Georgia, serif; font-size: clamp(28px, 3vw, 38px); line-height: 1.15; margin: 0 0 12px; font-weight: 400; letter-spacing: -.02em; }
+.kae-purchase .kae-purchase-concept { font-size: 14px; margin: 0 0 22px; color: var(--muted); }
+.kae-purchase .kae-purchase-prices { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px 20px; margin-bottom: 14px; }
+.kae-purchase .kae-purchase-prices del { color: var(--muted); font-size: 17px; }
+.kae-purchase .kae-purchase-prices strong { font-size: clamp(26px, 4vw, 34px); font-weight: 500; }
+.kae-purchase .kae-purchase-prices small { font-size: 12px; }
+.kae-purchase .kae-purchase-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 20px 28px; margin-top: 24px; }
+.kae-purchase label { display: grid; gap: 8px; font-size: 13px; }
+.kae-purchase input { width: 90px; min-height: 46px; padding: 10px 12px; border: 1px solid var(--line); background: transparent; color: inherit; border-radius: 0; font: inherit; }
+.kae-purchase .kae-purchase-total { margin: 0; font-size: 13px; }
+.kae-purchase output { display: block; font-size: 23px; line-height: 1.5; }
+.kae-purchase button { min-height: 48px; border: 0; padding: 16px 24px; background: #282722; color: #f8f5ef; font: inherit; font-size: 12px; letter-spacing: .06em; cursor: pointer; }
+.kae-purchase button:disabled { opacity: .6; cursor: wait; }
+.kae-purchase button:focus-visible, .kae-purchase input:focus-visible { outline: 2px solid #916735; outline-offset: 4px; }
+.kae-purchase .kae-purchase-shipping { margin: 20px 0 6px; font-size: 14px; line-height: 1.6; }
+.kae-purchase .kae-purchase-note { font-size: 12px; line-height: 1.6; margin: 0; color: #625e56; }
+.kae-purchase .kae-purchase-status { font-size: 13px; line-height: 1.6; margin: 12px 0 0; }
+.kae-purchase [data-bold-help] { display: inline-block; margin-top: 12px; font-size: 13px; text-decoration: underline; }
+.kae-purchase [hidden] { display: none; }
+.kae-purchase-section { padding-top: 32px; padding-bottom: 32px; }
+.kae-purchase-section .kae-purchase { margin-top: 0; }
+.kae-payment-result { padding-top: 160px; min-height: 65vh; }
+.kae-payment-result h1 { font-size: clamp(38px, 7vw, 70px); line-height: 1.05; }
+.kae-payment-result p { max-width: 680px; line-height: 1.7; }
+@media (max-width: 480px) { .kae-purchase button { width: 100%; } }
+
+.kae-payment-result [hidden] { display: none; }

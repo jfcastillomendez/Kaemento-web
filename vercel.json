@@ -10,5 +10,11 @@
       "destination": "/catalogos/catalogo-comercial-microcemento-kaemento-2026.pdf",
       "permanent": true
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/pagos/resultado",
+      "destination": "/pagos/resultado.html"
+    }
   ]
 }

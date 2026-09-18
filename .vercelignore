@@ -2,3 +2,11 @@
 AGENTS.md
 .agents/
 .codex/
+
+# Private configuration, tests and developer documentation are not public assets.
+.env
+.env.*
+BOLD_SETUP.md
+tests/
+scripts/bold-preview.cjs
+node_modules/

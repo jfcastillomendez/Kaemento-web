@@ -9,7 +9,7 @@ gtag('js', new Date());
 gtag('config','G-XYVF450MJE',{...debugOptions,send_page_view:false,page_location:'https://www.kaemento.com/',page_referrer:'',allow_google_signals:false,allow_ad_personalization_signals:false});
 gtag('config','AW-18358591293',{...debugOptions,send_page_view:false,page_location:'https://www.kaemento.com/',page_referrer:'',allow_ad_personalization_signals:false});
 // An Ads conversion label can be connected here after it is confirmed. No placeholder send_to.
-const allowedEvents=new Set(['page_view','phone_click','whatsapp_click','microcemento_cta_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start']);
+const allowedEvents=new Set(['page_view','phone_click','whatsapp_click','microcemento_cta_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start','begin_checkout']);
 window.addEventListener('message',event=>{
  if(event.origin!==location.origin || event.source!==parent || event.data?.type!=='kaemento-event' || !allowedEvents.has(event.data.event))return;
  const p=event.data.params || {}, safe={};
@@ -18,6 +18,13 @@ window.addEventListener('message',event=>{
  if(typeof p.page_path==='string'&&/^\/[a-z0-9/_\-.]*$/i.test(p.page_path)){safe.page_path=p.page_path;safe.page_location='https://www.kaemento.com'+p.page_path;}
  if(typeof p.source_host==='string'&&/^[a-z0-9.-]+$/i.test(p.source_host))safe.page_referrer='https://'+p.source_host+'/';
  if(p.lead_stage==='whatsapp_handoff')safe.lead_stage=p.lead_stage;
+ if (event.data.event === 'begin_checkout') {
+   const quantity = p.items?.[0]?.quantity;
+   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20 ||
+       p.currency !== 'COP' || p.value !== 365500 * quantity) return;
+   safe.currency = 'COP'; safe.value = 365500 * quantity;
+   safe.items = [{ item_id: 'microcemento-kaemento', item_name: 'Microcemento KAEMENTO', price: 365500, quantity }];
+ }
  gtag('event',event.data.event,safe);
 });
 parent.postMessage('kaemento-analytics-ready',location.origin);
