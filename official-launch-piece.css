@@ -3,25 +3,28 @@
 .campaign-art picture{display:block;width:100%;height:100%}
 .campaign-art img{display:block!important;width:100%!important;height:auto!important;max-width:100%!important;max-height:none!important;aspect-ratio:2/3;object-fit:contain!important;border:0;border-radius:0!important}
 .campaign-art:focus-visible,.campaign-configure:focus-visible{outline:2px solid #b48a4d;outline-offset:5px}
-.launch-home .campaign-secondary-scene{position:relative}
-.launch-home .campaign-secondary{position:absolute;width:30%;height:auto;right:4%;bottom:6%;z-index:2;background:transparent}
+.launch-home .campaign-secondary-scene{position:relative;min-height:0;height:auto;aspect-ratio:1;align-self:center}
+.launch-home .campaign-secondary-scene>img{height:100%;max-height:none}
+.launch-home .campaign-secondary{position:absolute;width:55%;height:auto;right:4%;bottom:6%;z-index:2;background:transparent}
 /* Coordinates refer to the 1024 × 1536 supplied artwork: commercial offer only. */
-.campaign-offer-glow{position:absolute;left:59.8%;top:75.1%;width:37.1%;height:13.15%;border-radius:4%;pointer-events:none;overflow:hidden;background:transparent;transform-origin:center;animation:campaign-offer-breathe 3.2s ease-in-out infinite;will-change:transform}
-.campaign-offer-glow:after{content:"";position:absolute;inset:-25%;background:linear-gradient(112deg,transparent 37%,#e7c88e40 49%,#fff3d32b 52%,transparent 65%);opacity:0;animation:campaign-offer-shimmer 8.5s ease-in-out infinite}
-@keyframes campaign-offer-breathe{0%,100%{transform:scale(1);box-shadow:inset 0 0 0 1px #bd94421a,0 0 4px #cfa75e08}50%{transform:scale(1.02);box-shadow:inset 0 0 10px #d8b47821,0 0 12px #bd944228}}
-@keyframes campaign-offer-shimmer{0%,82%{opacity:0;transform:translateX(-90%)}85%{opacity:.55}96%,100%{opacity:0;transform:translateX(90%)}}
+.campaign-offer-glow{position:absolute;left:59.8%;top:75.1%;width:37.1%;height:13.15%;border-radius:4%;pointer-events:none;overflow:hidden;background:transparent;transform-origin:center;animation:campaign-offer-breathe 2.8s ease-in-out infinite;will-change:transform}
+.campaign-offer-glow:after{content:"";position:absolute;inset:-25%;background:linear-gradient(112deg,transparent 34%,#dfbd7880 47%,#fff0c680 51%,transparent 66%);opacity:0;animation:campaign-offer-shimmer 8s ease-in-out infinite}
+@keyframes campaign-offer-breathe{0%,100%{transform:scale(1);box-shadow:inset 0 0 0 1px #bd944240,0 0 7px #cfa75e18}50%{transform:scale(1.035);box-shadow:inset 0 0 14px #d8b47855,0 0 20px #bd944260}}
+@keyframes campaign-offer-shimmer{0%{opacity:0;transform:translateX(-90%)}5%{opacity:.65}15%,100%{opacity:0;transform:translateX(90%)}}
 .detail-hero>.detail-image.campaign-product-hero{height:auto!important;min-height:0!important;padding:24px!important;display:grid;place-items:center}
 .campaign-product-art{width:min(100%,480px)}
 .campaign-service-intro{width:calc(100% - 40px);max-width:1100px;margin:32px auto 48px;display:flex;flex-direction:column;align-items:center;gap:24px}
 .campaign-service-art{width:min(100%,600px)}
 .campaign-configure{display:inline-flex;justify-content:center;align-items:center;gap:20px;min-height:48px;padding:15px 24px;background:#28251f;color:#fff7e9;font-size:12px;letter-spacing:.06em;text-decoration:none;transition:transform 250ms,box-shadow 250ms}
 .campaign-configure:hover{transform:translateY(-1px);box-shadow:0 5px 14px #28251f20}
-@media(min-width:721px) and (max-width:1100px){.launch-home .campaign-secondary{width:37%}}
-@media(max-width:720px){.launch-home .campaign-secondary{width:48%}.detail-hero>.detail-image.campaign-product-hero{padding:18px!important}.campaign-product-art{width:100%}.campaign-service-intro{margin-top:24px;gap:20px}.campaign-offer-glow{animation-name:campaign-offer-breathe-mobile}.campaign-offer-glow:after{opacity:.3}}
-@keyframes campaign-offer-breathe-mobile{0%,100%{transform:scale(1);box-shadow:0 0 3px #cfa75e05}50%{transform:scale(1.012);box-shadow:inset 0 0 6px #d8b47814,0 0 7px #bd94421a}}
+@media(min-width:721px) and (max-width:1100px){.launch-home .campaign-secondary{width:58%}}
+@media(max-width:720px){.launch-home .campaign-secondary-scene{aspect-ratio:3/4}.launch-home .campaign-secondary{width:78%}.detail-hero>.detail-image.campaign-product-hero{padding:18px!important}.campaign-product-art{width:100%}.campaign-service-intro{margin-top:24px;gap:20px}.campaign-offer-glow{animation-name:campaign-offer-breathe-mobile}.campaign-offer-glow:after{background:linear-gradient(112deg,transparent 34%,#dfbd7860 47%,#fff0c660 51%,transparent 66%)}}
+@keyframes campaign-offer-breathe-mobile{0%,100%{transform:scale(1);box-shadow:inset 0 0 0 1px #bd94422b,0 0 5px #cfa75e12}50%{transform:scale(1.035);box-shadow:inset 0 0 10px #d8b47838,0 0 14px #bd944245}}
 @media(prefers-reduced-motion:reduce){.campaign-offer-glow,.campaign-offer-glow:after,.campaign-configure{animation:none!important;transition:none!important;will-change:auto}.campaign-offer-glow:after{display:none}}
 
 .campaign-secondary.campaign-revealed{animation:campaign-art-entry 800ms cubic-bezier(.2,.65,.3,1) both}
 @keyframes campaign-art-entry{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @media(max-width:720px){.detail-hero>.campaign-product-hero{order:-1}}
 @media(prefers-reduced-motion:reduce){.campaign-secondary.campaign-revealed{animation:none!important}}
+/* Start the home offer effect on entry, together with its one-time reveal. */
+.campaign-secondary:not(.campaign-revealed) .campaign-offer-glow,.campaign-secondary:not(.campaign-revealed) .campaign-offer-glow:after{animation-play-state:paused}
