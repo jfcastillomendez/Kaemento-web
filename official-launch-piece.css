@@ -28,3 +28,9 @@
 @media(prefers-reduced-motion:reduce){.campaign-secondary.campaign-revealed{animation:none!important}}
 /* Start the home offer effect on entry, together with its one-time reveal. */
 .campaign-secondary:not(.campaign-revealed) .campaign-offer-glow,.campaign-secondary:not(.campaign-revealed) .campaign-offer-glow:after{animation-play-state:paused}
+
+/* Temporary count-up layer; the unmodified printed 15% returns when it completes. */
+.campaign-discount-counter{position:absolute;left:60.75%;top:78.65%;width:18.5%;height:5.45%;pointer-events:none;z-index:2;opacity:1;transition:opacity 160ms ease-out}
+.campaign-discount-counter svg{display:block;width:100%;height:100%}
+.campaign-discount-counter.is-complete{opacity:0}
+@media(prefers-reduced-motion:reduce){.campaign-discount-counter{display:none!important}}
