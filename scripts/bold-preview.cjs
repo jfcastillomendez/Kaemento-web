@@ -5,9 +5,20 @@ const fs = require('node:fs');
 const path = require('node:path');
 const checkout = require('../api/bold/checkout.js');
 const root = path.resolve(__dirname, '..');
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.pdf': 'application/pdf', '.mp4': 'video/mp4' };
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.avif': 'image/avif', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.pdf': 'application/pdf', '.mp4': 'video/mp4' };
 http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
+  if (url.pathname === '/index.html') {
+    res.writeHead(308, {'Location':'/' + url.search}); return res.end();
+  }
+  if (url.pathname === '/api/bold/webhook') {
+    const {default:webhook} = await import('../api/bold/webhook.mjs');
+    const init = {method:req.method,headers:req.headers};
+    if (!['GET','HEAD'].includes(req.method)) { init.body = req; init.duplex = 'half'; }
+    const response = await webhook.fetch(new Request(url,init));
+    res.writeHead(response.status,Object.fromEntries(response.headers));
+    return res.end(Buffer.from(await response.arrayBuffer()));
+  }
   if (url.pathname === '/api/bold/checkout') {
     let body = ''; let size = 0;
     for await (const chunk of req) {

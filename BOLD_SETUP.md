@@ -1,161 +1,89 @@
-# Bold · lanzamiento de Microcemento KAEMENTO
+# Bold · Microcemento KAEMENTO — confirmación de pagos
 
-## Estado y alcance
+## Estado de esta entrega
 
-Implementación en rama `codex/bold-microcemento-launch`. **No publicar producción todavía.**
-Arquitectura conservada: HTML/CSS/JS estático, sin framework, sin instalación de dependencias ni migración. Una Vercel Function Node.js firma cada orden. No hay base de datos, inventario ni confirmación definitiva de pagos.
+Rama `codex/microcemento-audit-payment-confirmation`. Solo Preview; no merge ni Production.
+El checkout, el SDK, las variantes y el precio de COP 365500 IVA incluido por kit se conservan.
+`begin_checkout` continúa como antes. `generate_lead` y `purchase` siguen bloqueados en el navegador y en el puente de Analytics.
 
-## Archivos
+La fase de confirmación está implementada y probada, pero **apagada por defecto**. No hay una base persistente conectada a esta entrega. No se ha registrado un webhook en el panel del comercio ni se ha realizado un cobro.
 
-- `api/bold/checkout.js`: endpoint POST y catálogo fijo de servidor.
-- `bold-config.js`: reglas compartidas de variantes, fórmulas y descripción, sin secretos.
-- `bold-checkout.js`, `bold-checkout.css`: selector, precio, carga única del SDK, checkout y estados accesibles.
-- `index.html`, `productos/microcemento-kaemento.html`: bloque de compra añadido sin reemplazar CTAs existentes.
-- `pagos/resultado.html`, `pagos/resultado.js`: estados informativos del retorno.
-- `vercel.json`: conserva redirects y añade solo el rewrite `/pagos/resultado`.
-- `analytics.js`, `analytics-bridge.js`, `analytics-bridge.html`: permiten exclusivamente `begin_checkout` con datos comerciales controlados, conservando etiquetas y eventos anteriores. Cache de los scripts actualizada.
-- `.env.example`, `.gitignore`, `.vercelignore`: variables vacías y exclusión de configuración privada, documentación y pruebas del despliegue.
-- `scripts/bold-preview.cjs`: servidor local auxiliar sin dependencias; no se despliega.
-- `tests/bold-checkout.test.cjs`: pruebas unitarias con fixtures efímeros, no válidos en Bold.
-- `BOLD_SETUP.md`: esta guía; no se publica como recurso del sitio.
+## Flujo y límites de confianza
 
-## Flujo
+1. `POST /api/bold/checkout` valida catálogo cerrado, mezcla, sellador y cantidad 1–20, y calcula el importe en el servidor.
+2. Cuando `BOLD_CONFIRMATION_ENABLED=true`, guarda la orden y su selección en Redis **antes de crear/devolver la firma**. Si no puede guardarla, devuelve 503 sin firma. Con la función apagada conserva el checkout previamente aprobado.
+3. El SDK existente abre Bold. La página `/pagos/resultado` conserva cantidad, fórmula y sellador locales, pero ningún parámetro del retorno confirma un pago. Incluso `bold-tx-status=approved` muestra “Pago pendiente de verificación”.
+4. `POST /api/bold/webhook` recibe el cuerpo crudo mediante Web Request de Vercel. El procedimiento oficial de Bold es: bytes originales → Base64 → HMAC-SHA256 con la llave secreta del botón → comparación en tiempo constante contra `x-bold-signature`. No reserializa el JSON para verificarlo.
+5. Solo acepta `SALE_APPROVED`, `SALE_REJECTED`, `VOID_APPROVED`, `VOID_REJECTED`; verifica referencia backend, importe y COP. Las órdenes previas a la activación que no estén guardadas no se confirman automáticamente.
+6. Una única operación Lua atómica guarda el evento y cambia el estado. Deduplica por notificación, pago y orden entre procesos concurrentes. Rechazos tardíos no rebajan una venta aprobada; anulaciones aprobadas retiran la orden del conjunto de confirmadas y cancelan su registro pendiente de Analytics.
+7. `SALE_APPROVED` crea una sola entrada persistente `purchase:<orderId>`, con selección y `analyticsStatus=awaiting_configuration`. El constructor `purchaseEvent` solo produce el evento para una orden aprobada. **No se envía aún a GA4**: falta decidir/configurar el transporte server-to-server y la asociación técnica y consentimiento correspondiente. No se inventa un identificador de visitante ni se cambia la configuración de Google.
+8. El conjunto `campaign:confirmed-orders` prepara la contabilización futura. Son **órdenes confirmadas, no personas únicas**; no permite afirmar “30 clientes” sin una regla de identidad comercial. No se muestra contador ni se cambia el precio automáticamente.
 
-1. El visitante selecciona de 1 a 20 kits. Precio regular por kit: COP 430000; lanzamiento: COP 365500 (15 % menos), IVA incluido.
-2. El navegador carga una sola vez `https://checkout.bold.co/library/boldPaymentButton.js` y envía producto, cantidad, modalidad, color/fórmula y sellador. Estándar: `{productId: "microcemento-kaemento-launch", quantity: 1, colorMode: "standard", color: "arena", sealer: "mate"}`. Mezcla: `{productId: "microcemento-kaemento-launch", quantity: 2, colorMode: "mix", color1: "arena", color2: "gris-cemento", percentage1: 70, percentage2: 30, sealer: "mate"}` a `POST /api/bold/checkout`.
-3. El servidor rechaza producto desconocido, cantidades que no sean enteros de 1 a 20 y campos adicionales (incluido `amount`). Calcula `365500 * quantity` y crea una referencia `KAE-MICRO-<timestamp>-<random>` menor de 60 caracteres.
-4. Firma SHA-256 de `orderId + amount + "COP" + BOLD_SECRET_KEY`, sin separadores. No se vuelve a sumar IVA. `tax` es `vat-19`.
-5. Devuelve exclusivamente orderId, amount, currency, apiKey (identidad pública), integritySignature, tax, description y selection (variante normalizada). Respuesta sin caché.
-6. `BoldCheckout` abre con `renderMode: "embedded"`. Si el método falla, se intenta el modo estándar documentado, omitiendo renderMode y reutilizando la misma orden firmada. Sin eventos de cierre inventados ni lógica apoyada en el DOM interno de Bold.
-7. Si `open()` termina sin error se registra una vez `begin_checkout`. Esto mide apertura solicitada del checkout; no prueba que Bold haya aprobado el pago. Los errores posteriores internos de la pasarela y el cierre no tienen callback documentado utilizado por esta implementación.
-8. Bold retorna a `window.location.origin + "/pagos/resultado"`. Se reconocen approved, pending/processing, rejected/failed y un estado neutral para valores desconocidos. No se interpreta ni se envía el orderId a Google.
-
-Los estados de la URL son **informativos y manipulables**, no una autorización de despacho. Confirmar siempre el pago en Bold antes de atender una orden. No se registra `purchase` ni se reactiva `generate_lead`.
-
-## Variables y seguridad
-
-Únicamente:
+## Variables (solo servidor; valores reales en Vercel, nunca en Git)
 
 ```dotenv
 BOLD_IDENTITY_KEY=
 BOLD_SECRET_KEY=
+BOLD_CONFIRMATION_ENABLED=false
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+BOLD_STORAGE_NAMESPACE=
 ```
 
-`BOLD_SECRET_KEY` se lee solo en la Function y nunca aparece en HTML, JS público, respuesta HTTP ni logs. No se ha introducido ninguna llave real en el repositorio. La llave de identidad sí debe llegar al SDK: no es la llave secreta.
+- Las dos llaves Bold existentes permanecen sin cambios. La llave de identidad es pública para el SDK; la secreta nunca se devuelve.
+- El adaptador persistente preparado utiliza Upstash Redis REST por HTTPS, sin dependencias nuevas. No se ha creado ni contratado una base. Si ya existe otro motor, adaptar la capa de persistencia antes de activarla.
+- Usar bases/credenciales separadas para Preview y Production y un namespace dedicado. En Preview debe ser estable durante la prueba, por ejemplo `preview-payment-audit`; Production requerirá otro.
+- Las órdenes, confirmaciones y llaves de deduplicación no expiran automáticamente; no se borran en esta implementación. Definir retención/archivo antes de una explotación prolongada. No guardar en Redis el JSON original de Bold: contiene datos del pagador.
+- Solo se guardan identificadores técnicos de orden/pago/evento, importe, moneda, configuración y fechas. No nombres, correos, teléfonos, tarjetas, mensajes ni formularios. No se escriben payloads, llaves ni firmas en logs.
+- La operación de almacenamiento tiene timeout de 1.2 s. Se responde 200 solo después de escritura duradera; si falla se responde 503 para permitir reintentos. Medir también latencia real y arranque en frío contra el límite de 2 s de Bold antes de activar.
 
-La falta de alguna variable produce HTTP 503 y un mensaje amable; no se sustituye por llaves ficticias. `.env` y `.env.*` están ignorados por Git y excluidos de Vercel (solo `.env.example` vacío se versiona). No usar un servidor estático genérico para servir un directorio que contenga archivos con secretos. El servidor auxiliar bloquea dotfiles, código de API, pruebas y documentación.
+## Activación y prueba manual en Preview (pendiente)
 
-## Configurar Preview / Development en Vercel
+1. Confirmar/provisionar almacenamiento persistente y configurar las tres variables Redis/namespace solo para esta rama Preview. No pegar secretos en el chat.
+2. Configurar `BOLD_CONFIRMATION_ENABLED=true` solo en esa Preview y redeploy. Mantener llaves de prueba para las pruebas de pago; no usar tarjetas de prueba contra llaves de producción.
+3. El webhook debe ser accesible por Bold sin login de Vercel. Si la Preview tiene protección, configurar una excepción/bypass de alcance limitado para webhooks, previa revisión de seguridad; no desproteger el proyecto entero. No añadir tokens a documentación.
+4. En Panel Bold: **Integraciones → Webhooks → Configurar webhook → URL HTTPS de la Preview + `/api/bold/webhook` → Crear webhook**. Registrar únicamente el endpoint de prueba en esta fase. Confirmar que la llave secreta corresponda al Botón de pagos usado por esta integración.
+5. Abrir el configurador de la Preview, completar una compra en **Modo de pruebas**, y utilizar “Probar el webhook” en Bold: los pagos online de prueba no generan automáticamente todas las notificaciones. Revisar el registro guardado y la respuesta 200.
+6. Repetir el mismo evento: debe responder `duplicate`, sin segunda compra. Probar aprobado, rechazo, anulación, monto alterado y firma incorrecta. Los dos últimos deben ser rechazados sin registrar compra.
+7. Validar apertura/retorno del SDK y latencia real. La suite local simula el SDK; no equivale a esta prueba del proveedor.
+8. Acordar la medición server-to-server de `purchase` y sus permisos antes de conectar el envío. Debe leer exclusivamente órdenes aprobadas, mantener `transaction_id` estable, usar una cola persistente con reintentos/deduplicación y nunca basarse en el retorno del navegador. No se activa `generate_lead`, no se importan conversiones ni se modifica Ads/GTM.
+9. No activar Production ni registrar su webhook hasta la aprobación de la entrega y de la prueba técnica.
 
-1. Abrir el proyecto **kaemento-web** → Settings → Environment Variables.
-2. Añadir `BOLD_IDENTITY_KEY` y `BOLD_SECRET_KEY` con el par de **PRUEBA** obtenido en el panel oficial de Bold.
-3. Seleccionar solamente Preview y Development para ese par. No pegarlas en el chat ni en archivos públicos.
-4. Crear/recrear un deployment Preview de esta rama para que reciba las variables. No promover ni publicar en Production.
-5. Confirmar que el checkout real muestra **Modo de pruebas** antes de introducir cualquier dato o simular una transacción. Si no aparece, detener la prueba.
+## Pruebas reproducibles
 
-## Pruebas y preview local
-
-No hay build de frontend ni linter configurado en este sitio. Node.js 20+ permite ejecutar:
+No hay build de frontend ni package.json: es un sitio HTML/CSS/JS con Vercel Functions.
 
 ```sh
-node --test tests/bold-checkout.test.cjs
+node --test tests/*.test.cjs
 node --check api/bold/checkout.js
-node --check bold-checkout.js
+node --check api/bold/_lib/payments.cjs
+node --check api/bold/webhook.mjs
 node --check pagos/resultado.js
-node --check analytics.js
-node --check analytics-bridge.js
+node --check scripts/bold-preview.cjs
 git diff --check
 ```
 
-Preview visual local sin llaves:
+Para ejecutar también la prueba de concurrencia real, instalar Redis local temporal y pasar su binario (no se conecta al Redis de producción):
 
 ```sh
-PORT=8137 node scripts/bold-preview.cjs
+REDIS_SERVER_BIN=/ruta/local/redis-server node --test tests/*.test.cjs
 ```
 
-En una terminal manual ese comando mantiene el servidor; desde Codex se inicia siempre como proceso separado en segundo plano. Abrir:
+La integración lanza Redis solo sobre un socket local temporal, sin puerto público, y lo cierra al terminar. Comprueba veinte entregas concurrentes mediante dos instancias del adaptador, reinicio lógico, replays, conflictos, rechazo tardío, anulación, persistencia previa a la firma y fallo de almacenamiento. Sin `REDIS_SERVER_BIN` ese grupo se marca explícitamente como omitido.
 
-- `http://localhost:8137/index.html#comprar-microcemento`
-- `http://localhost:8137/productos/microcemento-kaemento.html#comprar-microcemento`
-- `http://localhost:8137/pagos/resultado`
+El servidor auxiliar `scripts/bold-preview.cjs` debe iniciarse como proceso separado en segundo plano. Sirve AVIF con MIME correcto, redirección `/index.html` → `/` y los dos endpoints. No se despliega.
 
-Sin variables, comprar muestra el error controlado. Este adaptador no sustituye la prueba de despliegue con Vercel Functions. Preferir la URL HTTPS Preview para la transacción real de pruebas; Bold indica usar localhost, no 127.0.0.1, si se prueba localmente.
+## Fuentes oficiales
 
-### Matriz ejecutada localmente
+- Firma, tipos de evento, panel y pruebas: https://developers.bold.co/webhook
+- Checkout conservado: https://developers.bold.co/pagos-en-linea/boton-de-pagos/integracion-manual/integracion-personalizada
+- Web Request de Vercel: https://vercel.com/docs/functions/runtimes/node-js
+- Almacenamiento atómico preparado: https://upstash.com/docs/redis/features/restapi y https://upstash.com/docs/redis/sdks/ts/commands/scripts/eval
+- Requisitos pendientes de Measurement Protocol: https://developers.google.com/analytics/devguides/collection/protocol/ga4/reference
 
-- Unitarias: 7 grupos aprobados (precios 1/2/20, IVA incluido, SHA-256 exacto, 100 referencias únicas, validaciones, variables ausentes y filtrado de ambos niveles de Analytics).
-- Navegador: 8 combinaciones de Inicio/Microcemento × 320/390/768/1440; sin overflow ni errores JavaScript.
-- SDK simulado: envío exclusivo de campos permitidos de producto, cantidad y variante; cantidades 1 y 2; doble clic sin doble orden/evento; una carga de SDK por documento; fallback estándar reutiliza la orden; recuperación de errores; fallo al cargar SDK no crea orden.
-- Retorno simulado: approved, rejected, failed, pending, processing y parámetros desconocidos/maliciosos. No `purchase`, no `generate_lead`, no datos del query string en Analytics.
+## Condición de lanzamiento y pendientes comerciales
 
-**Pendiente:** pagos reales simulados por Bold, etiqueta Modo de pruebas, retorno real del proveedor y comportamiento embedded en dispositivos reales. No equivalen a los escenarios de SDK simulado. Requieren el par de llaves de prueba del comercio.
+“Promoción válida por 30 días o para los primeros 30 clientes, lo que ocurra primero.”
+Se conservan COP 430000 regular, COP 365500 lanzamiento, IVA incluido y 15%. No hay cierre automático ni contador artificial. El equipo debe controlar vigencia y cupos hasta implementar una regla comercial persistente y aprobada.
 
-### Transacción de prueba en Bold
-
-1. Abrir la landing de Microcemento en el dominio Preview HTTPS.
-2. Comprar 1 kit y comprobar COP 365500; repetir con 2 para COP 731000. IVA incluido, sin transporte.
-3. Verificar **Modo de pruebas**.
-4. Dentro del entorno de pruebas exclusivamente, usar VISA `4111111111111111` para aprobado, `4970110000000062` para rechazado y `5204730000008404` para fallido. Completar los demás campos de prueba requeridos por Bold.
-5. Volver a la tienda y revisar `/pagos/resultado`, tanto en desktop como móvil. Comprobar en la respuesta del endpoint que cada nuevo intento tiene referencia distinta.
-6. Revisar Network, fuente, consola y archivos públicos: ninguna respuesta debe contener BOLD_SECRET_KEY. No copiar capturas o logs de las variables de Vercel.
-7. Revisar `begin_checkout` en la capa/puente existente; no configurar conversiones nuevas en Ads. Nunca disparar purchase usando el query string.
-
-## Configurador estándar y mezcla (revisión local posterior)
-
-Colores cerrados: extra-blanco, arena, gris-cemento, negro, terracota. Selladores: mate/brillante. Sin selección automática de color ni sellador. Ambas modalidades son obligatorias y accesibles por teclado.
-
-Mezcla requiere tonos distintos y porcentajes numéricos de 10 a 90 en pasos de 10, con suma 100. El modo estándar acepta únicamente `color`; campos de mezcla sobrantes y campos no previstos se rechazan. El endpoint valida todo **antes** de crear orderId/firma y conserva el precio de COP 365500 para cada kit. La descripción incluye fórmula, sellador y cantidad, con máximo 100 caracteres.
-
-`begin_checkout` contiene `item_variant` (p. ej. `arena:70+gris-cemento:30`) y `sealer_type`, filtrados de nuevo en ambos niveles de medición. No se manda texto libre, credenciales ni referencias de pedido.
-
-El retorno recupera la selección en `sessionStorage` por orderId, como información temporal y no prueba de pago. Se guardan hasta 20 selecciones, sin claves ni firmas. En otro navegador, al cerrar la sesión o si el almacenamiento está bloqueado, se muestra que el detalle no está disponible y se remite al comprobante Bold. No se inventa una selección ni se usa la de otro pedido.
-
-Pruebas locales ampliadas: 11 grupos unitarios aprobados, incluyendo las 10 combinaciones estándar/sellador y las 360 mezclas; cantidades y fórmulas manipuladas rechazadas. Navegador: Inicio y Microcemento en 320/390/768/1440, selección obligatoria, tonos distintos, fórmula natural, envío exacto, descripción, resultado y evento sin duplicados. Cambio de mezcla a estándar omite los campos ocultos. SDK simulado, sin llaves Bold conectadas ni cobros. Esta revisión se sincroniza en codex/bold-microcemento-launch para Vercel Preview y conserva la misma versión en localhost:8137. No se publica producción.
-
-## Deployment de revisión anterior
-
-Vercel confirmó build/deployment **success**, entorno **Preview**, para el commit inicial `1c6e70b`:
-
-https://kaemento-5pqs39u4b-jfcastillomendez-6248s-projects.vercel.app
-
-La preview requiere sesión Vercel; el conector disponible respondió 403 al solicitar acceso temporal. Esto no valida el endpoint remoto ni el pago real: esas comprobaciones permanecen pendientes. La preview local en localhost:8137 y el handler ejecutado por las pruebas sí fueron verificados. No se configuraron llaves ni se publicó main.
-
-## Paso posterior a producción
-
-Solo después de completar las pruebas y de recibir autorización expresa:
-
-1. Configurar el par de llaves **PRODUCCIÓN** con los mismos nombres, únicamente en el Environment Production de Vercel.
-2. Mantener el par de prueba en Preview/Development.
-3. Revisar diff y pruebas, integrar la rama aprobada en main y comprobar el deployment.
-4. Verificar la oferta, cantidades, términos de transporte y disponibilidad del checkout. No simular tarjetas de prueba en producción ni hacer cargos reales de prueba sin autorización.
-
-## Pendientes de fase 2
-
-- Webhook autenticado e idempotente / consulta segura para la confirmación definitiva.
-- Pedido persistente, gestión de reintentos y conciliación; actualmente solo existe una referencia firmada por intento, no un pedido guardado.
-- Control automático de los primeros 30 pedidos/cupos y caducidad de la promoción. Sin contador; no se promete exclusividad automáticamente.
-- Cálculo de transporte (hoy se coordina después y lo paga el comprador).
-- Evento GA4 `purchase` únicamente tras confirmación verificable, con deduplicación.
-- Límite de intentos duradero si se necesita; el bloqueo del frontend evita doble clic, no sustituye una política de servidor ni impide varias compras voluntarias.
-- Comprobar en el panel del comercio si permite el monto de 20 kits (COP 7310000).
-
-## Fuentes oficiales consultadas
-
-- https://developers.bold.co/pagos-en-linea/boton-de-pagos/integracion-manual/integracion-manual
-- https://developers.bold.co/pagos-en-linea/boton-de-pagos/integracion-manual/integracion-personalizada
-- https://developers.bold.co/pagos-en-linea/boton-de-pagos/ambiente-pruebas
-- https://developers.bold.co/pagos-en-linea/llaves-de-integracion
-- https://vercel.com/docs/functions/runtimes/node-js
-
-No se cambiaron formularios, WhatsApp, imágenes, SEO de las páginas existentes, sitemap, robots, navegación, campañas ni configuración de Google Ads/GA4/GTM. Única extensión de medición: `begin_checkout` filtrado por el puente actual.
-
-
-## Campaña de lanzamiento 2026 (solo Preview hasta aprobación)
-
-La presentación está centralizada en `microcemento-launch-config.js`: enabled, regularPrice, launchPrice, discount, maxCustomers y durationDays. Los bloques tienen respaldo HTML para lectura sin JavaScript. La campaña comienza al publicarse en producción, no al crear este Preview. Registrar entonces la fecha de inicio y retirar la promoción al cumplirse 30 días o 30 pedidos confirmados, lo primero que ocurra. No hay contador, webhook ni cuota automática.
-
-Desactivación: cambiar `enabled` a false oculta los bloques promocionales y detiene los eventos de promoción. Esto NO cambia el precio de venta, el endpoint ni impide compras. El cierre comercial exige un cambio coordinado y probado del precio en backend y checkout (actualmente 365500), sus textos HTML y la validación Analytics de begin_checkout. No cambiar solo el precio de presentación. Hasta implementar webhook y almacenamiento persistente, el equipo debe verificar manualmente las compras confirmadas y cerrar la oferta.
-
-La futura fuente persistente debe validar pedidos pagados por webhook idempotente antes de contabilizar cupos. No usar aperturas de checkout ni la página de resultado como confirmación. Las claves y la lógica aprobada de Bold no se modifican en esta campaña.
-
-Solo se añaden select_promotion y view_promotion con promotion_name fijo microcemento_kaemento_launch_2026, filtrado también en analytics-bridge. view_promotion se emite una vez por carga cuando el configurador entra en pantalla. No se emiten purchase ni generate_lead.
+Existen política de datos y textos de despacho/transporte. No se encontraron documentos independientes de condiciones de compra, envíos, garantías ni cambios/devoluciones; deben ser suministrados/aprobados por KAEMENTO. No se redactaron condiciones legales nuevas.

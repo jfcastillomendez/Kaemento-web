@@ -3,7 +3,7 @@
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.KaementoBoldConfig = factory();
 })(typeof window === 'object' ? window : globalThis, () => {
-  const colors = new Map([['extra-blanco','Extra Blanco'],['arena','Arena'],['gris-cemento','Gris Cemento'],['negro','Negro'],['terracota','Terracota']]);
+  const colors = new Map([['extra-blanco','Extra Blanco'],['arena','Arena'],['gris-cemento','Gris Cemento'],['negro','Negro Profundo'],['terracota','Terracota']]);
   const sealers = new Map([['mate','Mate'],['brillante','Brillante']]);
   const percentages = [10,20,30,40,50,60,70,80,90];
   function normalize(body) {

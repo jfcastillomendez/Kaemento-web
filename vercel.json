@@ -1,6 +1,11 @@
 {
   "redirects": [
     {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
       "source": "/catalogos/experiencia-kaemento-2025.pdf",
       "destination": "/catalogos/experiencia-kaemento-2026.pdf",
       "permanent": true

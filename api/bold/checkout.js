@@ -4,6 +4,7 @@ const { createHash, randomBytes } = require('node:crypto');
 const UNIT_AMOUNT = 365500;
 const CURRENCY = 'COP';
 const variants = require('../../bold-config.js');
+const payments = require('./_lib/payments.cjs');
 
 module.exports = function checkout(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -34,10 +35,20 @@ module.exports = function checkout(req, res) {
     }
     const amount = UNIT_AMOUNT * body.quantity; // COP total, VAT already included.
     const orderId = `KAE-MICRO-${Date.now()}-${randomBytes(8).toString('hex')}`;
-    const integritySignature = createHash('sha256')
-      .update(`${orderId}${amount}${CURRENCY}${secretKey}`, 'utf8').digest('hex');
-    return reply(200, { orderId, amount, currency: CURRENCY, apiKey,
-      integritySignature, tax: 'vat-19', description, selection });
+    const finish = () => {
+      const integritySignature = createHash('sha256')
+        .update(`${orderId}${amount}${CURRENCY}${secretKey}`, 'utf8').digest('hex');
+      return reply(200, { orderId, amount, currency: CURRENCY, apiKey,
+        integritySignature, tax: 'vat-19', description, selection });
+    };
+    if (payments.enabled()) {
+      // Persist before returning a payable signature. A storage outage must not create an untracked payment.
+      let store;
+      try { store = payments.createStore(); } catch (_) { return reply(503, {error:'El pago no está disponible en este momento.'}); }
+      return store.saveOrder(payments.orderRecord(orderId, selection)).then(finish,
+        () => reply(503, {error:'No pudimos preparar el pago. Intenta nuevamente.'}));
+    }
+    return finish();
   } catch (_) {
     // Never log the request, environment, signature input or provider credentials.
     return reply(400, { error: 'No pudimos preparar el pago. Intenta nuevamente.' });

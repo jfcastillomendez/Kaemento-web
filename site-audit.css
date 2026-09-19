@@ -31,3 +31,24 @@
 #colores-boquilla figcaption p,.facade-service-note{color:#636059}
 
 @media(max-width:900px){body.quote-form-active .whatsapp{display:none!important}}
+
+/* Keyboard focus remains visible on light and dark sections without changing layout. */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid #79532b;outline-offset:4px;box-shadow:0 0 0 2px #faf7f2}
+.campaign-terms{font-size:13px;line-height:1.6;color:#635e55;max-width:600px;margin:16px auto 0}
+/* Audit: raise small-copy contrast and contact-link targets without redesigning sections. */
+.kae-purchase[data-bold-purchase] .kae-purchase-concept,.kae-purchase[data-bold-purchase] .kae-purchase-prices del{color:#635e55}
+.footer-grid nav>a{min-height:24px;line-height:24px}
+.contact-note p>a{display:inline-block;min-height:24px;line-height:24px}
+/* Reserve the final breadcrumb line box while the gallery font loads. */
+.gallery-intro .breadcrumbs{line-height:1.3}
+/* Keep the approved filter sizes stable during the Arial → DM Sans font swap. */
+.gallery-filters button{min-width:var(--gallery-filter-width);line-height:18px}
+.gallery-filters [data-gallery-filter="todos"]{--gallery-filter-width:73.77px}
+.gallery-filters [data-gallery-filter="equipo"]{--gallery-filter-width:80.61px}
+.gallery-filters [data-gallery-filter="boquilla"]{--gallery-filter-width:135.02px}
+.gallery-filters [data-gallery-filter="microcemento"]{--gallery-filter-width:128.96px}
+.gallery-filters [data-gallery-filter="fachadas"]{--gallery-filter-width:96.72px}
+.gallery-filters [data-gallery-filter="impermeabilizacion"]{--gallery-filter-width:159.82px}
+.gallery-filters [data-gallery-filter="obra"]{--gallery-filter-width:179.79px}
+.gallery-filters [data-gallery-filter="proyectos"]{--gallery-filter-width:172.22px}
+#gallery-count{line-height:18px}
