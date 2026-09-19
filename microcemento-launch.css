@@ -49,3 +49,7 @@
 #comprar-microcemento{scroll-margin-top:115px}
 @media(max-width:900px){.launch-home{grid-template-columns:1fr}.launch-home figure{min-height:0;height:340px}.launch-stages{grid-template-columns:1fr}.launch-stages li{display:grid;grid-template-columns:40px 1fr;column-gap:15px}.launch-stages h3{margin:4px 0 8px;min-height:0}.launch-stages p{grid-column:2}.launch-panel{padding:28px}.launch-home h2{font-size:44px}}
 @media(max-width:480px){.launch-panel{width:calc(100% - 32px);padding:24px 20px}.launch-home h2{font-size:36px}.launch-home figure{height:240px}.launch-actions{align-items:flex-start;flex-direction:column}.launch-price strong{font-size:36px}.launch-price span{flex-basis:100%}.launch-stages{gap:22px}.detail-hero.launch-hero .detail-copy{padding:30px 24px}.launch-trust ul{display:grid;grid-template-columns:1fr 1fr}.launch-system h2{font-size:34px}}
+
+/* Keep the complete kit diagram visible at every viewport size. */
+.feature-media.microcemento-kit-media{min-height:0;align-self:center;border-radius:0;background:transparent}
+.feature-media.microcemento-kit-media img{display:block;position:static;width:100%;height:auto;object-fit:contain}
