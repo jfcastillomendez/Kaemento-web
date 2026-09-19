@@ -1,29 +1,27 @@
-/* Floating campaign only: no solid panel and no replacement hero imagery. */
-.official-hero{position:relative}
-.official-hero>.detail-image{position:relative}
-.official-launch{position:absolute;z-index:3;inset:50% 20px auto;transform:translateY(-50%);display:grid;grid-template-columns:48fr 52fr;align-items:center;gap:20px;max-width:640px;margin:auto;background:transparent;color:#fff;text-shadow:0 1px 4px #000,0 1px 12px #0009}
-.hero>.official-launch{left:57%;right:24px}
-.official-art{display:block;min-width:0;filter:drop-shadow(0 6px 14px #0003);transition:transform 450ms}
-.official-art picture{display:block}
-.official-launch .official-art img{display:block!important;width:100%!important;height:auto!important;max-width:100%!important;max-height:none!important;object-fit:contain!important;aspect-ratio:2/3;border:1px solid #c5a36d55}
-.official-copy{min-width:0;background:transparent}
-.official-copy .official-eyebrow{font-size:10px;letter-spacing:.12em;line-height:1.4;margin:0 0 12px;color:inherit}
-.official-discount{position:relative;display:inline-flex;flex-direction:column;align-items:flex-start;overflow:hidden;padding:2px 5px;margin-left:-5px}
-.official-discount>span{display:block;color:#ecd5aa;font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(42px,4.2vw,64px);line-height:1;font-variant-numeric:tabular-nums;min-width:110px}
-.official-discount b{font-weight:500}.official-discount small{font-size:10px;letter-spacing:.1em;line-height:1.5;margin-top:4px}
-.official-copy .official-name{font-size:15px;line-height:1.35;margin:14px 0 10px;color:inherit}
-.official-copy .official-price{font-size:clamp(23px,2.3vw,32px);line-height:1.1;white-space:nowrap;font-weight:500;margin:0 0 18px;color:inherit}.official-price small{display:block;font-size:11px;margin-top:5px;font-weight:400}
-.official-cta{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:12px 14px;background:#24221ff2;color:#fff8ea;text-decoration:none;text-shadow:none;font-size:10px;letter-spacing:.04em;border:1px solid #c7a47066;white-space:nowrap;transition:transform 250ms,box-shadow 250ms}
-.official-cta:hover{transform:translateY(-2px);box-shadow:0 6px 16px #0002}.official-cta:focus-visible,.official-art:focus-visible{outline:2px solid #cfa773;outline-offset:4px}
-.official-launch.is-entered .official-art{animation:official-enter 750ms ease-out both}
-.official-launch.is-counted .official-discount>span{animation:official-pulse 8.5s ease-in-out infinite}
-.official-launch.is-counted .official-discount:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 35%,#d6b77533 50%,transparent 65%);animation:official-glint 8.5s ease-in-out infinite;opacity:0}
-@keyframes official-enter{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-@keyframes official-pulse{0%,15%,100%{transform:scale(1)}7%{transform:scale(1.04)}}
-@keyframes official-glint{0%,78%{opacity:0;transform:translateX(-100%)}85%{opacity:.7}94%,100%{opacity:0;transform:translateX(100%)}}
-@media(max-width:1000px){.official-launch{grid-template-columns:1fr;justify-items:center;text-align:center;gap:12px;max-width:290px;inset:50% 16px auto}.official-art{width:144px}.official-discount{align-items:center}.official-discount>span{font-size:46px}.official-copy .official-eyebrow{margin-bottom:6px}.official-copy .official-name{margin:8px 0;font-size:13px}.official-copy .official-price{font-size:25px;margin-bottom:12px}.official-hero>.detail-image{min-height:520px!important;height:520px!important}.hero>.official-launch{left:61%;right:16px}.official-cta{min-height:44px}}
-@media(max-width:720px){.official-hero .home-hero-mobile-visual{position:relative;min-height:520px}.official-hero .home-hero-mobile-visual>img{position:absolute;inset:0;width:100%!important;height:100%!important;object-fit:contain!important}.home-hero-mobile-visual>.official-launch{inset:50% 16px auto}.official-hero>.detail-image img:not(.official-art img){height:100%;object-fit:contain}.official-art{width:144px}}
-@media(prefers-reduced-motion:reduce){.official-art,.official-discount>span,.official-discount:after,.official-cta{animation:none!important;transition:none!important}.official-discount:after{display:none!important}}
-/* Product photography has a pale background: retain legibility without adding a panel. */
-.official-launch--product .official-copy{color:#24221f;text-shadow:0 1px 3px #fff,0 0 8px #fff;backdrop-filter:blur(2px)}
-.official-launch--product .official-discount>span{color:#88602e;text-shadow:0 1px 3px #fff,0 0 6px #fff}
+/* Official artwork placements. Base hero layout and checkout remain untouched. */
+.campaign-art{display:block;position:relative;isolation:isolate;aspect-ratio:2/3;min-width:0;text-decoration:none;filter:drop-shadow(0 8px 18px #2a21151f)}
+.campaign-art picture{display:block;width:100%;height:100%}
+.campaign-art img{display:block!important;width:100%!important;height:auto!important;max-width:100%!important;max-height:none!important;aspect-ratio:2/3;object-fit:contain!important;border:0;border-radius:0!important}
+.campaign-art:focus-visible,.campaign-configure:focus-visible{outline:2px solid #b48a4d;outline-offset:5px}
+.launch-home .campaign-secondary-scene{position:relative}
+.launch-home .campaign-secondary{position:absolute;width:30%;height:auto;right:4%;bottom:6%;z-index:2;background:transparent}
+/* Coordinates refer to the 1024 × 1536 supplied artwork: commercial offer only. */
+.campaign-offer-glow{position:absolute;left:59.8%;top:75.1%;width:37.1%;height:13.15%;border-radius:4%;pointer-events:none;overflow:hidden;background:transparent;transform-origin:center;animation:campaign-offer-breathe 3.2s ease-in-out infinite;will-change:transform}
+.campaign-offer-glow:after{content:"";position:absolute;inset:-25%;background:linear-gradient(112deg,transparent 37%,#e7c88e40 49%,#fff3d32b 52%,transparent 65%);opacity:0;animation:campaign-offer-shimmer 8.5s ease-in-out infinite}
+@keyframes campaign-offer-breathe{0%,100%{transform:scale(1);box-shadow:inset 0 0 0 1px #bd94421a,0 0 4px #cfa75e08}50%{transform:scale(1.02);box-shadow:inset 0 0 10px #d8b47821,0 0 12px #bd944228}}
+@keyframes campaign-offer-shimmer{0%,82%{opacity:0;transform:translateX(-90%)}85%{opacity:.55}96%,100%{opacity:0;transform:translateX(90%)}}
+.detail-hero>.detail-image.campaign-product-hero{height:auto!important;min-height:0!important;padding:24px!important;display:grid;place-items:center}
+.campaign-product-art{width:min(100%,480px)}
+.campaign-service-intro{width:calc(100% - 40px);max-width:1100px;margin:32px auto 48px;display:flex;flex-direction:column;align-items:center;gap:24px}
+.campaign-service-art{width:min(100%,600px)}
+.campaign-configure{display:inline-flex;justify-content:center;align-items:center;gap:20px;min-height:48px;padding:15px 24px;background:#28251f;color:#fff7e9;font-size:12px;letter-spacing:.06em;text-decoration:none;transition:transform 250ms,box-shadow 250ms}
+.campaign-configure:hover{transform:translateY(-1px);box-shadow:0 5px 14px #28251f20}
+@media(min-width:721px) and (max-width:1100px){.launch-home .campaign-secondary{width:37%}}
+@media(max-width:720px){.launch-home .campaign-secondary{width:48%}.detail-hero>.detail-image.campaign-product-hero{padding:18px!important}.campaign-product-art{width:100%}.campaign-service-intro{margin-top:24px;gap:20px}.campaign-offer-glow{animation-name:campaign-offer-breathe-mobile}.campaign-offer-glow:after{opacity:.3}}
+@keyframes campaign-offer-breathe-mobile{0%,100%{transform:scale(1);box-shadow:0 0 3px #cfa75e05}50%{transform:scale(1.012);box-shadow:inset 0 0 6px #d8b47814,0 0 7px #bd94421a}}
+@media(prefers-reduced-motion:reduce){.campaign-offer-glow,.campaign-offer-glow:after,.campaign-configure{animation:none!important;transition:none!important;will-change:auto}.campaign-offer-glow:after{display:none}}
+
+.campaign-secondary.campaign-revealed{animation:campaign-art-entry 800ms cubic-bezier(.2,.65,.3,1) both}
+@keyframes campaign-art-entry{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media(max-width:720px){.detail-hero>.campaign-product-hero{order:-1}}
+@media(prefers-reduced-motion:reduce){.campaign-secondary.campaign-revealed{animation:none!important}}
