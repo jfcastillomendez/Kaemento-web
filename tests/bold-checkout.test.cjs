@@ -4,28 +4,31 @@ const { createHash, randomBytes } = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const handler = require('../api/bold/checkout.js');
+const {createCheckout} = require('../api/bold/checkout.js');
+const {customer} = require('./helpers/orders.cjs');
+const handler = createCheckout(process.env, () => ({async saveOrder() {}}));
 const root = path.resolve(__dirname, '..');
 // Ephemeral unit-test fixtures only: never valid Bold keys and never used with Bold.
-const saved = { identity: process.env.BOLD_IDENTITY_KEY, secret: process.env.BOLD_SECRET_KEY };
+const saved = { identity: process.env.BOLD_IDENTITY_KEY, secret: process.env.BOLD_SECRET_KEY, enabled:process.env.BOLD_CONFIRMATION_ENABLED };
 const fixtureIdentity = randomBytes(16).toString('hex');
 const fixtureSecret = randomBytes(32).toString('hex');
-beforeEach(() => { process.env.BOLD_IDENTITY_KEY = fixtureIdentity; process.env.BOLD_SECRET_KEY = fixtureSecret; });
+beforeEach(() => { process.env.BOLD_IDENTITY_KEY = fixtureIdentity; process.env.BOLD_SECRET_KEY = fixtureSecret; process.env.BOLD_CONFIRMATION_ENABLED = 'true'; });
 after(() => {
-  for (const [key, value] of [['BOLD_IDENTITY_KEY', saved.identity], ['BOLD_SECRET_KEY', saved.secret]]) {
+  for (const [key, value] of [['BOLD_IDENTITY_KEY', saved.identity], ['BOLD_SECRET_KEY', saved.secret], ['BOLD_CONFIRMATION_ENABLED', saved.enabled]]) {
     if (value === undefined) delete process.env[key]; else process.env[key] = value;
   }
 });
-function invoke(body, method = 'POST', type = 'application/json') {
+async function invoke(body, method = 'POST', type = 'application/json') {
   const out = { headers: {} };
-  handler({ method, headers: { 'content-type': type }, body }, {
+  if (body && typeof body === 'object' && !Array.isArray(body)) body = {...body,customer};
+  await handler({ method, headers: { 'content-type': type }, body }, {
     setHeader(k, v) { out.headers[k] = v; },
     set statusCode(v) { out.status = v; }, end(v) { out.body = JSON.parse(v); }
   });
   return out;
 }
-for (const quantity of [1, 2, 20]) test(`Authoritative total, IVA and signature for ${quantity} kits`, () => {
-  const r = invoke({ productId: 'microcemento-kaemento-launch', colorMode: 'standard', color: 'arena', sealer: 'mate', quantity });
+for (const quantity of [1, 2, 20]) test(`Authoritative total, IVA and signature for ${quantity} kits`, async () => {
+  const r = await invoke({ productId: 'microcemento-kaemento-launch', colorMode: 'standard', color: 'arena', sealer: 'mate', quantity });
   assert.equal(r.status, 200); assert.equal(r.body.amount, 365500 * quantity);
   assert.equal(r.body.tax, 'vat-19'); assert.equal(r.body.currency, 'COP');
   assert.match(r.body.orderId, /^[A-Za-z0-9_-]{1,60}$/);
@@ -35,26 +38,27 @@ for (const quantity of [1, 2, 20]) test(`Authoritative total, IVA and signature 
   assert.equal(r.headers['Cache-Control'], 'no-store');
   assert.ok(r.body.description.length >= 2 && r.body.description.length <= 100);
 });
-test('Unique order IDs for separate attempts', () => {
-  const ids = new Set(Array.from({ length: 100 }, () => invoke({ productId: 'microcemento-kaemento-launch', colorMode: 'standard', color: 'arena', sealer: 'mate', quantity: 1 }).body.orderId));
+test('Unique order IDs for separate attempts', async () => {
+  const results = await Promise.all(Array.from({length:100}, () => invoke({productId:'microcemento-kaemento-launch',colorMode:'standard',color:'arena',sealer:'mate',quantity:1})));
+  const ids = new Set(results.map(r=>r.body.orderId));
   assert.equal(ids.size, 100);
 });
-test('Reject invalid quantities, products and browser supplied totals', () => {
+test('Reject invalid quantities, products and browser supplied totals', async () => {
   for (const quantity of [0, -1, 21, 1.1, '2', null, true, [], {}, NaN, Infinity]) {
-    assert.equal(invoke({ productId: 'microcemento-kaemento-launch', colorMode: 'standard', color: 'arena', sealer: 'mate', quantity }).status, 400);
+    assert.equal((await invoke({ productId: 'microcemento-kaemento-launch', colorMode: 'standard', color: 'arena', sealer: 'mate', quantity })).status, 400);
   }
   for (const body of [null, [], {}, 'invalid JSON', {productId:'other',quantity:1},
       {productId:'__proto__',quantity:1}, {productId:'microcemento-kaemento-launch',colorMode:'standard',color:'arena',sealer:'mate',quantity:1,amount:1},
-      {productId:'microcemento-kaemento-launch',colorMode:'standard',color:'arena',sealer:'mate',quantity:1,currency:'USD'}]) assert.equal(invoke(body).status,400);
+      {productId:'microcemento-kaemento-launch',colorMode:'standard',color:'arena',sealer:'mate',quantity:1,currency:'USD'}]) assert.equal((await invoke(body)).status,400);
 });
-test('Method, media type, oversized request and missing keys fail closed', () => {
-  assert.equal(invoke({}, 'GET').status, 405);
-  assert.equal(invoke({}, 'POST', 'text/plain').status, 415);
-  assert.equal(invoke('x'.repeat(1025)).status, 413);
+test('Method, media type, oversized request and missing keys fail closed', async () => {
+  assert.equal((await invoke({}, 'GET')).status, 405);
+  assert.equal((await invoke({}, 'POST', 'text/plain')).status, 415);
+  assert.equal((await invoke('x'.repeat(8193))).status, 413);
   delete process.env.BOLD_SECRET_KEY;
-  assert.equal(invoke({productId:'microcemento-kaemento-launch',colorMode:'standard',color:'arena',sealer:'mate',quantity:1}).status,503);
+  assert.equal((await invoke({productId:'microcemento-kaemento-launch',colorMode:'standard',color:'arena',sealer:'mate',quantity:1})).status,503);
 });
-test('Analytics allows only bounded non-personal checkout data through both layers', () => {
+test('Analytics allows only bounded non-personal checkout data through both layers', async () => {
   let parentListener, bridgeListener;
   const frame = { contentWindow: { postMessage() {} }, setAttribute() {} };
   const location = { pathname:'/index.html', origin:'https://preview.example', hostname:'preview.example', search:'' };
@@ -93,43 +97,43 @@ test('Analytics allows only bounded non-personal checkout data through both laye
   assert.equal(bridge.dataLayer.length,n);
 });
 
-test('Every allowed color and sealer combination keeps price and canonical description', () => {
+test('Every allowed color and sealer combination keeps price and canonical description', async () => {
   for(const color of ['extra-blanco','arena','gris-cemento','negro','terracota']) for(const sealer of ['mate','brillante']) {
-    const r=invoke({productId:'microcemento-kaemento-launch',quantity:2,colorMode:'standard',color,sealer});
+    const r=await invoke({productId:'microcemento-kaemento-launch',quantity:2,colorMode:'standard',color,sealer});
     assert.equal(r.status,200);assert.equal(r.body.amount,731000);
     assert.deepEqual(r.body.selection,{quantity:2,colorMode:'standard',color,sealer});
     assert.ok(r.body.description.length<=100);assert.ok(r.body.description.endsWith('2 kits'));
     assert.ok(r.body.description.includes(sealer==='mate'?'| Mate |':'| Brillante |'));
   }
 });
-test('Missing or manipulated variants never produce order or signature, even without keys', () => {
+test('Missing or manipulated variants never produce order or signature, even without keys', async () => {
   delete process.env.BOLD_SECRET_KEY;
   const valid={productId:'microcemento-kaemento-launch',quantity:1,colorMode:'standard',color:'arena',sealer:'mate'};
   for(const key of ['color','sealer']) {
     for(const value of ['',null,undefined,[],{},true,'__proto__','constructor','<script>','ARENA','matte']) {
-      const r=invoke({...valid,[key]:value});assert.equal(r.status,400);
+      const r=await invoke({...valid,[key]:value});assert.equal(r.status,400);
       assert.equal(r.body.orderId,undefined);assert.equal(r.body.integritySignature,undefined);
     }
-    const body={...valid};delete body[key];assert.equal(invoke(body).status,400);
+    const body={...valid};delete body[key];assert.equal((await invoke(body)).status,400);
   }
 });
 
-test('All ordered tone pairs and nine ratios are valid, bounded and priced identically', () => {
+test('All ordered tone pairs and nine ratios are valid, bounded and priced identically', async () => {
  const colors=['extra-blanco','arena','gris-cemento','negro','terracota'];
  let count=0;
  for(const color1 of colors)for(const color2 of colors)if(color1!==color2)for(const percentage1 of [10,20,30,40,50,60,70,80,90])for(const sealer of ['mate','brillante']) {
-  const r=invoke({productId:'microcemento-kaemento-launch',quantity:2,colorMode:'mix',color1,color2,percentage1,percentage2:100-percentage1,sealer});
+  const r=await invoke({productId:'microcemento-kaemento-launch',quantity:2,colorMode:'mix',color1,color2,percentage1,percentage2:100-percentage1,sealer});
   assert.equal(r.status,200);assert.equal(r.body.amount,731000);assert.ok(r.body.description.length<=100);
   assert.ok(r.body.description.includes(`${percentage1}%`));assert.equal(r.body.selection.colorMode,'mix');count++;
  }
  assert.equal(count,360);
 });
-test('Manipulated formulas fail before any signing, including same tones and totals other than 100', () => {
+test('Manipulated formulas fail before any signing, including same tones and totals other than 100', async () => {
  delete process.env.BOLD_SECRET_KEY;
  const valid={productId:'microcemento-kaemento-launch',quantity:2,colorMode:'mix',color1:'arena',color2:'gris-cemento',percentage1:70,percentage2:30,sealer:'mate'};
  for(const change of [{color1:'INVALID'},{color2:'gris'},{color2:'arena'},{percentage1:71,percentage2:29},{percentage1:70,percentage2:40},{percentage1:'70'},{percentage2:null},{percentage1:0,percentage2:100},{colorMode:'other'},{sealer:'INVALID'},{quantity:0},{quantity:'2'},{color:'arena'}]) {
-  const r=invoke({...valid,...change});assert.equal(r.status,400);assert.equal(r.body.orderId,undefined);assert.equal(r.body.integritySignature,undefined);
+  const r=await invoke({...valid,...change});assert.equal(r.status,400);assert.equal(r.body.orderId,undefined);assert.equal(r.body.integritySignature,undefined);
  }
  const standard={productId:'microcemento-kaemento-launch',quantity:1,colorMode:'standard',color:'arena',sealer:'mate',color1:'negro'};
- assert.equal(invoke(standard).status,400);
+ assert.equal((await invoke(standard)).status,400);
 });

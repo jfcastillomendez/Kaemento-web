@@ -7,7 +7,22 @@
   const format = amount => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount);
   const errorText = 'No pudimos abrir el pago en este momento. Intenta nuevamente o contáctanos por WhatsApp.';
   let sdkPromise;
+  let customerPromise;
   let preparing = false;
+  function loadCustomerStep() {
+    if (customerPromise) return customerPromise;
+    customerPromise = Promise.all([
+      ['script','/order-customer.js'], ['link','/order-customer.css']
+    ].map(([tag,url])=>new Promise((resolve,reject)=>{
+      const element = document.createElement(tag);
+      if (tag === 'script') element.src = url;
+      else { element.rel = 'stylesheet'; element.href = url; }
+      element.onload = resolve;
+      element.onerror = () => { element.remove(); customerPromise = undefined; reject(new Error('Order form unavailable')); };
+      document.head.appendChild(element);
+    })));
+    return customerPromise;
+  }
   function loadSdk() {
     if (typeof window.BoldCheckout === 'function') return Promise.resolve();
     if (sdkPromise) return sdkPromise;
@@ -90,14 +105,17 @@
       contact.hidden = true;
       let opened = false;
       try {
-        await loadSdk();
-        const response = await fetch('/api/bold/checkout', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-          signal: AbortSignal.timeout(15000), cache: 'no-store'
+        await loadCustomerStep();
+        const data = await window.KaementoOrderCustomer.open(selected, async customer => {
+          const response = await fetch('/api/bold/checkout', {
+            method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...body, customer}),
+            signal:AbortSignal.timeout(15000), cache:'no-store'
+          });
+          if (!response.ok) { const error = new Error('Order unavailable'); error.code = response.status === 400 ? 'INVALID_CUSTOMER' : 'UNAVAILABLE'; throw error; }
+          return response.json();
         });
-        if (!response.ok) throw new Error('Checkout unavailable');
-        const data = await response.json();
+        if (!data) { status.textContent = ''; return; }
+        await loadSdk();
         if (!Number.isInteger(data.amount) || data.amount !== n * unitAmount || data.currency !== 'COP' ||
             data.tax !== 'vat-19' || data.selection?.quantity !== n ||
             JSON.stringify(data.selection) !== JSON.stringify(selected) || !/^[A-Za-z0-9_-]{1,60}$/.test(data.orderId) ||
@@ -144,6 +162,7 @@
         variantControls.forEach(field => field.disabled = false);
         refresh();
         button.removeAttribute('aria-busy');
+        if (!opened) button.focus({preventScroll:true});
       }
     });
   });

@@ -2,6 +2,7 @@ const {test, before, after} = require('node:test');
 const assert = require('node:assert/strict');
 const {createHmac,randomBytes} = require('node:crypto');
 const payments = require('../api/bold/_lib/payments.cjs');
+const {customer} = require('./helpers/orders.cjs');
 const secret = randomBytes(32).toString('hex');
 const env = {BOLD_CONFIRMATION_ENABLED:'true',BOLD_SECRET_KEY:secret,
   UPSTASH_REDIS_REST_URL:'https://fixture.upstash.io',UPSTASH_REDIS_REST_TOKEN:randomBytes(16).toString('hex'),BOLD_STORAGE_NAMESPACE:'unit'};
@@ -47,7 +48,7 @@ test('Disabled, unconfigured or unavailable persistence never acknowledges a con
   assert.equal(result.status,503);assert.ok(!(await result.text()).includes(secret));
 });
 test('purchase projection is available only for verified approved orders and contains no webhook PII',()=>{
-  const order=payments.orderRecord(orderId(),selection);
+  const order=payments.orderRecord(orderId(),selection,customer);
   assert.equal(payments.purchaseEvent(order),null);
   const purchase=payments.purchaseEvent({...order,status:'approved',paymentId:'valid-payment',payer_email:'PRIVATE',card:{name:'PRIVATE'}});
   assert.equal(purchase.name,'purchase');assert.equal(purchase.params.value,731000);
@@ -82,7 +83,7 @@ test('Durable atomic confirmation with real Redis', {skip:!redisBin}, async t=>{
   const transport=async(url,options)=>{const args=JSON.parse(options.body);transmitted.push(args);return Response.json({result:await redis(args)});};
   const a=payments.createStore(env,transport),b=payments.createStore(env,transport),prefix='kaemento:unit:';
   await t.test('Concurrent duplicate deliveries, fresh event IDs and a cold instance create one purchase',async()=>{
-    const record=payments.orderRecord(orderId(),selection);await a.saveOrder(record);
+    const record=payments.orderRecord(orderId(),selection,customer);await a.saveOrder(record);
     const payload=event(record.orderId),notice=payments.notification(payload);
     const results=await Promise.all(Array.from({length:20},(_,i)=>(i%2?a:b).process(notice)));
     assert.equal(results.filter(x=>x==='confirmed').length,1);assert.equal(results.filter(x=>x==='duplicate').length,19);
@@ -99,7 +100,7 @@ test('Durable atomic confirmation with real Redis', {skip:!redisBin}, async t=>{
     assert.equal(payments.purchaseEvent(JSON.parse(await redis(['GET',prefix+'purchase:'+record.orderId]))),null);
   });
   await t.test('Wrong amount/order/payment and event collisions cannot count another purchase',async()=>{
-    const r1=payments.orderRecord(orderId(),selection),r2=payments.orderRecord(orderId(),selection);await a.saveOrder(r1);await a.saveOrder(r2);
+    const r1=payments.orderRecord(orderId(),selection,customer),r2=payments.orderRecord(orderId(),selection,customer);await a.saveOrder(r1);await a.saveOrder(r2);
     const n=payments.notification(event(r1.orderId));
     assert.equal(await a.process({...n,amount:1}),'mismatch');
     assert.equal(await a.process({...n,orderId:orderId()}),'unknown_order');
@@ -110,7 +111,7 @@ test('Durable atomic confirmation with real Redis', {skip:!redisBin}, async t=>{
     assert.equal((await b.readOrder(r2.orderId)).status,'pending');
   });
   await t.test('Void before approval never creates a confirmed purchase',async()=>{
-    const record=payments.orderRecord(orderId(),selection);await a.saveOrder(record);
+    const record=payments.orderRecord(orderId(),selection,customer);await a.saveOrder(record);
     const n=payments.notification(event(record.orderId));
     await a.process({...n,type:'VOID_APPROVED'});
     assert.equal(await a.process({...n,id:randomBytes(16).toString('hex')}),'ignored_voided');
@@ -119,7 +120,7 @@ test('Durable atomic confirmation with real Redis', {skip:!redisBin}, async t=>{
   await t.test('Checkout persists before returning its signature and fails closed on storage failure',async()=>{
     const checkout=require('../api/bold/checkout.js'),oldFetch=global.fetch,oldEnv={...process.env};
     Object.assign(process.env,env,{BOLD_IDENTITY_KEY:randomBytes(16).toString('hex')});global.fetch=transport;
-    async function invoke(){const out={};await checkout({method:'POST',headers:{'content-type':'application/json'},body:{productId:'microcemento-kaemento-launch',...selection}},
+    async function invoke(){const out={};await checkout({method:'POST',headers:{'content-type':'application/json'},body:{productId:'microcemento-kaemento-launch',...selection,customer}},
       {setHeader(){},set statusCode(x){out.status=x;},end(x){out.body=JSON.parse(x);}});return out;}
     try{
       const out=await invoke();assert.equal(out.status,200);assert.equal((await a.readOrder(out.body.orderId)).amount,731000);
@@ -127,5 +128,5 @@ test('Durable atomic confirmation with real Redis', {skip:!redisBin}, async t=>{
       global.fetch=async()=>{throw new Error('offline');};const fail=await invoke();assert.equal(fail.status,503);assert.equal(fail.body.integritySignature,undefined);
     }finally{global.fetch=oldFetch;for(const key of Object.keys(process.env))if(!(key in oldEnv))delete process.env[key];Object.assign(process.env,oldEnv);}
   });
- }finally{processRedis.kill('SIGTERM');await new Promise(r=>processRedis.once('exit',r));fs.rmSync(dir,{recursive:true,force:true});}
+ }finally{if(processRedis.exitCode === null && processRedis.signalCode === null){const stopped=new Promise(r=>processRedis.once('exit',r));processRedis.kill('SIGTERM');await stopped;}fs.rmSync(dir,{recursive:true,force:true});}
 });

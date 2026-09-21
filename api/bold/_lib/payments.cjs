@@ -1,5 +1,7 @@
 const { createHmac, timingSafeEqual, createHash } = require('node:crypto');
 const variants = require('../../../bold-config.js');
+const orders = require('./orders.cjs');
+const {emailStore} = require('./email-store.cjs');
 const ORDER_ID = /^KAE-MICRO-\d{13}-[a-f0-9]{16}$/;
 const EVENT_ID = /^[A-Za-z0-9_-]{1,100}$/;
 const TYPES = new Set(['SALE_APPROVED', 'SALE_REJECTED', 'VOID_APPROVED', 'VOID_REJECTED']);
@@ -18,13 +20,15 @@ function notification(body) {
   if (typeof data?.payment_id !== 'string' || !EVENT_ID.test(data.payment_id) || typeof reference !== 'string' || !ORDER_ID.test(reference) ||
       data?.amount?.currency !== 'COP' || !Number.isSafeInteger(data.amount.total) || data.amount.total <= 0) return null;
   // Strict projection: never store the raw webhook, payer, card or contact data.
-  return { id: body.id, type: body.type, paymentId: data.payment_id, orderId: reference,
+  const event = { id: body.id, type: body.type, paymentId: data.payment_id, orderId: reference,
     amount: data.amount.total, currency: 'COP' };
+  if (['CARD', 'CARD_WEB', 'NEQUI', 'BOTON_BANCOLOMBIA', 'PSE', 'QR'].includes(data.payment_method)) event.paymentMethod = data.payment_method;
+  return event;
 }
-function orderRecord(orderId, selection) {
+function orderRecord(orderId, selection, customer) {
   const canonical = variants.normalize({ productId:'microcemento-kaemento-launch', ...selection });
   if (!ORDER_ID.test(orderId) || !canonical) throw new Error('Invalid order');
-  return { orderId, selection: canonical, amount: UNIT_AMOUNT * canonical.quantity, currency:'COP',
+  return { ...orders.record(orderId, canonical, customer), selection: canonical, amount: UNIT_AMOUNT * canonical.quantity,
     status:'pending', createdAt:Date.now(), campaign:'microcemento_kaemento_launch_2026' };
 }
 function purchaseEvent(order) {
@@ -64,18 +68,43 @@ if event.type == 'SALE_APPROVED' then
     order.status = 'approved'
     order.paymentId = event.paymentId
     order.confirmedAt = tonumber(ARGV[3])
+    order.updatedAt = tonumber(ARGV[3])
+    order.paymentStatus = 'paid'
+    order.orderStatus = 'paid'
+    order.paidAt = tonumber(ARGV[3])
+    order.boldPaymentId = event.paymentId
+    order.boldStatus = event.type
+    order.paymentMethod = event.paymentMethod or cjson.null
     payment.status = 'approved'
     local purchase = {orderId=order.orderId, paymentId=event.paymentId, amount=order.amount,
       currency=order.currency, selection=order.selection, status='approved', confirmedAt=order.confirmedAt,
       campaign=order.campaign, analyticsStatus='awaiting_configuration'}
     redis.call('SET', KEYS[5], cjson.encode(purchase))
     redis.call('SADD', KEYS[6], order.orderId)
+    if order.schemaVersion == 2 and order.customerEmail then
+      for index=7,8 do
+        local role = index == 7 and 'sales' or 'customer'
+        local job = {orderId=order.orderId, role=role, status='pending', attempts=0, nextAttemptAt=tonumber(ARGV[3])}
+        if redis.call('SET', KEYS[index], cjson.encode(job), 'NX') then
+          redis.call('ZADD', KEYS[9], ARGV[3], order.orderId .. '|' .. role)
+        end
+      end
+      order.emailStatus = 'pending'
+    else
+      order.emailStatus = 'failed'
+      order.emailErrorCode = 'legacy_order_missing_customer'
+    end
     outcome = 'confirmed'
   end
 elseif event.type == 'VOID_APPROVED' then
   payment.status = 'voided'
   if not order.paymentId or order.paymentId == event.paymentId then
     order.status = 'voided'
+    order.updatedAt = tonumber(ARGV[3])
+    order.paymentStatus = 'refunded'
+    order.orderStatus = 'cancelled'
+    order.boldStatus = event.type
+    redis.call('ZREM', KEYS[9], order.orderId .. '|sales', order.orderId .. '|customer')
     redis.call('SREM', KEYS[6], order.orderId)
     local purchase = redis.call('GET', KEYS[5])
     if purchase then
@@ -87,7 +116,12 @@ elseif event.type == 'VOID_APPROVED' then
   end
 elseif event.type == 'SALE_REJECTED' then
   if payment.status ~= 'approved' and payment.status ~= 'voided' then payment.status = 'rejected' end
-  if order.status == 'pending' then order.status = 'rejected' end
+  if order.status == 'pending' then
+    order.status = 'rejected'
+    order.paymentStatus = 'failed'
+    order.boldStatus = event.type
+    order.updatedAt = tonumber(ARGV[3])
+  end
 end
 redis.call('SET', KEYS[1], cjson.encode(order))
 redis.call('SET', KEYS[2], ARGV[2])
@@ -95,7 +129,7 @@ redis.call('SET', KEYS[3], event.orderId)
 redis.call('SET', KEYS[4], cjson.encode(payment))
 return outcome
 `;
-function createStore(env = process.env, transport = fetch) {
+function createStore(env = process.env, transport = fetch, clock = Date.now) {
   const url = env.UPSTASH_REDIS_REST_URL, token = env.UPSTASH_REDIS_REST_TOKEN;
   const namespace = env.BOLD_STORAGE_NAMESPACE;
   if (!/^https:\/\/[a-z0-9.-]+\.upstash\.io\/?$/i.test(url || '') || !token?.trim() ||
@@ -111,14 +145,16 @@ function createStore(env = process.env, transport = fetch) {
     return data.result;
   }
   return {
+    ...emailStore(command, prefix, clock),
     async saveOrder(record) {
       if (await command(['SET', prefix+'order:'+record.orderId, JSON.stringify(record), 'NX']) !== 'OK') throw new Error('Order not stored');
     },
     async process(event) {
       const fingerprint = createHash('sha256').update(JSON.stringify(event)).digest('hex');
       const keys = ['order:'+event.orderId,'event:'+event.id,'payment-owner:'+event.paymentId,
-        'payment:'+event.paymentId,'purchase:'+event.orderId,'campaign:confirmed-orders'].map(k=>prefix+k);
-      return command(['EVAL',PROCESS_EVENT,String(keys.length),...keys,JSON.stringify(event),fingerprint,String(Date.now())]);
+        'payment:'+event.paymentId,'purchase:'+event.orderId,'campaign:confirmed-orders',
+        'email:'+event.orderId+':sales','email:'+event.orderId+':customer','email:due'].map(k=>prefix+k);
+      return command(['EVAL',PROCESS_EVENT,String(keys.length),...keys,JSON.stringify(event),fingerprint,String(clock())]);
     },
     async readOrder(orderId) {
       if (!ORDER_ID.test(orderId || '')) return null;

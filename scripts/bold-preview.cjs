@@ -11,8 +11,8 @@ http.createServer(async (req, res) => {
   if (url.pathname === '/index.html') {
     res.writeHead(308, {'Location':'/' + url.search}); return res.end();
   }
-  if (url.pathname === '/api/bold/webhook') {
-    const {default:webhook} = await import('../api/bold/webhook.mjs');
+  if (['/api/bold/webhook','/api/bold/retry-emails'].includes(url.pathname)) {
+    const {default:webhook} = await import('../api/bold/'+url.pathname.split('/').at(-1)+'.mjs');
     const init = {method:req.method,headers:req.headers};
     if (!['GET','HEAD'].includes(req.method)) { init.body = req; init.duplex = 'half'; }
     const response = await webhook.fetch(new Request(url,init));
@@ -23,7 +23,7 @@ http.createServer(async (req, res) => {
     let body = ''; let size = 0;
     for await (const chunk of req) {
       size += chunk.length;
-      if (size > 1024) { res.writeHead(413); return res.end(); }
+      if (size > 8192) { res.writeHead(413); return res.end(); }
       body += chunk;
     }
     req.body = body;
