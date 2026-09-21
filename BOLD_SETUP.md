@@ -60,6 +60,8 @@ BOLD_SECRET_KEY=
 BOLD_CONFIRMATION_ENABLED=false
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
+KV_REST_API_URL=
+KV_REST_API_TOKEN=
 BOLD_STORAGE_NAMESPACE=
 KAEMENTO_EMAIL_ENABLED=false
 RESEND_API_KEY=
@@ -69,7 +71,8 @@ KAEMENTO_EMAIL_RETRY_SECRET=
 ```
 
 - Mantener las llaves existentes sin alterarlas. Para pruebas de pago usar el entorno de prueba de Bold, nunca tarjetas de prueba contra llaves reales.
-- Redis: URL REST HTTPS, token privado y namespace estable de pruebas; usar base/credenciales aisladas de Production.
+- Redis: se aceptan las variables creadas por Vercel `KV_REST_API_URL` y `KV_REST_API_TOKEN`. Los nombres antiguos `UPSTASH_REDIS_REST_URL` y `UPSTASH_REDIS_REST_TOKEN` tienen prioridad, cada uno de forma independiente; no es necesario duplicar las variables. No se usa el token de solo lectura, `KV_URL` ni `REDIS_URL`.
+- `BOLD_STORAGE_NAMESPACE` es obligatorio, sin valor por defecto: `preview-pedidos` en Preview y `production-pedidos` cuando se configure Production. Si falta o es inválido, no se guarda ningún pedido ni se emite una firma de pago. Los namespaces separan los registros; para aislamiento de acceso usar bases/credenciales independientes.
 - `BOLD_CONFIRMATION_ENABLED=true` solo cuando la persistencia y el webhook estén configurados. Esta rama bloquea el nuevo pago si falta esa condición.
 - Resend: verificar primero el dominio remitente con los registros DNS que indique Resend. Un ejemplo, **solo después de verificarlo**, es `KAEMENTO <pedidos@kaemento.com>`. No se usa Gmail como remitente autenticado de Resend.
 - `KAEMENTO_SALES_EMAIL` acepta destinatarios separados por coma (máximo cinco); la selección aprobada son los dos correos anteriores.

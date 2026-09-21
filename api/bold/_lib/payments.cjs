@@ -130,7 +130,8 @@ redis.call('SET', KEYS[4], cjson.encode(payment))
 return outcome
 `;
 function createStore(env = process.env, transport = fetch, clock = Date.now) {
-  const url = env.UPSTASH_REDIS_REST_URL, token = env.UPSTASH_REDIS_REST_TOKEN;
+  const url = env.UPSTASH_REDIS_REST_URL || env.KV_REST_API_URL;
+  const token = env.UPSTASH_REDIS_REST_TOKEN || env.KV_REST_API_TOKEN;
   const namespace = env.BOLD_STORAGE_NAMESPACE;
   if (!/^https:\/\/[a-z0-9.-]+\.upstash\.io\/?$/i.test(url || '') || !token?.trim() ||
       !/^[a-z0-9:-]{1,64}$/.test(namespace || '')) throw new Error('Payment storage unavailable');
