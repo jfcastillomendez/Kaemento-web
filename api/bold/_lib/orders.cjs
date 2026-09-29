@@ -24,19 +24,20 @@ function customerData(body) {
 function checkoutInput(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
   const {customer, ...configuration} = body;
-  const selection = variants.normalize(configuration), buyer = customerData(customer);
+  const selection = variants.normalizeOrder(configuration), buyer = customerData(customer);
   return selection && buyer ? {selection, customer:buyer} : null;
 }
 function record(orderId, selection, customer, now = Date.now()) {
   const buyer = customerData(customer);
   if (!buyer) throw new Error('Invalid customer');
   return {
-    schemaVersion:2, orderId, createdAt:now, updatedAt:now,
-    productId:'microcemento-kaemento-launch', productName:'Microcemento KAEMENTO', quantity:selection.quantity,
+    schemaVersion:selection.items ? 3 : 2, orderId, createdAt:now, updatedAt:now,
+    productId:'microcemento-kaemento-launch', productName:'Microcemento KAEMENTO', quantity:variants.kitCount(selection),
     colorMode:selection.colorMode, standardColor:selection.colorMode === 'standard' ? selection.color : null,
     color1:selection.color1 || null, color1Percentage:selection.percentage1 || null,
     color2:selection.color2 || null, color2Percentage:selection.percentage2 || null, sealer:selection.sealer,
-    unitPrice:UNIT_PRICE, subtotal:UNIT_PRICE * selection.quantity, total:UNIT_PRICE * selection.quantity, currency:'COP',
+    ...(selection.items ? {items:selection.items.map(item=>({...item,productId:'microcemento-kaemento-launch',productName:'Microcemento KAEMENTO',unitPrice:UNIT_PRICE,subtotal:UNIT_PRICE*item.quantity}))} : {}),
+    unitPrice:UNIT_PRICE, subtotal:UNIT_PRICE * variants.kitCount(selection), total:UNIT_PRICE * variants.kitCount(selection), currency:'COP',
     customerName:buyer.name, customerDocumentType:buyer.documentType, customerDocument:buyer.document,
     customerEmail:buyer.email, customerPhone:buyer.phone, shippingCity:buyer.city, shippingAddress:buyer.address,
     privacyAcceptedAt:now, privacyPolicyUrl:'/politica-datos.html',

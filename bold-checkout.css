@@ -38,3 +38,20 @@
 
 .kae-purchase .kae-purchase-variants[hidden] { display: none; }
 .kae-purchase .kae-purchase-formula { font-size: 14px; line-height: 1.6; margin: 18px 0 0; }
+
+/* Multiple configurations share one order and one payment. */
+.kae-cart { margin-top:32px; padding-top:28px; border-top:1px solid var(--line); }
+.kae-cart h3 { font-size:26px; line-height:1.2; }
+.kae-cart h3 small { font:14px Arial,sans-serif; margin-left:12px; color:#655a48; }
+.kae-cart-list { list-style:none; margin:20px 0; padding:0; }
+.kae-cart-line { display:flex; justify-content:space-between; gap:24px; padding:22px 0; border-bottom:1px solid var(--line); }
+.kae-cart-line > div { min-width:0; }
+.kae-cart-line p { font-size:13px; margin:8px 0 0; }
+.kae-cart-controls { display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
+.kae-purchase .kae-cart-controls button, .kae-purchase [data-cart-cancel] { color:var(--ink); background:transparent; border:1px solid var(--line); padding:10px 14px; letter-spacing:0; }
+.kae-cart-footer { display:flex; justify-content:space-between; align-items:center; gap:24px; }
+.kae-cart-footer strong { display:block; font-size:28px; font-weight:500; }
+.kae-cart-footer small { display:block; font-size:12px; margin-top:6px; }
+[data-cart-message] { font-size:14px; line-height:1.5; }
+@media(max-width:800px) { .kae-cart-line,.kae-cart-footer { flex-direction:column; align-items:stretch; } }
+@media(max-width:480px) { .kae-cart-controls { display:grid; grid-template-columns:1fr 1fr; } .kae-cart-controls input { max-width:100%; } .kae-purchase { padding:20px 16px; } }

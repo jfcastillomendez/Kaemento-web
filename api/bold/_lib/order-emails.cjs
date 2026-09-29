@@ -4,7 +4,7 @@ const money = value => new Intl.NumberFormat('es-CO', {style:'currency',currency
 const date = value => new Intl.DateTimeFormat('es-CO', {dateStyle:'long',timeStyle:'short',timeZone:'America/Bogota'}).format(new Date(value));
 
 function emailContent(order, role) {
-  if (order.paymentStatus !== 'paid' || order.schemaVersion !== 2 || !order.paidAt) throw new Error('Order not confirmed');
+  if (order.paymentStatus !== 'paid' || ![2,3].includes(order.schemaVersion) || !order.paidAt) throw new Error('Order not confirmed');
   const sales = role === 'sales';
   if (!sales && role !== 'customer') throw new Error('Invalid email role');
   const subject = sales ? `NUEVA VENTA ONLINE — KAEMENTO — ${order.orderId}` : `Tu pedido KAEMENTO está confirmado — ${order.orderId}`;
@@ -12,9 +12,12 @@ function emailContent(order, role) {
   const intro = sales ? 'Estado: PAGO APROBADO' : 'Tu pedido de Microcemento KAEMENTO fue recibido correctamente y tu pago fue aprobado.';
   const sections = [
     ['Pedido', [['Número de pedido',order.orderId],['Fecha',date(order.paidAt)]]],
-    ['Producto', [['Producto','Microcemento KAEMENTO'],['Cantidad',`${order.quantity} ${order.quantity === 1 ? 'kit' : 'kits'}`],
-      ['Color / mezcla',variants.formula(order.selection)],['Sellador',variants.sealers.get(order.sealer)],
-      ...(sales ? [['Precio unitario',money(order.unitPrice)]] : []),['Total',money(order.total)]]],
+    ...variants.lines(variants.restore(order.selection)).map((item,index)=>[
+      `Producto${order.schemaVersion === 3 ? ' ' + (index+1) : ''}`,
+      [['Producto','Microcemento KAEMENTO'],['Cantidad',`${item.quantity} ${item.quantity === 1 ? 'kit' : 'kits'}`],
+       ['Color / mezcla',variants.formula(item)],['Sellador',variants.sealers.get(item.sealer)],
+       ['Precio unitario',money(order.unitPrice)],['Subtotal',money(order.unitPrice*item.quantity)]]]),
+    ['Total del pedido', [['Cantidad total',`${order.quantity} kits`],['Total',money(order.total)]]],
     ...(sales ? [['Cliente', [['Nombre / Razón social',order.customerName],['Identificación / NIT',`${order.customerDocumentType} ${order.customerDocument}`],
       ['Email',order.customerEmail],['Teléfono',order.customerPhone]]]] : []),
     ['Entrega', [['Ciudad',order.shippingCity],['Dirección',order.shippingAddress]]],
@@ -68,7 +71,7 @@ async function sendEmail(payload, key, env, transport = fetch) {
 }
 async function deliverOrder(orderId, store, env = process.env, transport = fetch, force = false) {
   const order = await store.readOrder(orderId);
-  if (!order || order.paymentStatus !== 'paid' || order.schemaVersion !== 2) return [];
+  if (!order || order.paymentStatus !== 'paid' || ![2,3].includes(order.schemaVersion)) return [];
   const config = emailConfig(env), results = [];
   for (const role of ['sales', 'customer']) {
     const payload = config ? emailPayload(order, role, config) : null;

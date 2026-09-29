@@ -38,13 +38,16 @@ function validCheckoutVariant(value) {
       payload.promotion_name = 'microcemento_kaemento_launch_2026';
     }
     if (event === 'begin_checkout') {
-      const quantity = values.items?.[0]?.quantity;
-      const color = values.items?.[0]?.item_variant, sealer = values.items?.[0]?.sealer_type;
-      if (!validCheckoutVariant(color) || !['mate','brillante'].includes(sealer) ||
-          !Number.isInteger(quantity) || quantity < 1 || quantity > 20 ||
-          values.currency !== 'COP' || values.value !== 365500 * quantity) return;
-      payload.currency = 'COP'; payload.value = 365500 * quantity;
-      payload.items = [{ item_id: 'microcemento-kaemento', item_name: 'Microcemento KAEMENTO', price: 365500, quantity, item_variant: color, sealer_type: sealer }];
+      if (!Array.isArray(values.items) || !values.items.length || values.items.length > 20) return;
+      const items = [];
+      let quantity = 0;
+      for (const item of values.items) {
+        if (!item || !validCheckoutVariant(item.item_variant) || !['mate','brillante'].includes(item.sealer_type) || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 20) return;
+        quantity += item.quantity;
+        items.push({item_id:'microcemento-kaemento',item_name:'Microcemento KAEMENTO',price:365500,quantity:item.quantity,item_variant:item.item_variant,sealer_type:item.sealer_type});
+      }
+      if (quantity > 20 || values.currency !== 'COP' || values.value !== 365500 * quantity) return;
+      payload.currency = 'COP'; payload.value = 365500 * quantity; payload.items = items;
     }
     window.dataLayer.push({event, ...payload});
     const message = {type:'kaemento-event', event, params:payload};

@@ -8,11 +8,15 @@
   try {
     const selections = JSON.parse(sessionStorage.getItem('kaemento-bold-selections') || '{}');
     const stored = /^KAE-MICRO-[A-Za-z0-9_-]{1,50}$/.test(orderId || '') && Object.hasOwn(selections, orderId) ? selections[orderId] : null;
-    const selected = stored ? variants.normalize({productId:'microcemento-kaemento-launch',...stored}) : null;
+    const selected = stored ? variants.restore(stored) : null;
     if (selected) {
-      document.getElementById('payment-quantity').textContent = `${selected.quantity} ${selected.quantity === 1 ? 'kit' : 'kits'}`;
-      document.getElementById('payment-color').textContent = variants.formula(selected);
-      document.getElementById('payment-sealer').textContent = variants.sealers.get(selected.sealer);
+      const list=document.getElementById('payment-items');
+      for(const item of variants.lines(selected)) {
+        const row=document.createElement('li');
+        row.textContent=`${item.quantity} ${item.quantity === 1 ? 'kit' : 'kits'} · ${variants.formula(item)} · Sellador ${variants.sealers.get(item.sealer)}`;
+        list.append(row);
+      }
+      document.getElementById('payment-total').textContent=new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(variants.kitCount(selected)*variants.unitPrice)+' IVA incluido';
       document.getElementById('payment-selection').hidden = false;
       document.getElementById('payment-selection-unavailable').hidden = true;
     }

@@ -62,7 +62,7 @@ document.addEventListener('click', event => {
   if(a.pathname.endsWith('/catalogo-comercial-microcemento-kaemento-2026.pdf'))track('microcemento_catalog_download',id);
   if(a.pathname.endsWith('/manual-aplicacion-microcemento-kaemento.pdf'))track('microcemento_manual_download',id);
 });
-document.querySelectorAll('form').forEach(form => {
+document.querySelectorAll('form:not([data-network-form])').forEach(form => {
   const micro=form.id==='microcemento-form';
   if(micro)form.addEventListener('focusin',()=>track('microcemento_form_start','microcemento-form'),{once:true});
   form.addEventListener('submit',event=>{
@@ -143,7 +143,7 @@ document.querySelectorAll('form').forEach(form => {
 
 // Keep the mobile floating shortcut clear of visible quote fields and keyboard focus.
 (() => {
-  const forms = [...document.querySelectorAll('#quote-form, #microcemento-form')];
+  const forms = [...document.querySelectorAll('#quote-form, #microcemento-form, [data-network-form], [data-bold-purchase]')];
   if (!forms.length) return;
   const visible = new Set();
   const update = () => document.body.classList.toggle('quote-form-active', visible.size > 0 || forms.some(form => form.contains(document.activeElement)));

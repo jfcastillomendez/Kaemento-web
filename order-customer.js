@@ -29,7 +29,14 @@
           <p class="kae-order-footnote">El transporte no está incluido y su valor es asumido por el cliente.</p>
         </form>`;
         const form = dialog.querySelector('form'), status = dialog.querySelector('.kae-order-message');
-        dialog.querySelector('.kae-order-summary').textContent = `${selection.quantity} ${selection.quantity === 1 ? 'kit' : 'kits'} · ${window.KaementoBoldConfig.formula(selection)} · Sellador ${window.KaementoBoldConfig.sealers.get(selection.sealer)} · ${format(selection.quantity * 365500)} IVA incluido`;
+        const variants=window.KaementoBoldConfig;
+        const summary=dialog.querySelector('.kae-order-summary');
+        for(const item of variants.lines(selection)) {
+          const line=document.createElement('span');line.style.display='block';
+          line.textContent=`${item.quantity} ${item.quantity === 1 ? 'kit' : 'kits'} · ${variants.formula(item)} · Sellador ${variants.sealers.get(item.sealer)} · ${format(item.quantity*365500)}`;
+          summary.append(line);
+        }
+        const total=document.createElement('strong');total.textContent=`Total: ${format(variants.kitCount(selection)*365500)} IVA incluido`;summary.append(total);
         let busy = false, finished = false;
         function finish(value) {
           if (finished) return;

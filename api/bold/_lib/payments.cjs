@@ -1,6 +1,7 @@
 const { createHmac, timingSafeEqual, createHash } = require('node:crypto');
 const variants = require('../../../bold-config.js');
 const orders = require('./orders.cjs');
+const {networkStore} = require('../../_lib/network-store.cjs');
 const {emailStore} = require('./email-store.cjs');
 const ORDER_ID = /^KAE-MICRO-\d{13}-[a-f0-9]{16}$/;
 const EVENT_ID = /^[A-Za-z0-9_-]{1,100}$/;
@@ -26,19 +27,18 @@ function notification(body) {
   return event;
 }
 function orderRecord(orderId, selection, customer) {
-  const canonical = variants.normalize({ productId:'microcemento-kaemento-launch', ...selection });
+  const canonical = variants.restore(selection);
   if (!ORDER_ID.test(orderId) || !canonical) throw new Error('Invalid order');
-  return { ...orders.record(orderId, canonical, customer), selection: canonical, amount: UNIT_AMOUNT * canonical.quantity,
+  return { ...orders.record(orderId, canonical, customer), selection: canonical, amount: UNIT_AMOUNT * variants.kitCount(canonical),
     status:'pending', createdAt:Date.now(), campaign:'microcemento_kaemento_launch_2026' };
 }
 function purchaseEvent(order) {
-  const selection = variants.normalize({ productId:'microcemento-kaemento-launch', ...order?.selection });
+  const selection = variants.restore(order?.selection);
   if (!selection || order.status !== 'approved' || !ORDER_ID.test(order.orderId || '') ||
-      !EVENT_ID.test(order.paymentId || '') || order.currency !== 'COP' || order.amount !== UNIT_AMOUNT * selection.quantity) return null;
+      !EVENT_ID.test(order.paymentId || '') || order.currency !== 'COP' || order.amount !== UNIT_AMOUNT * variants.kitCount(selection)) return null;
   // This is an outbox payload, not a browser event and not an HTTP request to GA4.
   return { name:'purchase', params:{ transaction_id:order.orderId, currency:'COP', value:order.amount,
-    items:[{ item_id:'microcemento-kaemento', item_name:'Microcemento KAEMENTO', price:UNIT_AMOUNT,
-      quantity:selection.quantity, item_variant:variants.itemVariant(selection), sealer_type:selection.sealer }] } };
+    items:variants.analyticsItems(selection) } };
 }
 
 // One Redis transaction checks and changes all state. It survives restarts and concurrent Functions.
@@ -81,7 +81,7 @@ if event.type == 'SALE_APPROVED' then
       campaign=order.campaign, analyticsStatus='awaiting_configuration'}
     redis.call('SET', KEYS[5], cjson.encode(purchase))
     redis.call('SADD', KEYS[6], order.orderId)
-    if order.schemaVersion == 2 and order.customerEmail then
+    if (order.schemaVersion == 2 or order.schemaVersion == 3) and order.customerEmail then
       for index=7,8 do
         local role = index == 7 and 'sales' or 'customer'
         local job = {orderId=order.orderId, role=role, status='pending', attempts=0, nextAttemptAt=tonumber(ARGV[3])}
@@ -147,6 +147,7 @@ function createStore(env = process.env, transport = fetch, clock = Date.now) {
   }
   return {
     ...emailStore(command, prefix, clock),
+    ...networkStore(command, prefix, clock),
     async saveOrder(record) {
       if (await command(['SET', prefix+'order:'+record.orderId, JSON.stringify(record), 'NX']) !== 'OK') throw new Error('Order not stored');
     },

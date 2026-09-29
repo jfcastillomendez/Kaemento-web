@@ -19,7 +19,7 @@ http.createServer(async (req, res) => {
     res.writeHead(response.status,Object.fromEntries(response.headers));
     return res.end(Buffer.from(await response.arrayBuffer()));
   }
-  if (url.pathname === '/api/bold/checkout') {
+  if (['/api/bold/checkout','/api/red-kaemento'].includes(url.pathname)) {
     let body = ''; let size = 0;
     for await (const chunk of req) {
       size += chunk.length;
@@ -27,7 +27,7 @@ http.createServer(async (req, res) => {
       body += chunk;
     }
     req.body = body;
-    return checkout(req, res);
+    return (url.pathname === '/api/red-kaemento' ? require('../api/red-kaemento.js') : checkout)(req, res);
   }
   let name;
   try { name = decodeURIComponent(url.pathname); } catch (_) { res.writeHead(400); return res.end(); }

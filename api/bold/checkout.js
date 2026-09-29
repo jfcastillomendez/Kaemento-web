@@ -19,13 +19,13 @@ function createCheckout(env = process.env, storeFactory = payments.createStore) 
     } catch (_) { /* The response never echoes personal data. */ }
     if (!input) return reply(400, {error:'Revisa la configuración y los datos del comprador.'});
     const {selection, customer} = input;
-    const description = variants.description(selection);
+    const description = variants.orderDescription(selection);
     if (description.length > 100) return reply(400, {error:'Selección no válida.'});
     const apiKey = env.BOLD_IDENTITY_KEY, secretKey = env.BOLD_SECRET_KEY;
     if (!apiKey?.trim() || !secretKey?.trim() || !payments.enabled(env)) {
       return reply(503, {error:'El pago no está disponible en este momento.'});
     }
-    const amount = orders.UNIT_PRICE * selection.quantity;
+    const amount = orders.UNIT_PRICE * variants.kitCount(selection);
     const orderId = `KAE-MICRO-${Date.now()}-${randomBytes(8).toString('hex')}`;
     try {
       // Never issue a payable signature without a durable, complete order.

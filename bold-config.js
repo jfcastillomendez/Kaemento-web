@@ -26,5 +26,37 @@
     return `Microcemento KAEMENTO | ${color} | ${sealers.get(s.sealer)} | ${s.quantity} ${s.quantity === 1 ? 'kit' : 'kits'}`;
   }
   function itemVariant(s) { return s.colorMode === 'standard' ? s.color : `${s.color1}:${s.percentage1}+${s.color2}:${s.percentage2}`; }
-  return {colors,sealers,normalize,formula,description,itemVariant};
+  const unitPrice = 365500;
+  const kitCount = selection => selection.items ? selection.items.reduce((n, item) => n + item.quantity, 0) : selection.quantity;
+  const lines = selection => selection.items || [selection];
+  function lineKey(item) {
+    const color = item.colorMode === 'standard' ? item.color : [[item.color1,item.percentage1],[item.color2,item.percentage2]].sort((a,b)=>a[0].localeCompare(b[0])).map(x=>x.join(':')).join('+');
+    return item.colorMode + '|' + color + '|' + item.sealer;
+  }
+  function normalizeCart(body) {
+    if (!body || Array.isArray(body) || Object.keys(body).length !== 1 || !Array.isArray(body.items) || body.items.length < 1 || body.items.length > 20) return null;
+    const items = [], keys = new Map();
+    for (const raw of body.items) {
+      const item = normalize(raw);
+      if (!item) return null;
+      const key = lineKey(item), previous = keys.get(key);
+      if (previous) previous.quantity += item.quantity;
+      else { keys.set(key,item); items.push(item); }
+    }
+    const selection = {items};
+    return kitCount(selection) <= 20 ? selection : null;
+  }
+  // Public requests are strict; restore projects stored non-personal selections through the same rules.
+  const normalizeOrder = body => Object.hasOwn(body || {}, 'items') ? normalizeCart(body) : normalize(body);
+  function restore(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    return Object.hasOwn(value,'items') ? normalizeCart({items:Array.isArray(value.items) ? value.items.map(item=>({productId:'microcemento-kaemento-launch',...item})) : null}) : normalize({productId:'microcemento-kaemento-launch',...value});
+  }
+  function orderDescription(selection) {
+    if (!selection.items) return description(selection);
+    const detail='Microcemento KAEMENTO | '+selection.items.map(item=>`${item.quantity} ${formula(item)} ${sealers.get(item.sealer)}`).join(' + ');
+    return detail.length<=100 ? detail : `Microcemento KAEMENTO | ${kitCount(selection)} kits | ${selection.items.length} configuraciones`;
+  }
+  const analyticsItems = selection => lines(selection).map(item=>({item_id:'microcemento-kaemento',item_name:'Microcemento KAEMENTO',price:unitPrice,quantity:item.quantity,item_variant:itemVariant(item),sealer_type:item.sealer}));
+  return {colors,sealers,normalize,formula,description,itemVariant,unitPrice,kitCount,lines,lineKey,normalizeCart,normalizeOrder,restore,orderDescription,analyticsItems};
 });
