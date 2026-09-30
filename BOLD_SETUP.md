@@ -151,3 +151,12 @@ Pasos de activación pendientes:
 - No se han enviado correos de prueba ni modificado variables externas. Validar recepción en ambos buzones internos y en un buzón de comprador autorizado antes de dar por comprobado el circuito real.
 - No se eliminan automáticamente pedidos abandonados: definir primero la retención aplicable a pedidos, pagos y datos de contacto.
 - El cierre automático de la oferta requiere fecha de inicio confirmada, definición de cupo (compradores o kits) y consumo histórico. No se cambia el precio ni se presume una fecha de vencimiento mientras falten esos datos.
+
+## Cupo público de lanzamiento y animación — 30 de septiembre de 2026
+
+- `GET /api/bold/promotion` publica exclusivamente `{capacity, remaining}`. Consulta `SCARD` de `campaign:confirmed-orders` en el namespace del entorno, con las mismas variables Redis/KV existentes. No requiere variables nuevas y no expone pedidos ni compradores. Si falla la consulta, devuelve 503 sin inventar una cifra.
+- Base conciliada: KAEMENTO informó seis pedidos el 30 de septiembre. La consulta de solo lectura a Production encontró dos pedidos confirmados en el conjunto automático. Se agregan cuatro pedidos históricos exclusivamente al cálculo del cupo; no se crean pedidos ni pagos ficticios. Por tanto, Production comienza con 24 cupos disponibles. Si posteriormente se importan esos cuatro pedidos históricos al conjunto, retirar el ajuste equivalente para no contarlos dos veces.
+- Una orden aprobada consume un cupo, independientemente del número de kits. El conjunto existente del webhook evita duplicados y devuelve el cupo al recibir una anulación confirmada. Pedidos pendientes/rechazados no descuentan. El contador se limita a cero. Preview mantiene su propio namespace y puede mostrar un número distinto al de Production.
+- El navegador consulta al entrar en pantalla y cada 60 segundos mientras el contador esté visible. La respuesta pública tiene caché CDN de 15 segundos; no implica actualización instantánea. No hay cambios de precio, cierre automático por fecha ni bloqueo de checkout al llegar a cero: este cambio añade el contador informativo solicitado.
+- La animación del descuento se reinicia después de salir completamente del viewport o de volver a la pestaña. Cancela trabajos pendientes para impedir superposiciones, respeta movimiento reducido y no genera eventos Analytics adicionales.
+- Validación: 62 pruebas automatizadas con Redis efímero; tres páginas en 1440/1024/768/390/320 px. No se generaron ventas ni correos reales.

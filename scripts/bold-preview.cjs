@@ -19,6 +19,7 @@ http.createServer(async (req, res) => {
     res.writeHead(response.status,Object.fromEntries(response.headers));
     return res.end(Buffer.from(await response.arrayBuffer()));
   }
+  if (url.pathname === '/api/bold/promotion') return require('../api/bold/promotion.js')(req,res);
   if (['/api/bold/checkout','/api/bold/status','/api/red-kaemento'].includes(url.pathname)) {
     let body = ''; let size = 0;
     for await (const chunk of req) {

@@ -160,6 +160,9 @@ function createStore(env = process.env, transport = fetch, clock = Date.now) {
         'email:'+event.orderId+':sales','email:'+event.orderId+':customer','email:due'].map(k=>prefix+k);
       return command(['EVAL',PROCESS_EVENT,String(keys.length),...keys,JSON.stringify(event),fingerprint,String(clock())]);
     },
+    async confirmedCampaignOrders() {
+      return command(['SCARD',prefix+'campaign:confirmed-orders']);
+    },
     async readOrder(orderId) {
       if (!ORDER_ID.test(orderId || '')) return null;
       const data = await command(['GET',prefix+'order:'+orderId]); return data ? JSON.parse(data) : null;
