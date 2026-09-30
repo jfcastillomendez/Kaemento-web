@@ -2,7 +2,28 @@ const photos = [{"id": 1, "title": "Sala Arena", "category": "microcemento", "so
 const filters=[...document.querySelectorAll('[data-gallery-filter]')];
 const tiles=[...document.querySelectorAll('[data-gallery-category]')];
 const dialog=document.querySelector('.gallery-dialog');let visible=photos;let active=0;let opener=null;
-filters.forEach(button=>button.addEventListener('click',()=>{const category=button.dataset.galleryFilter;filters.forEach(b=>b.setAttribute('aria-pressed',String(b===button)));tiles.forEach(t=>t.hidden=category!=='todos'&&t.dataset.galleryCategory!==category);visible=photos.filter(p=>category==='todos'||p.category===category);document.querySelector('#gallery-count').textContent=visible.length+' imágenes';}));
+// Keep the complete collection available, with a shorter initial mobile journey.
+let category='todos', shown=12;
+const more=document.createElement('button');
+more.type='button';more.className='gallery-more';more.textContent='VER MÁS IMÁGENES';
+tiles[0]?.parentElement.after(more);
+function renderTiles(){
+  const matching=tiles.filter(t=>category==='todos'||t.dataset.galleryCategory===category);
+  tiles.forEach(t=>t.hidden=true);
+  matching.slice(0,shown).forEach(t=>t.hidden=false);
+  more.hidden=shown>=matching.length;
+  document.querySelector('#gallery-count').textContent=Math.min(shown,matching.length)+' de '+matching.length+' imágenes';
+}
+more.addEventListener('click',()=>{
+  const first=tiles.filter(t=>category==='todos'||t.dataset.galleryCategory===category)[shown];
+  shown+=12;renderTiles();first?.querySelector('.gallery-open')?.focus({preventScroll:true});
+});
+filters.forEach(button=>button.addEventListener('click',()=>{
+  category=button.dataset.galleryFilter;shown=12;
+  filters.forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+  visible=photos.filter(p=>category==='todos'||p.category===category);renderTiles();
+}));
+renderTiles();
 function showPhoto(index){active=(index+visible.length)%visible.length;const p=visible[active];const img=document.querySelector('#photo-large');img.src='./'+p.image;img.alt=p.title;document.querySelector('#photo-title').textContent=p.title;document.querySelector('#photo-source').textContent=p.source;document.querySelector('#photo-position').textContent=(active+1)+' / '+visible.length;}
 document.querySelectorAll('.gallery-open').forEach(b=>b.addEventListener('click',()=>{opener=b;showPhoto(visible.findIndex(p=>p.id===Number(b.dataset.photo)+1));dialog.showModal();document.body.classList.add('photo-viewing');}));
 document.querySelector('.photo-close').addEventListener('click',()=>dialog.close());

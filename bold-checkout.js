@@ -9,6 +9,14 @@
   let sdkPromise;
   let customerPromise;
   let preparing = false;
+  // Retain only fingerprints and random request IDs in memory for safe network retries.
+  const checkoutAttempts = new Map();
+  async function requestKey(payload) {
+    const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(payload));
+    const fingerprint=Array.from(new Uint8Array(bytes),n=>n.toString(16).padStart(2,'0')).join('');
+    if(!checkoutAttempts.has(fingerprint))checkoutAttempts.set(fingerprint,crypto.randomUUID());
+    return checkoutAttempts.get(fingerprint);
+  }
   function loadCustomerStep() {
     if (customerPromise) return customerPromise;
     customerPromise = Promise.all([
@@ -129,7 +137,7 @@
           refresh();total.textContent=format(item.quantity*unitAmount);add.textContent='GUARDAR CONFIGURACIÓN';cancelEdit.hidden=false;button.disabled=true;mode.focus();
         });
         const remove=document.createElement('button');remove.type='button';remove.textContent='Quitar';remove.setAttribute('aria-label','Quitar '+variants.formula(item));
-        remove.addEventListener('click',()=>{items.splice(index,1);endEdit();saveCart();renderCart();cartMessage.textContent='Configuración eliminada.';add.focus();});
+        remove.addEventListener('click',()=>{items.splice(index,1);endEdit();resetSelection();saveCart();renderCart();cartMessage.textContent='Configuración eliminada.';add.focus();});
         controls.append(label,subtotal,edit,remove);row.append(summary,controls);cartList.append(row);
       });
       const count=items.reduce((n,x)=>n+x.quantity,0);
@@ -139,7 +147,12 @@
       button.disabled=!items.length || editing>=0;
     }
     function endEdit() {editing=-1;add.textContent='AÑADIR AL CARRITO';cancelEdit.hidden=true;}
-    cancelEdit.addEventListener('click',()=>{endEdit();renderCart();cartMessage.textContent='Edición cancelada.';});
+    function resetSelection() {
+      for (const field of [input, ...variantControls]) { field.value=''; field.setCustomValidity(''); }
+      total.textContent='—';
+      refresh();
+    }
+    cancelEdit.addEventListener('click',()=>{endEdit();resetSelection();renderCart();cartMessage.textContent='Edición cancelada.';});
     add.disabled=false;
     add.addEventListener('click',()=>{
       if(preparing)return;
@@ -150,8 +163,10 @@
       const next=items.map(x=>({...x}));if(editing>=0)next[editing]=item;else next.push(item);
       const valid=variants.restore({items:next});
       if(!valid) {cartMessage.textContent='Puedes comprar hasta 20 kits en un solo pedido. Ajusta las cantidades.';return;}
-      items=valid.items;endEdit();saveCart();renderCart();
-      cartMessage.textContent='Carrito actualizado. Puedes agregar otro color o continuar al pago.';
+      const wasEditing=editing>=0;
+      items=valid.items;endEdit();saveCart();renderCart();resetSelection();
+      cartMessage.textContent=(wasEditing?'Configuración guardada.':'Kit añadido al carrito.')+' Elige una nueva configuración o continúa al pago.';
+      mode.focus({preventScroll:true});
     });
     renderCart();
     button.addEventListener('click', async () => {
@@ -173,11 +188,13 @@
       try {
         await loadCustomerStep();
         const data = await window.KaementoOrderCustomer.open(selected, async customer => {
+          const payload=JSON.stringify({...body,customer});
+          const idempotencyKey=await requestKey(payload);
           const response = await fetch('/api/bold/checkout', {
-            method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...body, customer}),
+            method:'POST', headers:{'Content-Type':'application/json','Idempotency-Key':idempotencyKey}, body:payload,
             signal:AbortSignal.timeout(15000), cache:'no-store'
           });
-          if (!response.ok) { const error = new Error('Order unavailable'); error.code = response.status === 400 ? 'INVALID_CUSTOMER' : 'UNAVAILABLE'; throw error; }
+          if (!response.ok) { const error = new Error('Order unavailable'); error.code = ({400:'INVALID_CUSTOMER',409:'ORDER_PROCESSED',429:'RATE_LIMITED'})[response.status] || 'UNAVAILABLE'; throw error; }
           return response.json();
         });
         if (!data) { status.textContent = ''; return; }
@@ -185,7 +202,7 @@
         if (!Number.isInteger(data.amount) || data.amount !== n * unitAmount || data.currency !== 'COP' ||
             data.tax !== 'vat-19' || variants.kitCount(data.selection || {}) !== n ||
             JSON.stringify(data.selection) !== JSON.stringify(selected) || !/^[A-Za-z0-9_-]{1,60}$/.test(data.orderId) ||
-            !/^[a-f0-9]{64}$/.test(data.integritySignature) || typeof data.apiKey !== 'string' || !data.apiKey) {
+            !/^[a-f0-9]{64}$/.test(data.integritySignature) || !/^[a-f0-9]{64}$/.test(data.statusToken) || typeof data.apiKey !== 'string' || !data.apiKey) {
           throw new Error('Invalid configuration');
         }
         // Keep only non-personal selection data, keyed by this order, for the return page.
@@ -194,6 +211,8 @@
           const saved = JSON.parse(sessionStorage.getItem('kaemento-bold-selections') || '{}');
           const entries = saved && typeof saved === 'object' && !Array.isArray(saved) ? Object.entries(saved).slice(-19) : [];
           sessionStorage.setItem('kaemento-bold-selections', JSON.stringify(Object.fromEntries([...entries, [data.orderId, data.selection]])));
+          const tokens=JSON.parse(sessionStorage.getItem('kaemento-order-access') || '{}');
+          sessionStorage.setItem('kaemento-order-access',JSON.stringify(Object.fromEntries([...Object.entries(tokens).slice(-19),[data.orderId,data.statusToken]])));
         } catch (_) { /* Payment still works if browser storage is unavailable. */ }
         const config = {
           orderId: data.orderId, amount: String(data.amount), currency: data.currency,

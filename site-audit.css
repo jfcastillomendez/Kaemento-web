@@ -10,7 +10,7 @@
 .kit-list{padding-left:20px;line-height:1.8;margin:24px 0}.custom-tones{max-width:1000px;margin-top:48px;padding-top:36px;border-top:1px solid #ffffff30}.custom-tones h3{font-size:28px}.custom-tones p{line-height:1.75;color:#ddd5ca}.custom-tones .outline-button{color:#f5eee5;border-color:#9b8b77}.micro-related{margin-top:64px}.micro-quote{background:#eee7dd}.micro-quote .fields{display:grid;grid-template-columns:1fr 1fr;gap:22px}.micro-quote form{max-width:880px;margin-top:32px}.micro-quote label{display:flex;flex-direction:column;gap:8px;font-size:14px}.micro-quote .privacy-consent{flex-direction:row}.micro-quote input,.micro-quote select,.micro-quote textarea{width:100%;min-width:0;padding:13px;border:1px solid #b4aa9a;background:#faf7f2;color:#272420;font:inherit}.micro-quote textarea{min-height:110px}.micro-quote .full{grid-column:1/-1}.policy{padding-top:150px}.policy .wrap{max-width:950px}.policy h1{font-size:clamp(34px,5vw,64px)}.policy h2{font-size:28px;margin:36px 0 12px}.policy p{line-height:1.8}.policy a{text-decoration:underline}
 .breadcrumbs a{text-decoration:underline;text-underline-offset:3px}.eyebrow{color:#896035}.eyebrow.light,#colores .eyebrow,.detail-copy .eyebrow{color:#d6ae78}
 @media(max-width:1100px){.nav{gap:14px}.nav>nav{gap:14px}.nav>nav>a,.nav-group>a{font-size:11px}}
-@media(max-width:900px){.nav .menu{display:flex}.nav>nav{display:none;position:absolute;top:100%;left:0;right:0;width:100%;background:#faf7f2;color:#282521;padding:20px 24px;max-height:calc(100dvh - 90px);overflow-y:auto;overscroll-behavior:contain;flex-direction:column;align-items:stretch;gap:12px}.nav>nav.open{display:flex}.nav>nav>a,.nav-group>a{font-size:14px}.nav .nav-group{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between}.nav .submenu{position:static;box-shadow:none;flex-basis:100%;width:100%;max-height:none;padding:8px 0 8px 16px;display:none!important;visibility:visible;opacity:1;transform:none}.nav .submenu-open .submenu{display:flex!important;flex-direction:column}.nav .submenu a{padding:10px 0}.nav .nav-cta{align-self:flex-start}}
+@media(max-width:1100px){.nav .menu{display:flex}.nav>nav{display:none;position:absolute;top:100%;left:0;right:0;width:100%;background:#faf7f2;color:#282521;padding:20px 24px;max-height:calc(100dvh - 90px);overflow-y:auto;overscroll-behavior:contain;flex-direction:column;align-items:stretch;gap:12px}.nav>nav.open{display:flex}.nav>nav>a,.nav-group>a{font-size:14px}.nav .nav-group{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between}.nav .submenu{position:static;box-shadow:none;flex-basis:100%;width:100%;max-height:none;padding:8px 0 8px 16px;display:none!important;visibility:visible;opacity:1;transform:none}.nav .submenu-open .submenu{display:flex!important;flex-direction:column}.nav .submenu a{padding:10px 0}.nav .nav-cta{align-self:flex-start}}
 @media(max-width:540px){.micro-quote .fields{grid-template-columns:1fr}.micro-cta{display:flex;flex-direction:column;align-items:stretch}.micro-cta a{text-align:center;justify-content:space-between;max-width:100%;font-size:12px}.custom-tones h3{font-size:25px}.policy{padding-top:110px}}
 /* Accessible versions of the existing gold and muted-text palette. */
 .section h2 em,.policy h1 em{color:#896035}
@@ -52,3 +52,15 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .gallery-filters [data-gallery-filter="obra"]{--gallery-filter-width:179.79px}
 .gallery-filters [data-gallery-filter="proyectos"]{--gallery-filter-width:172.22px}
 #gallery-count{line-height:18px}
+
+/* Audit follow-up: readable forms and short paths through long editorial pages. */
+.section-jumps{width:min(1180px,calc(100% - 40px));margin:28px auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px 28px;padding:18px 0;border-block:1px solid #b9a78d66;font-size:14px;line-height:1.5}
+.section-jumps a{text-decoration:underline;text-underline-offset:5px;padding:8px 0}
+.service-intent{margin-top:24px}.service-intent a:first-child{font-weight:600;color:#79532b}
+.quote .fields label{font-size:12px;line-height:1.5}
+.quote .fields input,.quote .fields select,.quote .fields textarea{font-size:16px;line-height:1.5}
+@media(min-width:1101px) and (max-width:1380px){.nav{padding-inline:3vw;gap:16px}.nav>nav{gap:16px;font-size:12px}.nav .brand{font-size:14px;letter-spacing:.16em}}
+@media(max-width:720px){.section-jumps{gap:8px 20px;justify-content:flex-start;font-size:13px}.hero#inicio ~ .section{padding-top:60px;padding-bottom:60px}.service-list h3{font-size:clamp(26px,7.2vw,34px);overflow-wrap:normal}.quote .fields{gap:20px}}
+.gallery-more{display:block;margin:30px auto 0;padding:16px 26px;border:1px solid #8d704d;background:transparent;color:#33291f;font:inherit;cursor:pointer}
+
+@media(max-width:720px){main:has(#comprar-microcemento)>.section{padding-top:60px;padding-bottom:60px}}

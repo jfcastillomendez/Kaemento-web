@@ -21,7 +21,7 @@ nav?.querySelectorAll('a').forEach(a=>a.addEventListener('click',closeMenu));
 groups.forEach(group=>{
  const toggle=group.querySelector('.submenu-toggle');
  toggle?.addEventListener('click',e=>{e.stopPropagation();const open=!group.classList.contains('submenu-open');closeGroups();setGroup(group,open);});
- group.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&matchMedia('(min-width:901px)').matches){closeGroups();setGroup(group,true);}});
+ group.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&matchMedia('(min-width:1101px)').matches){closeGroups();setGroup(group,true);}});
  group.addEventListener('pointerleave',()=>{if(!group.contains(document.activeElement))setGroup(group,false);});
  group.addEventListener('focusout',e=>{if(!group.contains(e.relatedTarget))setGroup(group,false);});
 });

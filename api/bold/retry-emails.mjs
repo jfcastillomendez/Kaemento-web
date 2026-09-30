@@ -4,15 +4,17 @@ import emails from './_lib/order-emails.cjs';
 const headers = {'Content-Type':'application/json', 'Cache-Control':'no-store', 'X-Content-Type-Options':'nosniff'};
 const reply = (status, code, extra = {}) => Response.json({status:code,...extra},{status,headers});
 export async function handle(request, env = process.env, storeFactory = payments.createStore, deliver = emails.deliverOrder) {
-  if (request.method !== 'POST') return new Response('',{status:405,headers:{...headers,Allow:'POST'}});
-  const secret = env.KAEMENTO_EMAIL_RETRY_SECRET;
+  if (!['GET','POST'].includes(request.method)) return new Response('',{status:405,headers:{...headers,Allow:'GET, POST'}});
+  // Vercel Cron uses GET + its own CRON_SECRET. Manual POST keeps the existing secret.
+  const scheduled=request.method==='GET';
+  const secret = scheduled ? env.CRON_SECRET : env.KAEMENTO_EMAIL_RETRY_SECRET;
   if (!payments.enabled(env) || typeof secret !== 'string' || secret.length < 32) return reply(503,'retry_unavailable');
   const supplied = request.headers.get('authorization') || '';
   const hash = value => createHash('sha256').update(value).digest();
   if (!timingSafeEqual(hash(supplied),hash('Bearer '+secret))) return reply(401,'unauthorized');
-  if (!/^application\/json(?:;|$)/i.test(request.headers.get('content-type') || '')) return reply(415,'invalid_content_type');
-  let body;
-  try {
+  if (!scheduled && !/^application\/json(?:;|$)/i.test(request.headers.get('content-type') || '')) return reply(415,'invalid_content_type');
+  let body={};
+  if(!scheduled) try {
     const reader = request.body?.getReader(); let raw = '', size = 0;
     if (reader) try {
       while (true) { const {done,value} = await reader.read(); if (done) break; size += value.length;

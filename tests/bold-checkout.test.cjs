@@ -5,8 +5,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const {createCheckout} = require('../api/bold/checkout.js');
-const {customer} = require('./helpers/orders.cjs');
-const handler = createCheckout(process.env, () => ({async saveOrder() {}}));
+const {customer,checkoutStore} = require('./helpers/orders.cjs');
+const handler = createCheckout(process.env, () => checkoutStore());
 const root = path.resolve(__dirname, '..');
 // Ephemeral unit-test fixtures only: never valid Bold keys and never used with Bold.
 const saved = { identity: process.env.BOLD_IDENTITY_KEY, secret: process.env.BOLD_SECRET_KEY, enabled:process.env.BOLD_CONFIRMATION_ENABLED };
@@ -33,7 +33,7 @@ for (const quantity of [1, 2, 20]) test(`Authoritative total, IVA and signature 
   assert.equal(r.body.tax, 'vat-19'); assert.equal(r.body.currency, 'COP');
   assert.match(r.body.orderId, /^[A-Za-z0-9_-]{1,60}$/);
   assert.equal(r.body.integritySignature, createHash('sha256').update(`${r.body.orderId}${r.body.amount}COP${fixtureSecret}`).digest('hex'));
-  assert.deepEqual(Object.keys(r.body).sort(), ['orderId','amount','currency','apiKey','integritySignature','tax','description','selection'].sort());
+  assert.deepEqual(Object.keys(r.body).sort(), ['orderId','amount','currency','apiKey','integritySignature','tax','description','selection','statusToken'].sort());
   assert.ok(!JSON.stringify(r).includes(fixtureSecret));
   assert.equal(r.headers['Cache-Control'], 'no-store');
   assert.ok(r.body.description.length >= 2 && r.body.description.length <= 100);

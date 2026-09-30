@@ -6,7 +6,7 @@ const payments = require('../api/bold/_lib/payments.cjs');
 const emails = require('../api/bold/_lib/order-emails.cjs');
 const {createCheckout} = require('../api/bold/checkout.js');
 const {invoiceProvider} = require('../api/bold/_lib/invoice-provider.cjs');
-const {customer} = require('./helpers/orders.cjs');
+const {customer,checkoutStore} = require('./helpers/orders.cjs');
 const {redisFixture} = require('./helpers/redis.cjs');
 const env = {BOLD_CONFIRMATION_ENABLED:'true',BOLD_IDENTITY_KEY:randomBytes(16).toString('hex'),BOLD_SECRET_KEY:randomBytes(32).toString('hex'),
   UPSTASH_REDIS_REST_URL:'https://fixture.upstash.io',UPSTASH_REDIS_REST_TOKEN:randomBytes(16).toString('hex'),BOLD_STORAGE_NAMESPACE:'orders-tests',
@@ -18,7 +18,7 @@ const id = () => `KAE-MICRO-${Date.now()}-${randomBytes(8).toString('hex')}`;
 const notice = order => ({id:randomBytes(16).toString('hex'),type:'SALE_APPROVED',orderId:order.orderId,
   paymentId:randomBytes(12).toString('hex'),amount:order.amount,currency:'COP',paymentMethod:'PSE'});
 async function invoke(body, factory=()=>({async saveOrder(){}}), configuration=env) {
-  const out={}; await createCheckout(configuration,factory)({method:'POST',headers:{'content-type':'application/json'},body},
+  const out={}; await createCheckout(configuration,()=>checkoutStore(factory()))({method:'POST',headers:{'content-type':'application/json'},body},
     {setHeader(){},set statusCode(x){out.status=x;},end(x){out.body=JSON.parse(x);}}); return out;
 }
 test('Complete operational model, server totals and normalized buyer fields',async()=>{

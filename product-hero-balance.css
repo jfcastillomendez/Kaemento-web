@@ -1,4 +1,4 @@
-/* Only loaded by the six product detail pages. */
+/* Shared complete-artwork treatment for product detail pages. */
 .detail-hero:has(> .product-sheet) {
   height:660px;
   min-height:660px;

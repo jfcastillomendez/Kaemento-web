@@ -141,3 +141,13 @@ Pasos de activación pendientes:
 - https://resend.com/docs/dashboard/domains/introduction
 - https://vercel.com/docs/functions/functions-api-reference/vercel-functions-package
 - https://upstash.com/docs/redis/features/restapi
+
+## Seguimiento del pedido y recuperación de correos — auditoría septiembre 2026
+
+- El checkout devuelve una credencial opaca limitada a consultar ese pedido durante 30 días. Se conserva en `sessionStorage`, nunca en la URL ni en Analytics. `/api/bold/status` recibe `orderId` y `token` por POST y solo devuelve estado, selección e importe; no datos del comprador. El redirect de Bold nunca confirma el pago.
+- El frontend reutiliza una clave de idempotencia para reintentos de la misma configuración/comprador durante la sesión de página. Redis crea el pedido y registra la clave atómicamente, limita a 12 pedidos nuevos por origen de red y hora, y conserva las claves durante 24 horas. Los reintentos no consumen otro cupo. Pedidos pagados/anulados no emiten una nueva firma.
+- El POST autenticado de `/api/bold/retry-emails` conserva `KAEMENTO_EMAIL_RETRY_SECRET`. La variante GET admite Vercel Cron con `CRON_SECRET`, independiente, de al menos 32 caracteres. Sin esa variable, falla de forma controlada. Procesa un pedido pendiente por ejecución para limitar la duración.
+- El programador NO se activa en esta revisión: confirmar plan Vercel y crear `CRON_SECRET` en Production antes de configurar una frecuencia de cinco minutos. Una ejecución diaria no cubre de forma fiable la ventana de idempotencia de Resend. Referencia: https://vercel.com/docs/cron-jobs/manage-cron-jobs
+- No se han enviado correos de prueba ni modificado variables externas. Validar recepción en ambos buzones internos y en un buzón de comprador autorizado antes de dar por comprobado el circuito real.
+- No se eliminan automáticamente pedidos abandonados: definir primero la retención aplicable a pedidos, pagos y datos de contacto.
+- El cierre automático de la oferta requiere fecha de inicio confirmada, definición de cupo (compradores o kits) y consumo histórico. No se cambia el precio ni se presume una fecha de vencimiento mientras falten esos datos.

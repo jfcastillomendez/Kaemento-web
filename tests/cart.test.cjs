@@ -6,12 +6,12 @@ const variants=require('../bold-config.js');
 const {createCheckout}=require('../api/bold/checkout.js');
 const payments=require('../api/bold/_lib/payments.cjs');
 const emails=require('../api/bold/_lib/order-emails.cjs');
-const {customer}=require('./helpers/orders.cjs');
+const {customer,checkoutStore}=require('./helpers/orders.cjs');
 const {redisFixture}=require('./helpers/redis.cjs');
 const line=(color,quantity=1,sealer='mate')=>({productId:'microcemento-kaemento-launch',colorMode:'standard',color,quantity,sealer});
 const mix={productId:'microcemento-kaemento-launch',colorMode:'mix',color1:'arena',percentage1:70,color2:'gris-cemento',percentage2:30,quantity:2,sealer:'brillante'};
 const env={BOLD_CONFIRMATION_ENABLED:'true',BOLD_IDENTITY_KEY:randomBytes(16).toString('hex'),BOLD_SECRET_KEY:randomBytes(32).toString('hex'),KV_REST_API_URL:'https://fixture.upstash.io',KV_REST_API_TOKEN:randomBytes(16).toString('hex'),BOLD_STORAGE_NAMESPACE:'cart-tests',KAEMENTO_EMAIL_ENABLED:'true',RESEND_API_KEY:randomBytes(32).toString('hex'),KAEMENTO_EMAIL_FROM:'KAEMENTO <pedidos@example.invalid>',KAEMENTO_SALES_EMAIL:'sales@example.invalid,admin@example.invalid'};
-async function invoke(configuration,store={async saveOrder(){}}){const out={};await createCheckout(env,()=>store)({method:'POST',headers:{'content-type':'application/json'},body:{...configuration,customer}},{setHeader(){},set statusCode(x){out.status=x;},end(x){out.body=JSON.parse(x);}});return out;}
+async function invoke(configuration,store={async saveOrder(){}}){const out={};await createCheckout(env,()=>checkoutStore(store))({method:'POST',headers:{'content-type':'application/json'},body:{...configuration,customer}},{setHeader(){},set statusCode(x){out.status=x;},end(x){out.body=JSON.parse(x);}});return out;}
 test('One Extra Blanco and two Arena persist as two lines before one signed checkout',async()=>{
  let saved;const out=await invoke({items:[line('extra-blanco'),line('arena',2)]},{async saveOrder(order){saved=order;}});
  assert.equal(out.status,200);assert.equal(out.body.amount,1096500);assert.equal(saved.orderId,out.body.orderId);
