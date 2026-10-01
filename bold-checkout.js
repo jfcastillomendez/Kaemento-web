@@ -20,7 +20,7 @@
   function loadCustomerStep() {
     if (customerPromise) return customerPromise;
     customerPromise = Promise.all([
-      ['script','/order-customer.js'], ['link','/order-customer.css']
+      ['script','/order-customer.js?v=2'], ['link','/order-customer.css']
     ].map(([tag,url])=>new Promise((resolve,reject)=>{
       const element = document.createElement(tag);
       if (tag === 'script') element.src = url;
@@ -69,8 +69,9 @@
     const cartTotal = panel.querySelector('[data-cart-total]');
     const cartMessage = panel.querySelector('[data-cart-message]');
     const storageKey = 'kaemento-microcemento-cart-v1';
-    let items = [], editing = -1;
-    try { items = variants.restore(JSON.parse(localStorage.getItem(storageKey)))?.items || []; } catch (_) {}
+    let items = [], editing = -1, visit = 0;
+    // The draft belongs only to this page visit. Remove carts saved by older releases.
+    try { localStorage.removeItem(storageKey); } catch (_) {}
     const button = panel.querySelector('[data-bold-buy]');
     const status = panel.querySelector('[data-bold-status]');
     const total = panel.querySelector('[data-bold-total]');
@@ -103,9 +104,6 @@
     }
     variantControls.forEach(field => field.addEventListener('change',refresh));
     refresh();
-    function saveCart() {
-      try { localStorage.setItem(storageKey,JSON.stringify({items})); } catch (_) { cartMessage.textContent = 'Tu navegador no permite guardar el carrito. Mantenlo abierto hasta finalizar.'; }
-    }
     function renderCart() {
       cartList.replaceChildren();
       items.forEach((item,index)=>{
@@ -121,7 +119,7 @@
           const n=Number(qty.value), candidate=items.map((x,i)=>({...x,quantity:i===index?n:x.quantity}));
           const valid=variants.restore({items:candidate});
           if (!valid) {qty.setCustomValidity('El pedido admite entre 1 y 20 kits en total, en cantidades enteras.');button.disabled=true;cartMessage.textContent=qty.validationMessage;return;}
-          qty.setCustomValidity('');items=valid.items;saveCart();
+          qty.setCustomValidity('');items=valid.items;
           subtotal.textContent=format(n*unitAmount);
           const count=variants.kitCount(valid);cartTotal.textContent=format(count*unitAmount);
           panel.querySelector('[data-cart-count]').textContent=count+' '+(count===1?'kit':'kits');
@@ -137,7 +135,7 @@
           refresh();total.textContent=format(item.quantity*unitAmount);add.textContent='GUARDAR CONFIGURACIÓN';cancelEdit.hidden=false;button.disabled=true;mode.focus();
         });
         const remove=document.createElement('button');remove.type='button';remove.textContent='Quitar';remove.setAttribute('aria-label','Quitar '+variants.formula(item));
-        remove.addEventListener('click',()=>{items.splice(index,1);endEdit();resetSelection();saveCart();renderCart();cartMessage.textContent='Configuración eliminada.';add.focus();});
+        remove.addEventListener('click',()=>{items.splice(index,1);endEdit();resetSelection();renderCart();cartMessage.textContent='Configuración eliminada.';add.focus();});
         controls.append(label,subtotal,edit,remove);row.append(summary,controls);cartList.append(row);
       });
       const count=items.reduce((n,x)=>n+x.quantity,0);
@@ -164,15 +162,32 @@
       const valid=variants.restore({items:next});
       if(!valid) {cartMessage.textContent='Puedes comprar hasta 20 kits en un solo pedido. Ajusta las cantidades.';return;}
       const wasEditing=editing>=0;
-      items=valid.items;endEdit();saveCart();renderCart();resetSelection();
+      items=valid.items;endEdit();renderCart();resetSelection();
       cartMessage.textContent=(wasEditing?'Configuración guardada.':'Kit añadido al carrito.')+' Elige una nueva configuración o continúa al pago.';
       mode.focus({preventScroll:true});
     });
-    renderCart();
+    function clearDraft() {
+      items = [];
+      endEdit();
+      resetSelection();
+      renderCart();
+      cartMessage.textContent = '';
+      status.textContent = '';
+      contact.hidden = true;
+    }
+    window.addEventListener('pagehide', () => {
+      visit++;
+      clearDraft();
+      checkoutAttempts.clear();
+    });
+    // Also reset when Back/Forward restores the document from the browser's page cache.
+    window.addEventListener('pageshow', event => { if (event.persisted) clearDraft(); });
+    clearDraft();
     button.addEventListener('click', async () => {
       if (preparing || editing>=0 || [...cartList.querySelectorAll('input')].some(x=>!x.reportValidity())) return;
       const selected = variants.restore({items});
       if (!selected) {cartMessage.textContent='Añade al menos una configuración al carrito.';return;}
+      const activeVisit = visit;
       const n = variants.kitCount(selected);
       const body = {items:selected.items.map(item=>({productId:'microcemento-kaemento-launch',...item}))};
       preparing = true;
@@ -187,6 +202,7 @@
       let opened = false;
       try {
         await loadCustomerStep();
+        if (activeVisit !== visit) return;
         const data = await window.KaementoOrderCustomer.open(selected, async customer => {
           const payload=JSON.stringify({...body,customer});
           const idempotencyKey=await requestKey(payload);
@@ -197,8 +213,9 @@
           if (!response.ok) { const error = new Error('Order unavailable'); error.code = ({400:'INVALID_CUSTOMER',409:'ORDER_PROCESSED',429:'RATE_LIMITED'})[response.status] || 'UNAVAILABLE'; throw error; }
           return response.json();
         });
-        if (!data) { status.textContent = ''; return; }
+        if (!data || activeVisit !== visit) { status.textContent = ''; return; }
         await loadSdk();
+        if (activeVisit !== visit) return;
         if (!Number.isInteger(data.amount) || data.amount !== n * unitAmount || data.currency !== 'COP' ||
             data.tax !== 'vat-19' || variants.kitCount(data.selection || {}) !== n ||
             JSON.stringify(data.selection) !== JSON.stringify(selected) || !/^[A-Za-z0-9_-]{1,60}$/.test(data.orderId) ||

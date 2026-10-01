@@ -41,11 +41,14 @@
         function finish(value) {
           if (finished) return;
           finished = true;
+          window.removeEventListener('pagehide', abandon);
           dialog.close();
           form.reset();
           dialog.remove();
           resolve(value);
         }
+        const abandon = () => finish(null);
+        window.addEventListener('pagehide', abandon, {once:true});
         dialog.querySelector('.kae-order-close').addEventListener('click',()=>{if (!busy) finish(null);});
         dialog.addEventListener('cancel',event=>{event.preventDefault();if (!busy) finish(null);});
         form.addEventListener('submit',async event=>{
@@ -62,6 +65,7 @@
           status.textContent = 'Guardando tu pedido…';
           try { finish(await prepare(customer)); }
           catch (error) {
+            if (finished) return;
             // Display only fixed application errors supplied by our caller, never provider responses.
             status.textContent = ({INVALID_CUSTOMER:'Revisa tus datos: identificación válida, correo, teléfono de 7 a 15 dígitos y dirección completa.',ORDER_PROCESSED:'Este pedido ya fue procesado. Revisa tu comprobante o consulta con KAEMENTO antes de volver a pagar.',RATE_LIMITED:'Has realizado varios intentos. Espera un momento o escríbenos para ayudarte.'})[error.code] || 'No pudimos guardar tu pedido. Intenta nuevamente o contáctanos en kaemento@gmail.com.';
           } finally {
