@@ -37,21 +37,21 @@ test('Invalid cart lines, injected prices and malformed data fail before storage
  }assert.equal(calls,0);
  const out=await invoke({items:[line('arena')]},{async saveOrder(){throw new Error('offline');}});assert.equal(out.status,503);assert.equal(out.body.integritySignature,undefined);
 });
-test('Anonymous multi-line begin_checkout crosses both privacy boundaries once; no lead or PII',()=>{
+for (const metric of ['begin_checkout','add_to_cart','remove_from_cart','view_cart']) test('Anonymous multi-line '+metric+' crosses both privacy boundaries once; no lead or PII',()=>{
  let listener;const location={pathname:'/productos/microcemento-kaemento.html',origin:'http://localhost:8000',hostname:'localhost',search:'?gtm_debug=x'};
  const frame={contentWindow:{postMessage(){}},setAttribute(){}};
  const context={URL,URLSearchParams,location,document:{referrer:'',addEventListener(_,fn){fn();},createElement(){return frame;},body:{appendChild(){}}},sessionStorage:{getItem(){return null;},setItem(){}},window:{addEventListener(){}}};
  vm.runInNewContext(fs.readFileSync('analytics.js','utf8'),context);
  const params={currency:'COP',value:1096500,items:[{quantity:1,item_variant:'extra-blanco',sealer_type:'mate',email:'PRIVATE'},{quantity:2,item_variant:'arena',sealer_type:'brillante',name:'PRIVATE'}],email:'PRIVATE',message:'PRIVATE',phone:'PRIVATE'};
- context.window.kaementoTrack('begin_checkout',params);const event=context.window.dataLayer.at(-1);assert.equal(event.items.length,2);assert.equal(event.value,1096500);assert.ok(!JSON.stringify(event).includes('PRIVATE'));
- const before=context.window.dataLayer.length;context.window.kaementoTrack('generate_lead',params);context.window.kaementoTrack('begin_checkout',{...params,value:1});assert.equal(context.window.dataLayer.length,before);
+ context.window.kaementoTrack(metric,params);const event=context.window.dataLayer.at(-1);assert.equal(event.items.length,2);assert.equal(event.value,1096500);assert.ok(!JSON.stringify(event).includes('PRIVATE'));
+ const before=context.window.dataLayer.length;context.window.kaementoTrack('generate_lead',params);context.window.kaementoTrack(metric,{...params,value:1});assert.equal(context.window.dataLayer.length,before);
  const parent={postMessage(){}};const bridge={URLSearchParams,location,parent,window:{dataLayer:[],addEventListener(_,fn){listener=fn;}}};bridge.dataLayer=bridge.window.dataLayer;vm.runInNewContext(fs.readFileSync('analytics-bridge.js','utf8'),bridge);
- listener({origin:location.origin,source:parent,data:{type:'kaemento-event',event:'begin_checkout',params}});
+ listener({origin:location.origin,source:parent,data:{type:'kaemento-event',event:metric,params}});
  const result=bridge.dataLayer.at(-1);assert.equal(result[2].items.length,2);assert.equal(result[2].debug_mode,true);assert.ok(!JSON.stringify(result).includes('PRIVATE'));
 });
 test('Cart payment, duplicate webhooks and itemized independent emails use real Redis',{skip:!process.env.REDIS_SERVER_BIN},async()=>{
  const redis=await redisFixture();try {
- const store=payments.createStore(env,redis.transport);const result=await invoke({items:[line('extra-blanco'),line('arena',2),mix]},store);
+ const store=payments.createStore(env,redis.transport,()=>Date.parse('2026-09-30T12:00:00Z'));const result=await invoke({items:[line('extra-blanco'),line('arena',2),mix]},store);
  assert.equal(result.status,200);const orderId=result.body.orderId;
  const event={id:'cart-event',type:'SALE_APPROVED',paymentId:'cart-payment',orderId,amount:result.body.amount,currency:'COP'};
  assert.equal(await store.process({...event,amount:1}),'mismatch');

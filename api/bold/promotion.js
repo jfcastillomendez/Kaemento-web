@@ -1,9 +1,7 @@
 const payments = require('./_lib/payments.cjs');
-const CAPACITY = 30;
-// 2026-09-30: KAEMENTO reported 6 orders; production SCARD contained 2.
-// The 4 historical orders are quota accounting only, never fabricated payment records.
-const HISTORICAL_ORDERS = 4;
-function createPromotion(env = process.env, storeFactory = payments.createStore) {
+const campaign = require('../../microcemento-launch-config.js');
+const CAPACITY = campaign.maxOrders, HISTORICAL_ORDERS = campaign.historicalOrders;
+function createPromotion(env = process.env, storeFactory = payments.createStore, clock = Date.now) {
   return async function promotion(req,res) {
     res.setHeader('Content-Type','application/json');
     res.setHeader('X-Content-Type-Options','nosniff');
@@ -16,7 +14,9 @@ function createPromotion(env = process.env, storeFactory = payments.createStore)
       if (!Number.isSafeInteger(confirmed) || confirmed < 0) throw new Error('Invalid count');
       // Public aggregate only: no references, buyers, amounts or payment identifiers.
       res.setHeader('Cache-Control','public, max-age=0, s-maxage=15, stale-while-revalidate=15');
-      return reply(200,{capacity:CAPACITY,remaining:Math.max(0,CAPACITY-HISTORICAL_ORDERS-confirmed)});
+      const remaining = Math.max(0,CAPACITY-HISTORICAL_ORDERS-confirmed);
+      const state = !campaign.enabled || clock() >= Date.parse(campaign.endsAt) ? 'ended' : clock() < Date.parse(campaign.startsAt) ? 'upcoming' : remaining === 0 ? 'sold_out' : 'active';
+      return reply(200,{capacity:CAPACITY,remaining,state,endsAt:campaign.endsAt});
     } catch (_) { return reply(503,{error:'Disponibilidad temporalmente no disponible.'}); }
   };
 }

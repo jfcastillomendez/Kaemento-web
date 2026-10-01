@@ -62,6 +62,19 @@ document.addEventListener('click', event => {
   if(a.pathname.endsWith('/catalogo-comercial-microcemento-kaemento-2026.pdf'))track('microcemento_catalog_download',id);
   if(a.pathname.endsWith('/manual-aplicacion-microcemento-kaemento.pdf'))track('microcemento_manual_download',id);
 });
+// Retain only the selected service context; do not store contact details.
+(() => {
+  const choices = {
+    'arquitectura-obras':'Proyecto arquitectónico u obra civil',
+    mantenimiento:'Mantenimiento de edificaciones', fachadas:'Fachadas e impermeabilización',
+    'alto-trafico':'Pisos industriales y alto tráfico', garajes:'Garajes y sótanos',
+    bodegas:'Bodegas y centros logísticos', microcemento:'Microcemento KAEMENTO'
+  };
+  const field = document.querySelector('#quote-form select[name="servicio"]');
+  const key = new URLSearchParams(location.search).get('servicio');
+  if (field && Object.hasOwn(choices, key) && !field.value) field.value = choices[key];
+})();
+
 document.querySelectorAll('form:not([data-network-form])').forEach(form => {
   const micro=form.id==='microcemento-form';
   if(micro)form.addEventListener('focusin',()=>track('microcemento_form_start','microcemento-form'),{once:true});

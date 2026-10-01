@@ -15,7 +15,7 @@ async function invoke(handler,body,headers={}) {
 }
 test('Concurrent checkout retries create exactly one durable order and return the same signature/token',{skip:!process.env.REDIS_SERVER_BIN},async()=>{
  const redis=await redisFixture();try {
- const store=payments.createStore(env,redis.transport),handler=createCheckout(env,()=>store),key=randomUUID();
+ const store=payments.createStore(env,redis.transport,()=>Date.parse('2026-09-30T12:00:00Z')),handler=createCheckout(env,()=>store),key=randomUUID();
  const calls=await Promise.all(Array.from({length:16},()=>invoke(handler,{...selection,customer},{'idempotency-key':key})));
  assert.ok(calls.every(x=>x.status===200));assert.equal(new Set(calls.map(x=>x.body.orderId)).size,1);
  assert.equal(new Set(calls.map(x=>x.body.integritySignature)).size,1);assert.equal(new Set(calls.map(x=>x.body.statusToken)).size,1);
@@ -44,7 +44,7 @@ test('Concurrent checkout retries create exactly one durable order and return th
 });
 test('Checkout rate limit blocks only new requests, preserves retries, and recovers after its window',{skip:!process.env.REDIS_SERVER_BIN},async()=>{
  const redis=await redisFixture();try {
- const store=payments.createStore(env,redis.transport),handler=createCheckout(env,()=>store),key=randomUUID();
+ const store=payments.createStore(env,redis.transport,()=>Date.parse('2026-09-30T12:00:00Z')),handler=createCheckout(env,()=>store),key=randomUUID();
  for(let i=0;i<12;i++)assert.equal((await invoke(handler,{...selection,customer},{'idempotency-key':i===0?key:randomUUID()})).status,200);
  const limited=await invoke(handler,{...selection,customer},{'idempotency-key':randomUUID()});assert.equal(limited.status,429);assert.equal(limited.body.integritySignature,undefined);
  assert.equal((await invoke(handler,{...selection,customer},{'idempotency-key':key})).status,200);

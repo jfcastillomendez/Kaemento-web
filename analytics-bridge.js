@@ -16,7 +16,7 @@ gtag('js', new Date());
 gtag('config','G-XYVF450MJE',{...debugOptions,send_page_view:false,page_location:'https://www.kaemento.com/',page_referrer:'',allow_google_signals:false,allow_ad_personalization_signals:false});
 gtag('config','AW-18358591293',{...debugOptions,send_page_view:false,page_location:'https://www.kaemento.com/',page_referrer:'',allow_ad_personalization_signals:false});
 // An Ads conversion label can be connected here after it is confirmed. No placeholder send_to.
-const allowedEvents=new Set(['page_view','phone_click','whatsapp_click','microcemento_cta_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start','begin_checkout','select_promotion','view_promotion']);
+const allowedEvents=new Set(['page_view','phone_click','whatsapp_click','microcemento_cta_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start','begin_checkout','add_to_cart','remove_from_cart','view_cart','view_item','select_promotion','view_promotion']);
 window.addEventListener('message',event=>{
  if(event.origin!==location.origin || event.source!==parent || event.data?.type!=='kaemento-event' || !allowedEvents.has(event.data.event))return;
  const p=event.data.params || {}, safe={};
@@ -29,7 +29,7 @@ window.addEventListener('message',event=>{
    if (p.promotion_name !== 'microcemento_kaemento_launch_2026') return;
    safe.promotion_name = 'microcemento_kaemento_launch_2026';
  }
- if (event.data.event === 'begin_checkout') {
+ if (['begin_checkout','add_to_cart','remove_from_cart','view_cart'].includes(event.data.event)) {
    if (!Array.isArray(p.items) || !p.items.length || p.items.length > 20) return;
    const items = [];
    let quantity = 0;
@@ -40,6 +40,10 @@ window.addEventListener('message',event=>{
    }
    if (quantity > 20 || p.currency !== 'COP' || p.value !== 365500 * quantity) return;
    safe.currency = 'COP'; safe.value = 365500 * quantity; safe.items = items;
+ }
+ if (event.data.event === 'view_item') {
+   safe.currency = 'COP'; safe.value = 365500;
+   safe.items = [{item_id:'microcemento-kaemento',item_name:'Microcemento KAEMENTO',price:365500}];
  }
  gtag('event',event.data.event,safe);
 });

@@ -9,7 +9,7 @@ function validCheckoutVariant(value) {
   const match = /^([a-z-]+):(10|20|30|40|50|60|70|80|90)\+([a-z-]+):(10|20|30|40|50|60|70|80|90)$/.exec(value);
   return !!match && colors.includes(match[1]) && colors.includes(match[3]) && match[1] !== match[3] && Number(match[2]) + Number(match[4]) === 100;
 }
-  const allowed = new Set(['page_view','phone_click','whatsapp_click','microcemento_cta_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start','begin_checkout','select_promotion','view_promotion']);
+  const allowed = new Set(['page_view','phone_click','whatsapp_click','microcemento_cta_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start','begin_checkout','add_to_cart','remove_from_cart','view_cart','view_item','select_promotion','view_promotion']);
   // Explicit, page-scoped test signal; never persist it or copy the full query.
   const debugSignal = new URLSearchParams(location.search).get('gtm_debug');
   const debugSession = ['127.0.0.1', 'localhost'].includes(location.hostname) && /^(?:x|[0-9]{1,16})$/.test(debugSignal || '');
@@ -37,7 +37,7 @@ function validCheckoutVariant(value) {
       if (values.promotion_name !== 'microcemento_kaemento_launch_2026') return;
       payload.promotion_name = 'microcemento_kaemento_launch_2026';
     }
-    if (event === 'begin_checkout') {
+    if (['begin_checkout','add_to_cart','remove_from_cart','view_cart'].includes(event)) {
       if (!Array.isArray(values.items) || !values.items.length || values.items.length > 20) return;
       const items = [];
       let quantity = 0;
@@ -48,6 +48,10 @@ function validCheckoutVariant(value) {
       }
       if (quantity > 20 || values.currency !== 'COP' || values.value !== 365500 * quantity) return;
       payload.currency = 'COP'; payload.value = 365500 * quantity; payload.items = items;
+    }
+    if (event === 'view_item') {
+      payload.currency = 'COP'; payload.value = 365500;
+      payload.items = [{item_id:'microcemento-kaemento',item_name:'Microcemento KAEMENTO',price:365500}];
     }
     window.dataLayer.push({event, ...payload});
     const message = {type:'kaemento-event', event, params:payload};
@@ -62,5 +66,6 @@ function validCheckoutVariant(value) {
   document.addEventListener('DOMContentLoaded', () => {
     frame=document.createElement('iframe'); frame.src='/analytics-bridge.html' + (debugSession ? '?gtm_debug=' + encodeURIComponent(debugSignal) : ''); frame.hidden=true; frame.referrerPolicy='no-referrer'; frame.title='Medición técnica'; frame.setAttribute('aria-hidden','true'); document.body.appendChild(frame);
     send('page_view');
+    if (location.pathname === '/productos/microcemento-kaemento.html') send('view_item');
   });
 })();

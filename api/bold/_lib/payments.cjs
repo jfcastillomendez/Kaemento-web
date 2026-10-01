@@ -149,7 +149,7 @@ function createStore(env = process.env, transport = fetch, clock = Date.now) {
   return {
     ...emailStore(command, prefix, clock),
     ...networkStore(command, prefix, clock),
-    ...checkoutStore(command, prefix),
+    ...checkoutStore(command, prefix, clock),
     async saveOrder(record) {
       if (await command(['SET', prefix+'order:'+record.orderId, JSON.stringify(record), 'NX']) !== 'OK') throw new Error('Order not stored');
     },

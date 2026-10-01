@@ -53,7 +53,7 @@ test('Back/Forward resets native controls and cart; tabs and same-page anchors r
 test('A completed checkout keeps its order return token after the draft is cleared',async()=>{
  const f=fixture();await f.add('extra-blanco');await f.add('arena',2,'brillante');await f.control('bold-buy').emit('click');
  assert.equal(f.opened.length,1);assert.equal(f.requests.length,1);assert.equal(f.requests[0].body.items.length,2);assert.equal(f.opened[0].amount,'1096500');
- assert.equal(f.tracked.length,1);assert.equal(f.tracked[0][0],'begin_checkout');assert.ok(!JSON.stringify(f.tracked).includes('Synthetic buyer'));
+ assert.equal(f.tracked.filter(x=>x[0]==='begin_checkout').length,1);assert.ok(!JSON.stringify(f.tracked).includes('Synthetic buyer'));
  const retained=[...f.session];await f.event('pagehide');await f.event('pageshow');
  assert.equal(f.control('cart-count').textContent,'0 kits');assert.deepEqual([...f.session],retained);
  assert.equal(JSON.parse(f.session.get('kaemento-order-access'))['KAE-CART-TEST'],'b'.repeat(64));
@@ -62,5 +62,19 @@ test('Leaving during checkout preparation cannot reopen Bold with a cleared draf
  let resolve,selection;const f=fixture({customerStep:s=>{selection=s;return new Promise(r=>{resolve=r;});}});
  await f.add('arena');const checkout=f.control('bold-buy').emit('click');await flush();
  assert.ok(resolve);await f.event('pagehide');await f.event('pageshow');resolve(f.result(selection));await checkout;
- assert.equal(f.opened.length,0);assert.equal(f.tracked.length,0);assert.equal(f.control('cart-count').textContent,'0 kits');assert.ok(f.control('bold-buy').disabled);
+ assert.equal(f.opened.length,0);assert.equal(f.tracked.filter(x=>x[0]==='begin_checkout').length,0);assert.equal(f.control('cart-count').textContent,'0 kits');assert.ok(f.control('bold-buy').disabled);
+});
+
+test('Cart measures each committed addition/removal once, including quantity deltas and unchanged edits',async()=>{
+ const f=fixture();await f.add('extra-blanco');await f.add('arena',2);
+ assert.deepEqual(f.tracked.map(x=>x[0]),['add_to_cart','add_to_cart']);
+ assert.deepEqual(f.tracked.map(x=>x[1].value),[365500,731000]);
+ const row=f.control('cart-list').children[1],controls=row.children[1],qty=controls.children[0].children[0];
+ qty.value='3';await qty.emit('input');assert.equal(f.tracked.length,2);
+ await qty.emit('change');await qty.emit('change');assert.equal(f.tracked.length,3);assert.equal(f.tracked.at(-1)[1].items[0].quantity,1);
+ await controls.children[2].emit('click');await f.control('cart-add').emit('click');assert.equal(f.tracked.length,3);
+ const current=f.control('cart-list').children[1].children[1];
+ await current.children[3].emit('click');assert.equal(f.tracked.at(-1)[0],'remove_from_cart');assert.equal(f.tracked.at(-1)[1].items[0].quantity,3);
+ assert.equal(f.control('cart-count').textContent,'1 kit');
+ const count=f.tracked.length;await f.event('pagehide');assert.equal(f.tracked.length,count);
 });

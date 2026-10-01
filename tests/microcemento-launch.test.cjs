@@ -29,3 +29,15 @@ test('Campaign configuration matches the approved server price without changing 
  const box={window:{}};vm.runInNewContext(fs.readFileSync(path.join(root,'microcemento-launch-config.js'),'utf8'),box);
  const c=box.window.KaementoLaunchCampaign;assert.equal(c.launchPrice,365500);assert.equal(c.regularPrice*(100-c.discount)/100,c.launchPrice);assert.equal(c.maxCustomers,30);assert.equal(c.durationDays,30);
 });
+test('Product view is emitted once on the product route with a fixed public item and no supplied personal fields',()=>{
+ const frame={contentWindow:{postMessage(){}},setAttribute(){}},location={pathname:'/productos/microcemento-kaemento.html',origin:'https://preview.example',hostname:'preview.example',search:'?servicio=PRIVATE'};
+ const sandbox={URL,URLSearchParams,location,document:{referrer:'',addEventListener(_,fn){fn();},createElement(){return frame;},body:{appendChild(){}}},sessionStorage:{getItem(){return null;},setItem(){}},window:{addEventListener(){}}};
+ vm.runInNewContext(fs.readFileSync(path.join(root,'analytics.js'),'utf8'),sandbox);
+ assert.equal(sandbox.window.dataLayer.filter(x=>x.event==='view_item').length,1);
+ sandbox.window.kaementoTrack('view_item',{items:[{item_name:'PRIVATE',phone:'PRIVATE'}],email:'PRIVATE',message:'PRIVATE'});
+ const event=sandbox.window.dataLayer.at(-1);assert.equal(event.items[0].item_name,'Microcemento KAEMENTO');assert.ok(!JSON.stringify(event).includes('PRIVATE'));
+ let listener;const parent={postMessage(){}},bridge={URLSearchParams,location,parent,dataLayer:[],window:{addEventListener(_,fn){listener=fn;}}};bridge.window.dataLayer=bridge.dataLayer;
+ vm.runInNewContext(fs.readFileSync(path.join(root,'analytics-bridge.js'),'utf8'),bridge);
+ listener({origin:location.origin,source:parent,data:{type:'kaemento-event',event:'view_item',params:{email:'PRIVATE',items:[{item_name:'PRIVATE'}]}}});
+ assert.equal(bridge.dataLayer.at(-1)[2].items[0].item_name,'Microcemento KAEMENTO');assert.ok(!JSON.stringify(bridge.dataLayer.at(-1)).includes('PRIVATE'));
+});

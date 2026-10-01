@@ -11,9 +11,16 @@
       const response = await fetch('/api/bold/promotion',{cache:'no-store',signal:AbortSignal.timeout(5000)});
       if (!response.ok) throw new Error('Availability unavailable');
       const data = await response.json();
-      if (data.capacity !== 30 || !Number.isInteger(data.remaining) || data.remaining < 0 || data.remaining > data.capacity) throw new Error('Invalid availability');
-      const message = data.remaining === 0 ? 'Cupo de 30 pedidos completado' : data.remaining === 1 ? 'Queda 1 pedido con precio de lanzamiento' : `Quedan ${data.remaining} pedidos con precio de lanzamiento`;
+      if (!['active','ended','upcoming','sold_out'].includes(data.state) || data.capacity !== 30 || !Number.isInteger(data.remaining) || data.remaining < 0 || data.remaining > data.capacity) throw new Error('Invalid availability');
+      const message = data.state === 'ended' ? 'La promoción de lanzamiento ha finalizado' : data.state === 'upcoming' ? 'El lanzamiento aún no ha comenzado' : data.remaining === 0 ? 'Cupo de 30 pedidos completado' : data.remaining === 1 ? 'Queda 1 pedido con precio de lanzamiento' : `Quedan ${data.remaining} pedidos con precio de lanzamiento`;
       blocks.forEach(block => { block.querySelector('[data-launch-remaining]').textContent = message; });
+      // Campaign status is visible at the configurator as well as beside the artwork.
+      document.querySelectorAll('[data-bold-purchase]').forEach(panel => {
+        let notice = panel.querySelector('[data-launch-status]');
+        if (!notice) { notice = document.createElement('p'); notice.dataset.launchStatus = ''; notice.className = 'launch-limit'; panel.prepend(notice); }
+        notice.textContent = data.state === 'active' ? '' : message + '. Consulta disponibilidad con KAEMENTO.';
+        notice.hidden = data.state === 'active';
+      });
       lastUpdate = Date.now();
     } catch (_) {
       // Never replace a failed request with an invented available quota.

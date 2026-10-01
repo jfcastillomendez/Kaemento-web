@@ -20,7 +20,7 @@
   function loadCustomerStep() {
     if (customerPromise) return customerPromise;
     customerPromise = Promise.all([
-      ['script','/order-customer.js?v=2'], ['link','/order-customer.css']
+      ['script','/order-customer.js?v=3'], ['link','/order-customer.css']
     ].map(([tag,url])=>new Promise((resolve,reject)=>{
       const element = document.createElement(tag);
       if (tag === 'script') element.src = url;
@@ -104,6 +104,35 @@
     }
     variantControls.forEach(field => field.addEventListener('change',refresh));
     refresh();
+    // Track only validated product selections; never buyer details or checkout tokens.
+    function cartEvent(event, selection) {
+      if (!selection.length) return;
+      window.kaementoTrack?.(event, {currency:'COP',value:selection.reduce((n,x)=>n+x.quantity,0)*unitAmount,items:variants.analyticsItems({items:selection})});
+    }
+    const lineKey = item => JSON.stringify({...item,quantity:0});
+    function trackChanges(previous, next) {
+      const before = new Map(previous.map(item=>[lineKey(item),item]));
+      const after = new Map(next.map(item=>[lineKey(item),item]));
+      const added=[], removed=[];
+      for (const key of new Set([...before.keys(),...after.keys()])) {
+        const delta=(after.get(key)?.quantity || 0)-(before.get(key)?.quantity || 0);
+        if (delta>0) added.push({...after.get(key),quantity:delta});
+        if (delta<0) removed.push({...before.get(key),quantity:-delta});
+      }
+      cartEvent('remove_from_cart',removed); cartEvent('add_to_cart',added);
+    }
+    let viewedCart=false;
+    function viewCart() {
+      if (viewedCart || !items.length || !cartList.getBoundingClientRect) return;
+      const rect=cartList.getBoundingClientRect();
+      if (rect.bottom > 0 && rect.top < window.innerHeight) {
+        viewedCart=true;cartEvent('view_cart',items);
+      }
+    }
+    if ('IntersectionObserver' in window) {
+      const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting))viewCart();});
+      observer.observe(cartList);
+    }
     function renderCart() {
       cartList.replaceChildren();
       items.forEach((item,index)=>{
@@ -115,6 +144,12 @@
         const label=document.createElement('label'); label.textContent='Kits';
         const qty=document.createElement('input'); qty.type='number'; qty.min='1';qty.max='20';qty.step='1';qty.required=true;qty.inputMode='numeric';qty.value=String(item.quantity);
         qty.setAttribute('aria-label','Cantidad de '+variants.formula(item)+' · '+variants.sealers.get(item.sealer));
+        let measuredQuantity=item.quantity;
+        qty.addEventListener('change',()=>{
+          if (!qty.validity.valid || Number(qty.value) !== items[index]?.quantity) return;
+          trackChanges([{...items[index],quantity:measuredQuantity}],[items[index]]);
+          measuredQuantity=items[index].quantity;
+        });
         qty.addEventListener('input',()=>{
           const n=Number(qty.value), candidate=items.map((x,i)=>({...x,quantity:i===index?n:x.quantity}));
           const valid=variants.restore({items:candidate});
@@ -135,7 +170,7 @@
           refresh();total.textContent=format(item.quantity*unitAmount);add.textContent='GUARDAR CONFIGURACIÓN';cancelEdit.hidden=false;button.disabled=true;mode.focus();
         });
         const remove=document.createElement('button');remove.type='button';remove.textContent='Quitar';remove.setAttribute('aria-label','Quitar '+variants.formula(item));
-        remove.addEventListener('click',()=>{items.splice(index,1);endEdit();resetSelection();renderCart();cartMessage.textContent='Configuración eliminada.';add.focus();});
+        remove.addEventListener('click',()=>{cartEvent('remove_from_cart',[items[index]]);items.splice(index,1);endEdit();resetSelection();renderCart();cartMessage.textContent='Configuración eliminada.';add.focus();});
         controls.append(label,subtotal,edit,remove);row.append(summary,controls);cartList.append(row);
       });
       const count=items.reduce((n,x)=>n+x.quantity,0);
@@ -143,6 +178,7 @@
       panel.querySelector('[data-cart-count]').textContent=count+' '+(count===1?'kit':'kits');
       panel.querySelector('[data-cart-empty]').hidden=items.length>0;
       button.disabled=!items.length || editing>=0;
+      viewCart();
     }
     function endEdit() {editing=-1;add.textContent='AÑADIR AL CARRITO';cancelEdit.hidden=true;}
     function resetSelection() {
@@ -162,12 +198,14 @@
       const valid=variants.restore({items:next});
       if(!valid) {cartMessage.textContent='Puedes comprar hasta 20 kits en un solo pedido. Ajusta las cantidades.';return;}
       const wasEditing=editing>=0;
+      trackChanges(items,valid.items);
       items=valid.items;endEdit();renderCart();resetSelection();
       cartMessage.textContent=(wasEditing?'Configuración guardada.':'Kit añadido al carrito.')+' Elige una nueva configuración o continúa al pago.';
       mode.focus({preventScroll:true});
     });
     function clearDraft() {
       items = [];
+      viewedCart=false;
       endEdit();
       resetSelection();
       renderCart();
@@ -210,7 +248,12 @@
             method:'POST', headers:{'Content-Type':'application/json','Idempotency-Key':idempotencyKey}, body:payload,
             signal:AbortSignal.timeout(15000), cache:'no-store'
           });
-          if (!response.ok) { const error = new Error('Order unavailable'); error.code = ({400:'INVALID_CUSTOMER',409:'ORDER_PROCESSED',429:'RATE_LIMITED'})[response.status] || 'UNAVAILABLE'; throw error; }
+          if (!response.ok) {
+            const failure = await response.json().catch(()=>({}));
+            const error = new Error('Order unavailable');
+            error.code = response.status === 409 && failure.code === 'CAMPAIGN_CLOSED' ? 'CAMPAIGN_CLOSED' : ({400:'INVALID_CUSTOMER',409:'ORDER_PROCESSED',429:'RATE_LIMITED'})[response.status] || 'UNAVAILABLE';
+            throw error;
+          }
           return response.json();
         });
         if (!data || activeVisit !== visit) { status.textContent = ''; return; }

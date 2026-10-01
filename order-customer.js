@@ -67,7 +67,7 @@
           catch (error) {
             if (finished) return;
             // Display only fixed application errors supplied by our caller, never provider responses.
-            status.textContent = ({INVALID_CUSTOMER:'Revisa tus datos: identificación válida, correo, teléfono de 7 a 15 dígitos y dirección completa.',ORDER_PROCESSED:'Este pedido ya fue procesado. Revisa tu comprobante o consulta con KAEMENTO antes de volver a pagar.',RATE_LIMITED:'Has realizado varios intentos. Espera un momento o escríbenos para ayudarte.'})[error.code] || 'No pudimos guardar tu pedido. Intenta nuevamente o contáctanos en kaemento@gmail.com.';
+            status.textContent = ({CAMPAIGN_CLOSED:'La promoción de lanzamiento ha finalizado. Consulta disponibilidad y precio con KAEMENTO antes de pagar.',INVALID_CUSTOMER:'Revisa tus datos: identificación válida, correo, teléfono de 7 a 15 dígitos y dirección completa.',ORDER_PROCESSED:'Este pedido ya fue procesado. Revisa tu comprobante o consulta con KAEMENTO antes de volver a pagar.',RATE_LIMITED:'Has realizado varios intentos. Espera un momento o escríbenos para ayudarte.'})[error.code] || 'No pudimos guardar tu pedido. Intenta nuevamente o contáctanos en kaemento@gmail.com.';
           } finally {
             busy = false;
             controls.forEach(el=>el.disabled = false);

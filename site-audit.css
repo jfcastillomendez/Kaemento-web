@@ -64,3 +64,12 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .gallery-more{display:block;margin:30px auto 0;padding:16px 26px;border:1px solid #8d704d;background:transparent;color:#33291f;font:inherit;cursor:pointer}
 
 @media(max-width:720px){main:has(#comprar-microcemento)>.section{padding-top:60px;padding-bottom:60px}}
+
+/* Commercial audit: compact in-flow CTA, preserving the complete approved artwork. */
+.campaign-product-hero .campaign-mobile-cta{display:none}
+.kae-cart-notice{font-size:12px;line-height:1.6;color:#635e55;margin:16px 0}
+@media(max-width:720px){
+  .campaign-product-hero .campaign-mobile-cta{display:flex;flex-direction:column;gap:5px;width:100%;margin-top:16px;text-align:center;font-size:12px;line-height:1.4;padding:14px}
+  .campaign-mobile-cta span{font-size:11px;letter-spacing:0}
+}
+@media(max-width:360px){.service-list h3{font-size:24px}}

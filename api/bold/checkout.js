@@ -43,6 +43,7 @@ function createCheckout(env = process.env, storeFactory = payments.createStore) 
       const ip = String(req.headers['x-vercel-forwarded-for'] || req.socket?.remoteAddress || 'local').split(',')[0].trim();
       const claim = await storeFactory(env).claimCheckout(requestId,record,hmac(JSON.stringify(input)),hmac('checkout-ip:'+ip));
       if (claim.status === 'limited') { res.setHeader('Retry-After','3600'); return reply(429,{error:'Espera un momento antes de crear otro pedido.'}); }
+      if (claim.status === 'campaign_closed') return reply(409,{code:'CAMPAIGN_CLOSED',error:'La promoción de lanzamiento ha finalizado. Consulta disponibilidad con KAEMENTO.'});
       if (claim.status === 'conflict') return reply(409,{error:'La configuración cambió. Inicia nuevamente el pago.'});
       if (!['created','existing'].includes(claim.status) || !claim.order) throw new Error('Order unavailable');
       if (['paid','refunded'].includes(claim.order.paymentStatus)) return reply(409,{error:'Este pedido ya fue procesado. Consulta su resultado antes de volver a pagar.'});
