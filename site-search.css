@@ -1,0 +1,42 @@
+.nav.has-site-search{column-gap:20px}
+.nav.has-site-search>.brand{margin-right:auto}
+.nav .site-search-trigger{flex:0 0 44px;width:44px;height:44px;display:grid;place-items:center;border:1px solid rgba(34,34,31,.22);border-radius:50%;color:#282722;background:transparent;cursor:pointer;transition:background .2s,border-color .2s}
+.nav .site-search-trigger:hover{background:rgba(197,155,104,.13);border-color:#947044}
+html.site-search-open{overflow:hidden}
+.site-search-dialog{box-sizing:border-box;width:min(720px,calc(100% - 40px));max-width:none;max-height:calc(100dvh - 80px);margin:40px auto;padding:28px 32px 20px;border:1px solid #d9ccba;border-radius:4px;background:#fbf8f2;color:#282722;box-shadow:0 24px 100px #0004;overflow:auto;overscroll-behavior:contain;font-family:"DM Sans",Arial,sans-serif;font-weight:400}
+.site-search-dialog::backdrop{background:rgba(24,23,20,.6);backdrop-filter:blur(3px)}
+.site-search-heading{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.site-search-heading>span{font-size:10px;letter-spacing:.2em;color:#795d3c;font-weight:600}
+.site-search-dialog button{font:inherit;cursor:pointer;color:inherit}
+.site-search-close,.site-search-clear{display:grid;place-items:center;flex:none;width:44px;height:44px;padding:0;border:0;background:transparent;font-size:28px!important;line-height:1}
+.site-search-dialog h2{font-family:"Cormorant Garamond",Georgia,serif;font-weight:400;letter-spacing:-.025em;font-size:42px;line-height:1.1;margin:16px 0 24px;color:#282722}
+.site-search-label{display:block;font-size:13px;margin-bottom:10px;color:#5e5951}
+.site-search-field{display:flex;align-items:center;border:1px solid #aa9272;background:#fffdf9;min-height:54px}
+.site-search-field:focus-within{outline:2px solid #947044;outline-offset:3px}
+.site-search-field input{min-width:0;width:100%;height:54px;border:0!important;background:transparent!important;padding:12px 14px;color:#282722!important;font:inherit;font-size:16px;border-radius:0;outline:none!important;box-shadow:none!important}
+.site-search-field input::-webkit-search-cancel-button{display:none}
+.site-search-clear[hidden]{display:none}
+.site-search-suggestions{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+.site-search-suggestions button{min-height:38px;border:1px solid #ded5c8;border-radius:2px;background:transparent;padding:8px 12px;font-size:12px}
+.site-search-suggestions button:hover{background:#eee6d9}
+.site-search-status{font-size:13px;line-height:1.6;color:#625c53;margin:20px 0 10px}
+.site-search-results{list-style:none;padding:0;margin:0}
+.site-search-results li{border-top:1px solid #e0d7ca}
+.site-search-results a{display:grid;gap:5px;padding:16px 12px;color:#282722;text-decoration:none;overflow-wrap:anywhere}
+.site-search-results a:hover{background:#f0e9dd}
+.site-search-category{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#795d3c}
+.site-search-results strong{font-size:17px;font-weight:500;line-height:1.4}
+.site-search-description{font-size:13px;line-height:1.6;color:#625c53}
+.site-search-note{border-top:1px solid #e0d7ca;padding-top:16px;margin:20px 0 0;font-size:11px;line-height:1.5;color:#625c53}
+.site-search-dialog button:focus-visible,.site-search-dialog a:focus-visible{outline:2px solid #947044;outline-offset:2px}
+@media(min-width:1101px) and (max-width:1380px){.nav.has-site-search{column-gap:12px}.nav.has-site-search>nav{gap:12px}}
+@media(max-width:1100px){.nav.has-site-search{column-gap:8px}}
+@media(max-width:600px){
+ .site-search-dialog{width:calc(100% - 24px);max-height:calc(100dvh - 24px);margin:12px auto;padding:16px 18px}
+ .site-search-dialog h2{font-size:33px;margin:12px 0 22px}
+ .site-search-suggestions button{min-height:44px;padding:8px 10px}
+ .site-search-results a{padding:15px 3px}
+ .site-search-results strong{font-size:16px}
+}
+@media(max-width:360px){.nav.has-site-search{padding-inline:12px;column-gap:4px}.nav.has-site-search>.brand{gap:8px;font-size:13px;letter-spacing:.12em}}
+@media(prefers-reduced-motion:reduce){.nav .site-search-trigger{transition:none}}

@@ -1,4 +1,15 @@
 // KAEMENTO visual refinement layer
+// Shared local search; no query is sent to an API or to Analytics.
+if (!document.querySelector('script[data-kae-search]')) {
+  const searchStyle = document.createElement('link');
+  searchStyle.rel = 'stylesheet';
+  searchStyle.href = '/site-search.css?v=1';
+  const searchScript = document.createElement('script');
+  searchScript.src = '/site-search.js?v=1';
+  searchScript.dataset.kaeSearch = 'true';
+  document.head.append(searchStyle, searchScript);
+}
+
 if (!document.querySelector('link[data-kae-visual-refinement]')) {
   const refinement = document.createElement('link');
   refinement.rel = 'stylesheet';
