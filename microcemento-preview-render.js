@@ -1,11 +1,11 @@
-// Medians from the approved launch swatches; sampling coordinates are in docs/color-preview.md.
+// Launch swatches with the requested gray display correction; details in docs/color-preview.md.
 // Screen interpolation is not a measured physical pigment-mixing model.
 ((root, factory) => {
   if (typeof module === 'object' && module.exports) module.exports = factory(require('./microcemento-preview-scenes.js'));
   else root.KaementoColorPreview = factory(root.KaementoPreviewScenes);
 })(typeof window === 'object' ? window : globalThis, scenes => {
   const palette = Object.freeze({
-    'extra-blanco': '#e6e1dc', arena: '#bfac9a', 'gris-cemento': '#787674',
+    'extra-blanco': '#e6e1dc', arena: '#bfac9a', 'gris-cemento': '#888684',
     negro: '#2b2b2a', terracota: '#a06145'
   });
   const rgb = hex => hex.slice(1).match(/../g).map(n => parseInt(n, 16));
@@ -48,7 +48,7 @@
       const nx=x/width, ny=y/height;
       const center=scene.light+(ny-.6)*(scene.light>.5?-.15:.15);
       const spread=surface==='floor'?.18:.26;
-      return (surface==='floor'?.28:.16)*Math.exp(-2*((nx-center)/spread)**2)*
+      return (surface==='floor'?.34:.20)*Math.exp(-2*((nx-center)/spread)**2)*
         Math.exp(-(((ny-(surface==='floor'?.88:.3))/(surface==='floor'?.5:.6))**2));
     }
     function mask(path, holes = [], openings = []) {

@@ -39,7 +39,7 @@ Regiones usadas para normalizar el brillo de las nuevas escenas, en el mismo for
 | Comedor | (430, 80, 620, 350) | (560, 930, 1040, 1010) |
 | Balcón/terraza | (650, 120, 1200, 390) | (450, 790, 1180, 980) |
 
-Los cinco valores RGB se midieron en las muestras de la pieza oficial de lanzamiento, confirmada por el usuario como referencia el 7 de octubre de 2026. Se utiliza la mediana de cada canal sRGB en una región interior para reducir la influencia de la textura, sin incluir bordes ni etiquetas. No se modifica la pieza original.
+Los cinco valores RGB de partida se midieron en las muestras de la pieza oficial de lanzamiento, confirmada por el usuario como referencia el 7 de octubre de 2026. Se utiliza la mediana de cada canal sRGB en una región interior para reducir la influencia de la textura, sin incluir bordes ni etiquetas. No se modifica la pieza original. La tabla conserva estos valores de origen, anteriores al ajuste visual de Gris Cemento descrito a continuación.
 
 Fuente: `assets/microcemento/microcemento-lanzamiento-2026.webp`, 1024 × 1536; SHA-256 `5c63695bef8f15dff7e594f04046ed97c3d07f975aa9f8d16376b90e5d65ee48`. Regiones `(x inicial, y inicial, x final exclusivo, y final exclusivo)`:
 
@@ -51,15 +51,17 @@ Fuente: `assets/microcemento/microcemento-lanzamiento-2026.webp`, 1024 × 1536; 
 | Negro Profundo | (375, 1212, 463, 1277) | 43, 43, 42 | #2b2b2a |
 | Terracota | (488, 1212, 576, 1277) | 160, 97, 69 | #a06145 |
 
+Revisión visual solicitada el 7 de octubre de 2026: Gris Cemento se aclara de `#787674` a `#888684` (RGB 136, 134, 132; +16 por canal), manteniendo su ligero matiz cálido. Es una corrección de representación para revisión, no una nueva medición del material físico. Solo cambia esta entrada de la paleta digital; sus mezclas y los indicadores utilizan el mismo valor corregido, sin ajustes ocultos después del cálculo.
+
 La iluminación relativa se conserva mediante la luminancia de la imagen base dividida por la mediana de una zona sin mobiliario: pared `(550, 140, 980, 340)`, `0.6122007843137255`; piso `(450, 750, 1250, 930)`, `0.6884298039215687`. Se usa la misma suma ponderada de canales sRGB del renderizador (`0.2126 R + 0.7152 G + 0.0722 B`, dividida por 255). Es una normalización visual, no una medición fotométrica ni una calibración física. Evita un oscurecimiento global añadido; las zonas con distinta luz conservan diferencias de brillo. Los indicadores de color muestran el tono de referencia sin esa iluminación.
 
 ### Cálculo y límite de precisión
 
-Para cada canal digital: `round((canal1 × porcentaje1 + canal2 × porcentaje2) / 100)`. Solo admite las proporciones existentes (10–90%, en pasos de 10), que suman exactamente 100%. Por ejemplo, Arena 70% + Gris Cemento 30% da RGB `(170, 156, 143)`, `#aa9c8f`. El redondeo final de 8 bits introduce como máximo medio nivel por canal. Invertir colores y porcentajes da el mismo resultado.
+Para cada canal digital: `round((canal1 × porcentaje1 + canal2 × porcentaje2) / 100)`. Solo admite las proporciones existentes (10–90%, en pasos de 10), que suman exactamente 100%. Por ejemplo, Arena 70% + Gris Cemento 30% da RGB `(175, 161, 147)`, `#afa193`, con el gris ajustado. El redondeo final de 8 bits introduce como máximo medio nivel por canal. Invertir colores y porcentajes da el mismo resultado.
 
 Esta interpolación es reproducible y respeta matemáticamente la selección, pero **no predice con exactitud una mezcla física de pigmentos**. No se inventan coeficientes de absorción, dispersión ni fuerza tintórea a partir de una fotografía. Para una predicción física se necesitan muestras medidas de los materiales y sus mezclas; los modelos de pigmentos utilizan propiedades espectrales ([referencia de investigación](https://doi.org/10.1364/AO.41.005969)). La interfaz indica expresamente que la vista es orientativa y requiere una muestra física.
 
-El brillo es igualmente una aproximación visual: un reflejo neutro y localizado de baja intensidad, calculado solo dentro de las máscaras de microcemento. No es una calibración del sellador real ni una simulación fotométrica. No se inventa un cambio permanente en la pigmentación por elegir sellador. Los muebles y objetos no reciben este efecto.
+El brillo es igualmente una aproximación visual: un reflejo neutro y localizado de baja intensidad, calculado solo dentro de las máscaras de microcemento. En esta revisión el coeficiente máximo pasa de 0.28 a 0.34 en piso y de 0.16 a 0.20 en pared, conservando extensión, dirección y suavidad. Esto compensa también la reducción de contraste del reflejo sobre el gris aclarado. No es una calibración del sellador real ni una simulación fotométrica. No se inventa un cambio permanente en la pigmentación por elegir sellador. Los muebles y objetos no reciben este efecto.
 
 No se solicita una imagen a IA en cada cambio. El cálculo ocurre en el navegador, sin nuevas librerías ni servicios. La imagen se carga de forma diferida, tiene dimensiones reservadas y conserva una alternativa estática si falla el lienzo. Los colores se comunican también con texto. El enlace para volver a la imagen respeta movimiento reducido.
 

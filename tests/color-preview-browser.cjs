@@ -83,7 +83,7 @@ fs.mkdirSync(output,{recursive:true});
       await select('mode','mix');await select('tone1','arena');await select('tone2','gris-cemento');await select('ratio','70');
       await select('sealer','mate');await panel.locator('[data-bold-quantity]').fill('2');await tick();
       let current=await pixels();assert.deepEqual(current.wall,whiteWall);assert.notDeepEqual(current.floor,original.floor);
-      await assertReferenceTone('floor','#aa9c8f');
+      await assertReferenceTone('floor','#afa193');
       await select('sealer','brillante');await tick();
       for(const key of ['wood','sofa','table','ceiling','chair'])assert.deepEqual(current[key],original[key]);
       const firstFloor=current.floor;await select('ratio','30');await tick();assert.notDeepEqual((await pixels()).floor,firstFloor);await select('ratio','70');

@@ -17,14 +17,14 @@ test('Every purchasable standard color has a digital reference',()=>{
   assert.deepEqual(Object.keys(palette),[...config.colors.keys()]);
   for(const color of config.colors.keys())assert.match(colorFor({colorMode:'standard',color}),/^#[a-f0-9]{6}$/);
 });
-test('Standard tones match the approved launch artwork samples',()=>{
+test('Digital tones retain the launch references with the requested gray display correction',()=>{
   assert.deepEqual(palette,{
-    'extra-blanco':'#e6e1dc',arena:'#bfac9a','gris-cemento':'#787674',negro:'#2b2b2a',terracota:'#a06145'
+    'extra-blanco':'#e6e1dc',arena:'#bfac9a','gris-cemento':'#888684',negro:'#2b2b2a',terracota:'#a06145'
   });
 });
 test('Specified proportions produce the independently calculated digital tone',()=>{
-  // 70% (191,172,154) + 30% (120,118,116) = (169.7,155.8,142.6).
-  assert.equal(colorFor({colorMode:'mix',color1:'arena',color2:'gris-cemento',percentage1:70,percentage2:30}),'#aa9c8f');
+  // 70% (191,172,154) + 30% (136,134,132) = (174.5,160.6,147.4).
+  assert.equal(colorFor({colorMode:'mix',color1:'arena',color2:'gris-cemento',percentage1:70,percentage2:30}),'#afa193');
   // Equal parts (230,225,220) and (43,43,42), rounded once to 8-bit channels.
   assert.equal(colorFor({colorMode:'mix',color1:'extra-blanco',color2:'negro',percentage1:50,percentage2:50}),'#898683');
 });
