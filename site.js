@@ -3,7 +3,7 @@
 if (!document.querySelector('script[data-kae-search]')) {
   const searchStyle = document.createElement('link');
   searchStyle.rel = 'stylesheet';
-  searchStyle.href = '/site-search.css?v=1';
+  searchStyle.href = '/site-search.css?v=2';
   const searchScript = document.createElement('script');
   searchScript.src = '/site-search.js?v=1';
   searchScript.dataset.kaeSearch = 'true';

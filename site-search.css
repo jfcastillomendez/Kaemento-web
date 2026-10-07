@@ -29,7 +29,13 @@ html.site-search-open{overflow:hidden}
 .site-search-description{font-size:13px;line-height:1.6;color:#625c53}
 .site-search-note{border-top:1px solid #e0d7ca;padding-top:16px;margin:20px 0 0;font-size:11px;line-height:1.5;color:#625c53}
 .site-search-dialog button:focus-visible,.site-search-dialog a:focus-visible{outline:2px solid #947044;outline-offset:2px}
-@media(min-width:1101px) and (max-width:1380px){.nav.has-site-search{column-gap:12px}.nav.has-site-search>nav{gap:12px}}
+/* Distribute desktop navigation across the available header width. */
+@media(min-width:1101px){
+ .nav.has-site-search{padding-inline:clamp(20px,2vw,40px);column-gap:clamp(20px,2vw,40px)}
+ .nav.has-site-search>.brand{flex:none;margin-right:0}
+ .nav.has-site-search>nav{flex:1;min-width:0;justify-content:space-between;gap:clamp(12px,1.2vw,24px);font-size:13px}
+ .nav.has-site-search>nav>a,.nav.has-site-search>nav>.nav-group{flex-shrink:0;white-space:nowrap}
+}
 @media(max-width:1100px){.nav.has-site-search{column-gap:8px}}
 @media(max-width:600px){
  .site-search-dialog{width:calc(100% - 24px);max-height:calc(100dvh - 24px);margin:12px auto;padding:16px 18px}
