@@ -2,26 +2,31 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {palette,colorFor}=require('../microcemento-preview-render.js');
 const config=require('../bold-config.js');
-test('Material enhancement cannot invent texture on a uniform surface or bleed an excluded object',()=>{
+test('Material smoothing cannot invent texture on a uniform surface or bleed an excluded object',()=>{
   const {materialField}=require('../microcemento-preview-render.js');
   const width=96,height=96,source=new Float32Array(width*height).fill(.6),alpha=new Float32Array(source.length).fill(1);
   for(let y=20;y<76;y++)for(let x=20;x<40;x++){source[y*width+x]=1;alpha[y*width+x]=0;}
   const original=new Float32Array(source);
-  const {enhanced,relief,median}=materialField(source,alpha,width,height,[45,10,86,86]);
+  const {enhanced,softEnhanced,relief,median,softMedian}=materialField(source,alpha,width,height,[45,10,86,86]);
   assert.deepEqual(source,original);
   assert.ok(enhanced.every((value,i)=>Math.abs(value-original[i])<1e-6));
+  assert.ok(softEnhanced.every((value,i)=>Math.abs(value-original[i])<1e-6));
   assert.ok(relief.every(value=>Math.abs(value)<1e-6));
   assert.ok(Math.abs(median-.6)<.0001);
+  assert.ok(Math.abs(softMedian-.6)<.0001);
 });
-test('Material texture has stronger local detail while retaining its center tone and bounded relief',()=>{
+test('Veining is softer in both finishes, with more detail in gloss and stable center tones',()=>{
   const {materialField}=require('../microcemento-preview-render.js');
   const width=128,height=128,source=new Float32Array(width*height),alpha=new Float32Array(source.length).fill(1);
   for(let y=0;y<height;y++)for(let x=0;x<width;x++)source[y*width+x]=.5+.018*Math.sin(x/7)*Math.cos(y/9)+.003*Math.sin(x*2+y);
-  const {enhanced,relief,median}=materialField(source,alpha,width,height,[8,8,120,120]);
+  const {enhanced,softEnhanced,relief,median,softMedian}=materialField(source,alpha,width,height,[8,8,120,120]);
   const variance=data=>data.reduce((total,value)=>total+(value-.5)**2,0)/data.length;
-  assert.ok(variance(enhanced)>variance(source)*2);
+  assert.ok(variance(enhanced)<variance(source));
+  assert.ok(variance(softEnhanced)<variance(enhanced));
+  assert.ok(variance(softEnhanced)>variance(source)*.15,'Fine material variation remains visible');
   assert.ok(Math.abs(median-.5)<.003);
-  assert.ok(relief.every(value=>Math.abs(value)<=.045001));
+  assert.ok(Math.abs(softMedian-.5)<.003);
+  assert.ok(relief.every(value=>Math.abs(value)<=.025001));
 });
 test('Every available room has its own image and geometry',()=>{
   const {scenes}=require('../microcemento-preview-render.js');

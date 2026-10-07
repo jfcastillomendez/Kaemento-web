@@ -22,7 +22,7 @@
   }
   const clamp = n => Math.max(0, Math.min(1, n));
   function materialField(luminance, alpha, width, height, reference) {
-    // Amplify the photograph's own mineral grain and trowel variation, without adding noise.
+    // Soften broad trowel variation while preserving the photograph's fine mineral grain.
     // Mask-weighted averages keep furniture and fittings out of the texture calculation.
     const stride = width + 1, size = stride * (height + 1);
     const sums = new Float64Array(size), weights = new Float64Array(size);
@@ -51,9 +51,10 @@
       const grain = value - average(x, y, 3, value);
       // Protect strong light/shadow edges from becoming hard outlines.
       const guard = 1 - clamp((Math.abs(body) - .035) / .09);
-      relief[i] = Math.max(-.045, Math.min(.045, body * 1.15 + grain * .4)) * guard;
-      enhanced[i] = Math.max(.001, Math.min(.999, value + relief[i]));
-      softEnhanced[i] = Math.max(.001, Math.min(.999, value + relief[i] * .8));
+      relief[i] = Math.max(-.025, Math.min(.025, body * .55 + grain * .2)) * guard;
+      // Gloss reveals more fine grain, without restoring exaggerated broad veining.
+      enhanced[i] = Math.max(.001, Math.min(.999, value + (-body * .08 + grain * .24) * guard));
+      softEnhanced[i] = Math.max(.001, Math.min(.999, value + (-body * .5 + grain * .05) * guard));
       if (alpha[i] > .99 && x >= reference[0] && x < reference[2] && y >= reference[1] && y < reference[3]) {
         histogram[Math.round(enhanced[i] * 32767)]++; sampleCount++;
         softHistogram[Math.round(softEnhanced[i] * 32767)]++;
@@ -96,7 +97,7 @@
       const nx=x/width, ny=y/height;
       const center=scene.light+(ny-.6)*(scene.light>.5?-.15:.15);
       const spread=surface==='floor'?.18:.26;
-      return (surface==='floor'?.34:.20)*Math.exp(-2*((nx-center)/spread)**2)*
+      return (surface==='floor'?.40:.24)*Math.exp(-2*((nx-center)/spread)**2)*
         Math.exp(-(((ny-(surface==='floor'?.88:.3))/(surface==='floor'?.5:.6))**2));
     }
     function mask(path, holes = [], openings = []) {
@@ -168,9 +169,8 @@
         if (!colors[surface]) continue;
         const target = rgb(colors[surface]);
         const mask = masks[surface];
-        // Cement Gray and glossy finishes retain the approved mineral detail.
-        // Only other matte tones soften the added texture.
-        const profile = colors[surface] === palette['gris-cemento'] || finishes[surface] === 'brillante' ? 2 : 4;
+        // Both finishes soften veining; gloss retains more mineral detail than matte.
+        const profile = finishes[surface] === 'brillante' ? 2 : 4;
         for (let i = 0; i < mask.length; i += 6) {
           const p = mask[i], alpha = mask[i + 1], shade = mask[i + profile];
           for (let c = 0; c < 3; c++) {
