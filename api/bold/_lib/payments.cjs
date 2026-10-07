@@ -4,6 +4,7 @@ const orders = require('./orders.cjs');
 const {networkStore} = require('../../_lib/network-store.cjs');
 const {emailStore} = require('./email-store.cjs');
 const {checkoutStore} = require('./checkout-store.cjs');
+const {adsConversionStore} = require('./ads-conversion-store.cjs');
 const ORDER_ID = /^KAE-MICRO-\d{13}-[a-f0-9]{16}$/;
 const EVENT_ID = /^[A-Za-z0-9_-]{1,100}$/;
 const TYPES = new Set(['SALE_APPROVED', 'SALE_REJECTED', 'VOID_APPROVED', 'VOID_REJECTED']);
@@ -147,6 +148,7 @@ function createStore(env = process.env, transport = fetch, clock = Date.now) {
     return data.result;
   }
   return {
+    ...adsConversionStore(command, prefix, clock),
     ...emailStore(command, prefix, clock),
     ...networkStore(command, prefix, clock),
     ...checkoutStore(command, prefix, clock),

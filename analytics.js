@@ -28,6 +28,14 @@ function validCheckoutVariant(value) {
   window.dataLayer = window.dataLayer || [];
   let frame, ready = false;
   const queue = [];
+  // Pass only Google's opaque click identifiers to the existing same-origin tag document.
+  // Never forward the result URL, order reference, buyer token or arbitrary query strings.
+  const adsClick = new URLSearchParams();
+  const landingSearch = new URLSearchParams(location.search);
+  for (const key of ['gclid','gbraid','wbraid']) {
+    const value = landingSearch.get(key);
+    if (value && /^[A-Za-z0-9_-]{10,512}$/.test(value)) adsClick.set(key,value);
+  }
   function send(event, values = {}) {
     if (!allowed.has(event)) return;
     const payload = { ...context };
@@ -64,7 +72,8 @@ function validCheckoutVariant(value) {
     ready = true; queue.splice(0).forEach(m=>frame.contentWindow.postMessage(m,location.origin));
   });
   document.addEventListener('DOMContentLoaded', () => {
-    frame=document.createElement('iframe'); frame.src='/analytics-bridge.html' + (debugSession ? '?gtm_debug=' + encodeURIComponent(debugSignal) : ''); frame.hidden=true; frame.referrerPolicy='no-referrer'; frame.title='Medición técnica'; frame.setAttribute('aria-hidden','true'); document.body.appendChild(frame);
+    if (debugSession) adsClick.set('gtm_debug',debugSignal);
+    frame=document.createElement('iframe'); frame.src='/analytics-bridge.html' + (adsClick.size ? '?' + adsClick.toString() : ''); frame.hidden=true; frame.referrerPolicy='no-referrer'; frame.title='Medición técnica'; frame.setAttribute('aria-hidden','true'); document.body.appendChild(frame);
     send('page_view');
     if (location.pathname === '/productos/microcemento-kaemento.html') send('view_item');
   });

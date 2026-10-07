@@ -20,7 +20,7 @@ http.createServer(async (req, res) => {
     return res.end(Buffer.from(await response.arrayBuffer()));
   }
   if (url.pathname === '/api/bold/promotion') return require('../api/bold/promotion.js')(req,res);
-  if (['/api/bold/checkout','/api/bold/status','/api/red-kaemento'].includes(url.pathname)) {
+  if (['/api/bold/checkout','/api/bold/status','/api/bold/conversion','/api/red-kaemento'].includes(url.pathname)) {
     let body = ''; let size = 0;
     for await (const chunk of req) {
       size += chunk.length;
@@ -28,7 +28,7 @@ http.createServer(async (req, res) => {
       body += chunk;
     }
     req.body = body;
-    const handler=url.pathname === '/api/red-kaemento' ? require('../api/red-kaemento.js') : url.pathname === '/api/bold/status' ? require('../api/bold/status.js') : checkout;
+    const handler=url.pathname === '/api/red-kaemento' ? require('../api/red-kaemento.js') : url.pathname === '/api/bold/status' ? require('../api/bold/status.js') : url.pathname === '/api/bold/conversion' ? require('../api/bold/conversion.js') : checkout;
     return handler(req, res);
   }
   let name;

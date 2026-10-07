@@ -1,6 +1,6 @@
 (() => {
   // A redirect is only a hint. Paid status comes exclusively from the authenticated webhook.
-  // No analytics event, order reference or access token is sent to Google.
+  // Only a paid order may request the separate one-time Ads authorization. No access token reaches Google.
   const params=new URLSearchParams(location.search), hint=params.get('bold-tx-status');
   const orderId=params.get('bold-order-id'), variants=window.KaementoBoldConfig;
   const title=document.getElementById('payment-title'), message=document.getElementById('payment-message');
@@ -47,6 +47,7 @@
       renderSelection(selected,data.amount);reference.textContent='Pedido '+data.orderId;reference.hidden=false;
       retry.hidden=true;
       if(data.paymentStatus==='paid') {
+        window.kaementoMeasurePaidOrder?.(orderId,token);
         title.textContent='Pago aprobado';message.textContent='Tu pedido está confirmado. Te enviaremos el detalle por correo y coordinaremos contigo el despacho y el transporte. Conserva tu número de pedido.';complete=true;
       }else if(data.paymentStatus==='refunded') {
         title.textContent='Pago anulado';message.textContent='Bold confirmó la anulación de este pago. Consulta con KAEMENTO cualquier duda sobre el pedido.';complete=true;
