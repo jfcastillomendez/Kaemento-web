@@ -81,9 +81,10 @@ fs.mkdirSync(output,{recursive:true});
       const whiteWall=(await pixels()).wall;
       await surface('floor').click();assert.equal(await panel.locator('[data-bold-mode]').inputValue(),'');assert.equal(await panel.locator('[data-bold-quantity]').inputValue(),'');
       await select('mode','mix');await select('tone1','arena');await select('tone2','gris-cemento');await select('ratio','70');
-      await select('sealer','brillante');await panel.locator('[data-bold-quantity]').fill('2');await tick();
+      await select('sealer','mate');await panel.locator('[data-bold-quantity]').fill('2');await tick();
       let current=await pixels();assert.deepEqual(current.wall,whiteWall);assert.notDeepEqual(current.floor,original.floor);
       await assertReferenceTone('floor','#aa9c8f');
+      await select('sealer','brillante');await tick();
       for(const key of ['wood','sofa','table','ceiling','chair'])assert.deepEqual(current[key],original[key]);
       const firstFloor=current.floor;await select('ratio','30');await tick();assert.notDeepEqual((await pixels()).floor,firstFloor);await select('ratio','70');
       await surface('walls').click();assert.equal(await panel.locator('[data-bold-color]').inputValue(),'extra-blanco');assert.equal(await panel.locator('[data-bold-quantity]').inputValue(),'1');
@@ -134,6 +135,59 @@ fs.mkdirSync(output,{recursive:true});
       assert.equal(await panel.locator('[data-cart-count]').innerText(),'0 kits');assert.equal(await surface('floor').locator('small').innerText(),'Sin seleccionar');
       await page.reload();await panel.locator('[data-color-preview]').waitFor();assert.equal(await panel.locator('[data-bold-mode]').inputValue(),'');
       checks.push({route,independentSurfaces:true,linkedColorIndependentKits:true,cartResetRetainsAppliedPreview:true,editRemove:true,orderPayloadUnchanged:true,lifecycleCleared:true});
+      await panel.locator('[data-color-preview]').scrollIntoViewIfNeeded();
+      await select('mode','standard');await select('color','terracota');await select('sealer','mate');
+      await surface('floor').click();await select('mode','standard');await select('color','negro');await select('sealer','mate');
+      const anchors={
+        sala:{wall:[750,180],floor:[750,840],objects:[[900,480],[690,550],[1450,360]]},
+        bano:{wall:[950,210],floor:[750,880],objects:[[490,500],[500,180],[500,402],[1210,570],[739,460],[637,390]]},
+        cocina:{wall:[700,200],floor:[900,890],objects:[[630,520],[1180,185],[887,348],[323,408],[487,348],[115,860]]},
+        dormitorio:{wall:[800,220],floor:[800,980],objects:[[780,730],[700,390],[388,444],[1165,580]]},
+        comedor:{wall:[500,240],floor:[800,980],objects:[[1000,547],[600,680],[771,180],[950,690],[349,760],[500,510],[650,530],[900,480]]},
+        terraza:{wall:[1050,250],floor:[900,850],objects:[[703,590],[964,640],[385,585],[235,540],[1480,600]]}
+      };
+      const fieldState=()=>panel.locator('[data-bold-mode],[data-bold-color],[data-bold-sealer],[data-bold-quantity]').evaluateAll(fields=>fields.map(f=>f.value));
+      const initialFields=await fieldState();
+      for(const [scene,points]of Object.entries(anchors)){
+        await panel.locator('[data-preview-scene]').selectOption(scene);
+        await page.waitForFunction(scene=>document.querySelector('[data-color-preview]').dataset.scene===scene&&document.querySelector('.kae-preview-scene').getAttribute('aria-busy')==='false',scene);
+        await tick();assert.deepEqual(await fieldState(),initialFields,'switching rooms preserves the configuration');
+        const sample=async original=>page.evaluate(({points,original})=>{
+          const preview=document.querySelector('[data-color-preview]');let canvas=preview.querySelector('canvas');
+          if(original){canvas=document.createElement('canvas');canvas.width=1536;canvas.height=1024;canvas.getContext('2d').drawImage(preview.querySelector('img'),0,0);}
+          const ctx=canvas.getContext('2d');return [points.wall,points.floor,...points.objects].map(([x,y])=>Array.from(ctx.getImageData(x,y,1,1).data));
+        },{points,original});
+        const base=await sample(true),matte=await sample(false);
+        assert.notDeepEqual(matte[0],base[0],scene+' wall recolored');assert.notDeepEqual(matte[1],base[1],scene+' floor recolored');
+        assert.deepEqual(matte.slice(2),base.slice(2),scene+' furniture and fittings unchanged');
+        if(route.includes('/productos/')){
+          const png=await panel.locator('canvas').evaluate(c=>c.toDataURL());
+          fs.writeFileSync(path.join(output,scene+'-mate.png'),Buffer.from(png.split(',')[1],'base64'));
+        }
+        await page.evaluate(()=>{window.__mattePixels=document.querySelector('[data-color-preview] canvas').getContext('2d').getImageData(0,0,1536,1024).data;});
+        await select('sealer','brillante');await tick();
+        const gloss=await sample(false);assert.deepEqual(gloss[0],matte[0],scene+' wall finish remains independent');
+        assert.deepEqual(gloss.slice(2),base.slice(2),scene+' gloss does not recolor furniture');
+        const changed=await page.evaluate(()=>{
+          const after=document.querySelector('[data-color-preview] canvas').getContext('2d').getImageData(0,0,1536,1024).data;
+          let changed=0;for(let p=0;p<after.length;p+=4)if(after[p]!==window.__mattePixels[p])changed++;return changed;
+        });
+        assert.ok(changed>10000,scene+' visible finish difference');
+        assert.match(await surface('floor').innerText(),/Sellador: Brillante/);
+        if(route.includes('/productos/')){
+          const png=await panel.locator('canvas').evaluate(c=>c.toDataURL());
+          fs.writeFileSync(path.join(output,scene+'-brillante.png'),Buffer.from(png.split(',')[1],'base64'));
+        }
+        await select('sealer','mate');await tick();assert.deepEqual(await sample(false),matte,'Mate is reversible');
+        await surface('walls').click();await select('sealer','brillante');await tick();
+        const glossyWall=await sample(false);assert.deepEqual(glossyWall[1],matte[1],scene+' floor finish remains independent');
+        assert.deepEqual(glossyWall.slice(2),base.slice(2),scene+' wall sheen preserves furniture');
+        await select('sealer','mate');await surface('floor').click();await tick();
+        checks.push({route,scene,preservedConfiguration:true,furnitureUnchanged:true,finishChangedPixels:changed});
+      }
+      for(const scene of ['bano','cocina','dormitorio','comedor','terraza','sala'])await panel.locator('[data-preview-scene]').selectOption(scene);
+      await page.waitForFunction(()=>document.querySelector('.kae-preview-scene').getAttribute('aria-busy')==='false'&&document.querySelector('[data-color-preview] img').currentSrc.endsWith('/sala-base.webp'));
+      await tick();assert.equal(await panel.locator('[data-bold-color]').inputValue(),'negro');
       await page.close();
     }
     assert.deepEqual(errors,[]);assert.deepEqual(missing,[]);

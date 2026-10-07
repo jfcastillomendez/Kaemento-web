@@ -15,12 +15,13 @@
     section.id = 'vista-colores-microcemento' + (index ? '-' + index : '');
     section.setAttribute('aria-labelledby', 'kae-preview-title-' + index);
     section.innerHTML = `<h4 id="kae-preview-title-${index}">Imagina la combinación en tu espacio.</h4>
-      <p class="kae-preview-intro">Elige paredes o piso y prueba colores o mezclas. Cada superficie conserva su selección.</p>
+      <p class="kae-preview-intro">Prueba tu combinación en distintos espacios. Paredes y piso conservan su color, mezcla y acabado.</p>
+      <label class="kae-preview-room">Elige tu espacio<select data-preview-scene>${Object.entries(preview.scenes).map(([id,scene])=>'<option value="'+id+'">'+scene.label+'</option>').join('')}</select></label>
       <figure><div class="kae-preview-scene"><img src="/assets/microcemento/visualizador/sala-base.webp" width="1536" height="1024" loading="lazy" decoding="async" alt="Ambiente ilustrativo con pared principal y piso de microcemento, sofá claro y muebles de madera."><canvas aria-hidden="true" hidden></canvas></div>
-      <figcaption>Visualización conceptual · Color orientativo. Valida una muestra física: el resultado depende de la mezcla, la aplicación, la luz y la pantalla.</figcaption></figure>
+      <figcaption>Simulación de color y acabado. Valida una muestra física: el resultado depende de la mezcla, la aplicación, la luz y la pantalla.</figcaption></figure>
       <div class="kae-preview-surfaces" role="group" aria-label="Superficie que estás configurando">
-        <button type="button" data-preview-surface="walls" aria-pressed="true"><strong><span class="kae-preview-chip" aria-hidden="true"></span>Paredes</strong><span class="kae-preview-recipe-label">Tu selección</span><small data-preview-summary>Sin seleccionar</small><span class="kae-preview-order-state" hidden>En carrito</span></button>
-        <button type="button" data-preview-surface="floor" aria-pressed="false"><strong><span class="kae-preview-chip" aria-hidden="true"></span>Piso</strong><span class="kae-preview-recipe-label">Tu selección</span><small data-preview-summary>Sin seleccionar</small><span class="kae-preview-order-state" hidden>En carrito</span></button>
+        <button type="button" data-preview-surface="walls" aria-pressed="true"><strong><span class="kae-preview-chip" aria-hidden="true"></span>Paredes</strong><span class="kae-preview-recipe-label">Tu selección</span><small data-preview-summary>Sin seleccionar</small><span class="kae-preview-order-state" hidden>En carrito</span><span class="kae-preview-finish" hidden></span></button>
+        <button type="button" data-preview-surface="floor" aria-pressed="false"><strong><span class="kae-preview-chip" aria-hidden="true"></span>Piso</strong><span class="kae-preview-recipe-label">Tu selección</span><small data-preview-summary>Sin seleccionar</small><span class="kae-preview-order-state" hidden>En carrito</span><span class="kae-preview-finish" hidden></span></button>
       </div>
       <label class="kae-preview-link"><input type="checkbox" data-preview-linked><span>Usar el mismo tono en ambos</span></label>
       <p class="kae-preview-editing" role="status" aria-live="polite"></p>`;
@@ -38,21 +39,34 @@
     const image = section.querySelector('img'), linked = section.querySelector('[data-preview-linked]');
     const buttons = [...section.querySelectorAll('[data-preview-surface]')];
     const status = section.querySelector('.kae-preview-editing');
-    const renderer = preview.createRenderer(image, section.querySelector('canvas'), () => {
-      section.querySelector('figcaption').textContent = 'La vista de color no está disponible en este navegador. Puedes continuar eligiendo tu fórmula y comprando. Valida siempre el tono con una muestra física.';
-    });
+    const sceneControl = section.querySelector('[data-preview-scene]'), frame = section.querySelector('.kae-preview-scene');
+    const caption = section.querySelector('figcaption'), captionText = caption.textContent;
+    let renderer, activeScene = 'sala';
+    function loadScene(id) {
+      if (!preview.scenes[id]) return;
+      renderer?.dispose(); activeScene = id; section.dataset.scene = id;
+      section.querySelector('canvas').hidden = true; frame.setAttribute('aria-busy','true');
+      image.src = preview.scenes[id].src;
+      renderer = preview.createRenderer(image, section.querySelector('canvas'), () => {
+        frame.setAttribute('aria-busy','false');
+        caption.textContent = 'No se pudo mostrar la simulación. Puedes elegir otro espacio o continuar configurando tu pedido. Valida el tono con una muestra física.';
+      }, id, () => {frame.setAttribute('aria-busy','false');caption.textContent=captionText;});
+      paint();
+    }
+    sceneControl.addEventListener('change', () => loadScene(sceneControl.value));
     const read = () => Object.fromEntries(names.map(name => [name, fields[name].value]));
     function selection(values) {
-      const shared = {productId:'microcemento-kaemento-launch',quantity:1,sealer:'mate',colorMode:values.mode};
+      const shared = {productId:'microcemento-kaemento-launch',quantity:1,sealer:values.sealer || 'mate',colorMode:values.mode};
       return config.normalize(values.mode === 'standard' ? {...shared, color:values.color} : {
         ...shared, color1:values.tone1, color2:values.tone2, percentage1:Number(values.ratio), percentage2:100-Number(values.ratio)
       });
     }
     function paint() {
-      const colors = {}, descriptions = {};
+      const colors = {}, descriptions = {}, finishes = {};
       for (const button of buttons) {
         const surface = button.dataset.previewSurface, draft = selection(selections[surface]), chosen = draft || applied[surface];
         colors[surface] = preview.colorFor(chosen);
+        finishes[surface] = draft ? selections[surface].sealer : applied[surface]?.sealer;
         descriptions[surface] = chosen ? config.formula(chosen) : 'Sin seleccionar';
         button.setAttribute('aria-pressed', String(surface === active));
         const summary = button.querySelector('[data-preview-summary]');
@@ -65,10 +79,13 @@
           const line = document.createElement('span'); line.textContent = text; return line;
         }));
         button.querySelector('.kae-preview-order-state').hidden = !!draft || !applied[surface];
+        const finish = button.querySelector('.kae-preview-finish');
+        finish.hidden = !chosen;
+        finish.textContent = finishes[surface] ? 'Sellador: ' + (finishes[surface] === 'brillante' ? 'Brillante' : 'Mate') : 'Sellador por elegir';
         button.querySelector('.kae-preview-chip').style.setProperty('--preview-color', colors[surface] || '#e0dcd4');
       }
-      image.alt = 'Simulación de microcemento. Pared principal: ' + descriptions.walls + '. Piso: ' + descriptions.floor + '. Mobiliario sin cambios.';
-      renderer.update(colors);
+      image.alt = preview.scenes[activeScene].alt + '. Simulación de microcemento. Pared principal: ' + descriptions.walls + '. Piso: ' + descriptions.floor + '. Mobiliario sin cambios.';
+      renderer?.update(colors, finishes);
       const busy = buy.getAttribute('aria-busy') === 'true', editing = !cancel.hidden;
       for (const control of [...buttons, linked]) control.disabled = busy || editing;
       status.textContent = editing ? 'Estás editando una configuración del carrito. Guarda o cancela para cambiar de superficie.' :
@@ -128,7 +145,7 @@
     }
     window.addEventListener('pagehide', clear);
     window.addEventListener('pageshow', event => { if (event.persisted) clear(); });
-    sync();
+    loadScene('sala'); sync();
     if (window.location.hash === '#' + section.id) requestAnimationFrame(() => section.scrollIntoView({block:'start',behavior:'instant'}));
   });
 })();

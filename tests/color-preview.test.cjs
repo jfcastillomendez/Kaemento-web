@@ -2,6 +2,17 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {palette,colorFor}=require('../microcemento-preview-render.js');
 const config=require('../bold-config.js');
+test('Every available room has its own image and geometry',()=>{
+  const {scenes}=require('../microcemento-preview-render.js');
+  const fs=require('node:fs'),path=require('node:path');
+  assert.deepEqual(Object.keys(scenes),['sala','bano','cocina','dormitorio','comedor','terraza']);
+  for(const [id,scene]of Object.entries(scenes)){
+    assert.ok(fs.existsSync(path.join(__dirname,'..',scene.src)),'image '+id);
+    assert.ok(scene.wall.startsWith('M')&&scene.floor.startsWith('M'));
+    for(const value of Object.values(scene.brightness))assert.ok(value>0&&value<1);
+  }
+  assert.equal(new Set(Object.values(scenes).map(scene=>scene.src)).size,6);
+});
 test('Every purchasable standard color has a digital reference',()=>{
   assert.deepEqual(Object.keys(palette),[...config.colors.keys()]);
   for(const color of config.colors.keys())assert.match(colorFor({colorMode:'standard',color}),/^#[a-f0-9]{6}$/);
