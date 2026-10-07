@@ -6,6 +6,7 @@
   const scenes = {
     sala: {
       label:'Sala', alt:'Sala con sofá claro y muebles de madera', brightness:{walls:.6122007843137255,floor:.6884298039215687},
+      reference:{walls:[550,140,980,340],floor:[450,750,1250,930]},
       wall:'M311 40L1073 42V429L1055 430L1056 397L1016 391L995 388L986 383L919 384L908 380L836 383L805 381L757 384L682 382L621 385L582 383L515 389L477 401L467 411L448 428L440 432V522L331 519V446H311Z',
       wallHoles:['M358 459Q391 454 430 459V514L413 520L408 539H369L364 515L359 507Z'],
       floor:'M0 592L239 516L440 522L1079 522L1081 436L1108 437V453L1153 467L1155 480L1180 485V491L1222 501L1536 633V1024H0Z',
@@ -16,6 +17,7 @@
     },
     bano: {
       label:'Baño',alt:'Baño con mueble de lavabo de madera y sanitarios blancos',brightness:{walls:.6736086274509804,floor:.6736086274509804},
+      reference:{walls:[820,120,1050,380],floor:[400,800,1100,980]},
       wall:'M294 0H1338V687H294Z',
       wallHoles:['M425 58H629V313H425Z','M294 420H398V388Q506 383 625 388V409L681 416L679 437L674 600H294Z',
         'M347 369Q369 353 388 369L391 410Q370 422 347 412Z','M518 330H535V388H518Z','M631 349H644V364L650 373V414H626V373L633 364Z',
@@ -27,6 +29,7 @@
     },
     cocina: {
       label:'Cocina',alt:'Cocina con muebles bajos de roble, lavaplatos y estufa',brightness:{walls:.5912556862745098,floor:.667201568627451},
+      reference:{walls:[600,30,820,250],floor:[350,770,1100,980]},
       wall:'M266 0H1382V421H266Z',
       wallHoles:['M1137 0H1225V170H1342V207H1023L1042 170H1137Z',
         'M299 383Q324 377 347 383L346 416Q324 427 302 418Z','M407 362H427V421H406Z',
@@ -43,6 +46,7 @@
     },
     dormitorio: {
       label:'Dormitorio',alt:'Dormitorio de tamaño habitual con cama doble y mesas de noche',brightness:{walls:.5609843137254902,floor:.5357827450980391},
+      reference:{walls:[550,50,1050,320],floor:[430,940,1100,1010]},
       wall:'M228 0H1363V669H228Z',
       wallHoles:[
         'M497 374Q763 367 1037 374V526Q1162 540 1212 690Q1252 740 1280 867L1263 909L1201 872V901H1179L1171 834H345V900H322V834L248 905H230Q245 805 270 751L301 664Q350 566 497 526Z',
@@ -58,6 +62,7 @@
     },
     comedor: {
       label:'Comedor',alt:'Comedor para cuatro personas con mesa y sillas de madera',brightness:{walls:.7173121568627451,floor:.6153513725490195},
+      reference:{walls:[430,80,620,350],floor:[560,930,1040,1010]},
       wall:'M165 0H1338V643H165Z',
       wallHoles:['M766 0H771V112H780L789 144Q848 155 866 217Q775 241 672 221Q682 157 749 144L753 113H766Z',
         'M327 534L423 492H1113L1207 534V568H327Z',
@@ -75,6 +80,7 @@
     },
     terraza: {
       label:'Balcón / terraza',alt:'Balcón cubierto con sofá de exterior y vista hacia árboles',brightness:{walls:.5598831372549019,floor:.6103286274509804},
+      reference:{walls:[650,120,1200,390],floor:[450,790,1180,980]},
       wall:'M471 126L1075 0H1329V687L471 604Z',
       wallHoles:['M507 469L545 466L549 446Q633 440 712 452L746 445Q832 444 909 448L912 486L920 494L907 591L907 645L847 665L443 617L419 598L420 563L429 504L507 487Z',
         'M944 519H982V554H944Z'],

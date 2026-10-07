@@ -2,6 +2,27 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {palette,colorFor}=require('../microcemento-preview-render.js');
 const config=require('../bold-config.js');
+test('Material enhancement cannot invent texture on a uniform surface or bleed an excluded object',()=>{
+  const {materialField}=require('../microcemento-preview-render.js');
+  const width=96,height=96,source=new Float32Array(width*height).fill(.6),alpha=new Float32Array(source.length).fill(1);
+  for(let y=20;y<76;y++)for(let x=20;x<40;x++){source[y*width+x]=1;alpha[y*width+x]=0;}
+  const original=new Float32Array(source);
+  const {enhanced,relief,median}=materialField(source,alpha,width,height,[45,10,86,86]);
+  assert.deepEqual(source,original);
+  assert.ok(enhanced.every((value,i)=>Math.abs(value-original[i])<1e-6));
+  assert.ok(relief.every(value=>Math.abs(value)<1e-6));
+  assert.ok(Math.abs(median-.6)<.0001);
+});
+test('Material texture has stronger local detail while retaining its center tone and bounded relief',()=>{
+  const {materialField}=require('../microcemento-preview-render.js');
+  const width=128,height=128,source=new Float32Array(width*height),alpha=new Float32Array(source.length).fill(1);
+  for(let y=0;y<height;y++)for(let x=0;x<width;x++)source[y*width+x]=.5+.018*Math.sin(x/7)*Math.cos(y/9)+.003*Math.sin(x*2+y);
+  const {enhanced,relief,median}=materialField(source,alpha,width,height,[8,8,120,120]);
+  const variance=data=>data.reduce((total,value)=>total+(value-.5)**2,0)/data.length;
+  assert.ok(variance(enhanced)>variance(source)*2);
+  assert.ok(Math.abs(median-.5)<.003);
+  assert.ok(relief.every(value=>Math.abs(value)<=.045001));
+});
 test('Every available room has its own image and geometry',()=>{
   const {scenes}=require('../microcemento-preview-render.js');
   const fs=require('node:fs'),path=require('node:path');
@@ -19,12 +40,12 @@ test('Every purchasable standard color has a digital reference',()=>{
 });
 test('Digital tones retain the launch references with the requested gray display correction',()=>{
   assert.deepEqual(palette,{
-    'extra-blanco':'#e6e1dc',arena:'#bfac9a','gris-cemento':'#888684',negro:'#2b2b2a',terracota:'#a06145'
+    'extra-blanco':'#e6e1dc',arena:'#bfac9a','gris-cemento':'#989694',negro:'#2b2b2a',terracota:'#a06145'
   });
 });
 test('Specified proportions produce the independently calculated digital tone',()=>{
-  // 70% (191,172,154) + 30% (136,134,132) = (174.5,160.6,147.4).
-  assert.equal(colorFor({colorMode:'mix',color1:'arena',color2:'gris-cemento',percentage1:70,percentage2:30}),'#afa193');
+  // 70% (191,172,154) + 30% (152,150,148) = (179.3,165.4,152.2).
+  assert.equal(colorFor({colorMode:'mix',color1:'arena',color2:'gris-cemento',percentage1:70,percentage2:30}),'#b3a598');
   // Equal parts (230,225,220) and (43,43,42), rounded once to 8-bit channels.
   assert.equal(colorFor({colorMode:'mix',color1:'extra-blanco',color2:'negro',percentage1:50,percentage2:50}),'#898683');
 });
