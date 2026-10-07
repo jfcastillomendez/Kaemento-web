@@ -179,6 +179,7 @@
       panel.querySelector('[data-cart-empty]').hidden=items.length>0;
       button.disabled=!items.length || editing>=0;
       viewCart();
+      panel.dispatchEvent(new CustomEvent('kaemento:cart-updated', {detail:{items:items.map(item=>({...item}))}}));
     }
     function endEdit() {editing=-1;add.textContent='AÑADIR AL CARRITO';cancelEdit.hidden=true;}
     function resetSelection() {
@@ -200,6 +201,7 @@
       const wasEditing=editing>=0;
       trackChanges(items,valid.items);
       items=valid.items;endEdit();renderCart();resetSelection();
+      panel.dispatchEvent(new CustomEvent('kaemento:configuration-added', {detail:{...item}}));
       cartMessage.textContent=(wasEditing?'Configuración guardada.':'Kit añadido al carrito.')+' Elige una nueva configuración o continúa al pago.';
       mode.focus({preventScroll:true});
     });

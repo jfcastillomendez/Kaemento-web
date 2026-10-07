@@ -17,21 +17,22 @@ class Element {
  querySelectorAll(selector){const nodes=this.children.flatMap(child=>[child,...child.querySelectorAll('*')]);return selector==='*'?nodes:nodes.filter(n=>selector.split(',').includes(n.tag));}
 }
 function fixture({customerStep}={}) {
- const controls=new Map(),events={},removed=[],opened=[],tracked=[],requests=[];
+ const controls=new Map(),events={},removed=[],opened=[],tracked=[],requests=[],uiEvents=[];
  const session=new Map([['kaemento-order-access','{"previous":"retained-token"}'],['kaemento-bold-selections','{"previous":{"quantity":1}}']]);
- const panel={querySelector(selector){if(!controls.has(selector))controls.set(selector,new Element());return controls.get(selector);}};
+ const panel={dispatchEvent(event){uiEvents.push(event);},querySelector(selector){if(!controls.has(selector))controls.set(selector,new Element());return controls.get(selector);}};
  const control=name=>panel.querySelector(`[data-${name}]`);
  const document={querySelectorAll:()=>[panel],createElement(tag){const el=new Element();el.tag=tag;return el;},head:{appendChild(el){queueMicrotask(()=>el.onload());}}};
  const window={KaementoBoldConfig:variants,location:{origin:'https://example.invalid'},addEventListener(name,fn){(events[name]??=[]).push(fn);},kaementoTrack:(...args)=>tracked.push(args),BoldCheckout:class{constructor(config){this.config=config;}async open(){opened.push(this.config);}},KaementoOrderCustomer:{async open(selection,prepare){return customerStep?customerStep(selection,prepare):prepare({name:'Synthetic buyer'});}}};
  const result=selection=>({amount:variants.kitCount(selection)*365500,currency:'COP',tax:'vat-19',selection,orderId:'KAE-CART-TEST',integritySignature:'a'.repeat(64),statusToken:'b'.repeat(64),apiKey:'public-fixture',description:'Synthetic cart'});
  const context={window,document,localStorage:{removeItem:key=>removed.push(key),getItem(){throw Error('must not restore');},setItem(){throw Error('must not persist');}},sessionStorage:{getItem:key=>session.get(key)||null,setItem:(key,value)=>session.set(key,value)},crypto:webcrypto,TextEncoder,AbortSignal,Intl,URL,console,setTimeout:fn=>{queueMicrotask(fn);return 1;},clearTimeout(){},async fetch(url,options){const body=JSON.parse(options.body);requests.push({url,body});return Response.json(result(variants.restore({items:body.items})));}};
+ context.CustomEvent=class{constructor(type,options){this.type=type;this.detail=options.detail;}};
  vm.runInNewContext(fs.readFileSync(require.resolve('../bold-checkout.js'),'utf8'),context);
  async function event(name,details={persisted:true}){for(const fn of events[name]||[])await fn(details);await flush();}
  async function add(color,quantity=1,sealer='mate'){
   control('bold-mode').value='standard';control('bold-color').value=color;control('bold-sealer').value=sealer;control('bold-quantity').value=String(quantity);
   await control('bold-mode').emit('change');await control('cart-add').emit('click');
  }
- return {control,add,event,removed,session,opened,tracked,requests,result};
+ return {control,add,event,removed,session,opened,tracked,requests,result,uiEvents};
 }
 test('Cart starts empty, removes only its legacy key and never restores a previous visit',async()=>{
  const f=fixture(),retained=[...f.session];
@@ -77,4 +78,15 @@ test('Cart measures each committed addition/removal once, including quantity del
  await current.children[3].emit('click');assert.equal(f.tracked.at(-1)[0],'remove_from_cart');assert.equal(f.tracked.at(-1)[1].items[0].quantity,3);
  assert.equal(f.control('cart-count').textContent,'1 kit');
  const count=f.tracked.length;await f.event('pagehide');assert.equal(f.tracked.length,count);
+});
+
+test('Preview receives only accepted selections and observes cart clearing without changing the order contract',async()=>{
+ const f=fixture();await f.add('arena',2,'brillante');
+ const added=f.uiEvents.filter(e=>e.type==='kaemento:configuration-added');
+ assert.equal(added.length,1);assert.equal(added[0].detail.color,'arena');assert.equal(added[0].detail.quantity,2);
+ assert.equal(f.control('bold-mode').value,'');assert.equal(f.control('bold-quantity').value,'');
+ await f.add('negro',20);
+ assert.equal(f.uiEvents.filter(e=>e.type==='kaemento:configuration-added').length,1,'rejected cart limit cannot update the visual reference');
+ await f.event('pagehide');
+ assert.equal(f.uiEvents.filter(e=>e.type==='kaemento:cart-updated').at(-1).detail.items.length,0);
 });
