@@ -179,3 +179,10 @@ document.querySelectorAll('form:not([data-network-form])').forEach(form => {
   document.addEventListener('focusin', update);
   document.addEventListener('focusout', () => requestAnimationFrame(update));
 })();
+
+// Persistent commercial entry points, kept separate from navigation and checkout logic.
+if (!location.pathname.startsWith('/pagos/') && !document.querySelector('script[data-kae-discovery]')) {
+  const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = '/commercial-access.css?v=2';
+  const js = document.createElement('script'); js.src = '/commercial-access.js?v=2'; js.dataset.kaeDiscovery = 'true';
+  document.head.append(css,js);
+}

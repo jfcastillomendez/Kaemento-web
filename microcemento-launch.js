@@ -13,7 +13,9 @@
   }
   const promotion = {promotion_name: 'microcemento_kaemento_launch_2026'};
   document.querySelectorAll('[data-launch-cta]').forEach(link => link.addEventListener('click', event => {
-    window.kaementoTrack?.('select_promotion', {...promotion, button_id: link.id});
+    if (window.KaementoPromotion?.getState().state === 'active') {
+      window.kaementoTrack?.('select_promotion', {...promotion, button_id: link.id});
+    }
     if (link.getAttribute('href') === '#comprar-microcemento') {
       event.preventDefault();
       const target = document.getElementById('comprar-microcemento');
@@ -21,14 +23,5 @@
       history.replaceState(null, '', '#comprar-microcemento');
     }
   }));
-  const target = document.querySelector('[data-bold-purchase]');
-  if (target && 'IntersectionObserver' in window) {
-    const observer = new IntersectionObserver(entries => {
-      if (entries.some(entry => entry.isIntersecting)) {
-        window.kaementoTrack?.('view_promotion', promotion);
-        observer.disconnect();
-      }
-    }, {threshold: 0.05});
-    observer.observe(target);
-  }
+  // The shared discovery strip measures a visible, available promotion once per page.
 })();

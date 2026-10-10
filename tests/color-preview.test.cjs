@@ -45,12 +45,12 @@ test('Every purchasable standard color has a digital reference',()=>{
 });
 test('Digital tones retain the launch references with the requested gray display correction',()=>{
   assert.deepEqual(palette,{
-    'extra-blanco':'#e6e1dc',arena:'#bfac9a','gris-cemento':'#989694',negro:'#2b2b2a',terracota:'#a06145'
+    'extra-blanco':'#e6e1dc',arena:'#bfac9a','gris-cemento':'#a8a6a4',negro:'#2b2b2a',terracota:'#a06145'
   });
 });
 test('Specified proportions produce the independently calculated digital tone',()=>{
-  // 70% (191,172,154) + 30% (152,150,148) = (179.3,165.4,152.2).
-  assert.equal(colorFor({colorMode:'mix',color1:'arena',color2:'gris-cemento',percentage1:70,percentage2:30}),'#b3a598');
+  // 70% (191,172,154) + 30% (168,166,164) = (184.1,170.2,157).
+  assert.equal(colorFor({colorMode:'mix',color1:'arena',color2:'gris-cemento',percentage1:70,percentage2:30}),'#b8aa9d');
   // Equal parts (230,225,220) and (43,43,42), rounded once to 8-bit channels.
   assert.equal(colorFor({colorMode:'mix',color1:'extra-blanco',color2:'negro',percentage1:50,percentage2:50}),'#898683');
 });

@@ -1,0 +1,49 @@
+/* Two consistent entry points; the institutional hero keeps its own composition. */
+:root{--kae-access-height:48px;--kae-header-height:82px}
+body.has-kae-discovery main{padding-top:var(--kae-access-height)}
+.kae-access{position:fixed;z-index:18;top:var(--kae-header-height);inset-inline:0;min-height:48px;display:flex;justify-content:center;background:#f8f4ed;border-bottom:1px solid #c4ab854d;color:#292720;box-shadow:0 3px 14px #33271808}
+.kae-access a{display:flex;align-items:center;justify-content:center;gap:18px;padding:10px 28px;text-decoration:none;min-height:48px}
+.kae-access a+a{border-left:1px solid #c4ab8566}
+.kae-access a>span{font-size:10px;letter-spacing:.10em;color:#795b33}
+.kae-access strong{font-size:12px;font-weight:500;white-space:nowrap}
+.kae-access a:hover{background:#eee6d9}
+.kae-access a:focus-visible{outline:2px solid #795b33;outline-offset:-4px}
+.has-kae-discovery #vista-colores-microcemento,.has-kae-discovery #comprar-microcemento,.has-kae-discovery #lanzamiento-microcemento{scroll-margin-top:calc(var(--kae-header-height) + var(--kae-access-height) + 22px)}
+body:has(dialog[open]) .kae-access,body:has(.nav>nav.open) .kae-access{visibility:hidden;pointer-events:none}
+[data-discovery-live][hidden]{display:none!important}
+.launch-home.kae-discovery-home{max-width:1400px;background:#f2ede4;gap:clamp(28px,4vw,64px);grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)}
+.kae-discovery-home .launch-home-copy{min-width:0}
+.kae-discovery-discount{display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:center;width:fit-content;margin-bottom:20px;color:#78552c}
+.kae-discovery-discount>span:first-child{grid-column:1/-1;font-size:10px;letter-spacing:.14em;margin-bottom:3px}
+.kae-discovery-discount>strong{font-size:clamp(44px,4vw,58px);font-weight:500;letter-spacing:-.05em;line-height:1}
+.kae-discovery-discount>span:last-child{font-size:11px;letter-spacing:.08em;max-width:100px;line-height:1.6}
+.kae-discovery-home h2{font-size:clamp(36px,3.5vw,54px);margin:12px 0 18px}
+.kae-discovery-home .launch-actions{gap:16px;margin-top:22px}
+.kae-discovery-home .launch-limit{font-size:11px;color:#655d51}
+.kae-discovery-home .launch-price{margin:18px 0 8px}
+.kae-discovery-home .launch-price strong{font-size:32px}
+.kae-discovery-home .kae-discovery-visual{min-width:0;min-height:0;height:auto;margin:0}
+.kae-discovery-scene{position:relative;aspect-ratio:3/2;background:#e1d8cc;overflow:hidden}
+.kae-discovery-home .kae-discovery-scene img{display:block;width:100%;height:100%;object-fit:contain;max-height:none}
+.kae-discovery-visual figcaption{padding:12px 0;color:#665d50;font-size:11px;line-height:1.6}
+.kae-tonality-button{position:absolute;right:24px;bottom:24px;display:inline-flex;align-items:center;justify-content:space-between;gap:28px;min-height:56px;padding:17px 24px;background:#d6b27c;color:#211d17;border:1px solid #e4c89e;box-shadow:0 8px 24px #21190e33;font-size:13px;font-weight:600;letter-spacing:.06em;text-decoration:none;transition:transform .2s ease,background .2s ease,box-shadow .2s ease}
+.kae-tonality-button:hover{background:#e2c493;box-shadow:0 10px 28px #21190e40;transform:translateY(-2px)}
+.kae-tonality-button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.kae-tonality-button>span:last-child{font-size:23px;font-weight:400;line-height:1}
+.kae-selection-offer{font-size:12px!important;line-height:1.6;color:#795b33;margin:12px 0}
+@media(max-width:900px){
+ :root{--kae-access-height:0px}
+ body.has-kae-discovery{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+ .kae-access{top:auto;bottom:0;min-height:68px;padding:0 10px env(safe-area-inset-bottom,0px);border-top:1px solid #c4ab8566;border-bottom:0;box-shadow:0 -4px 20px #33271810}
+ .kae-access a{flex:1;min-width:0;flex-direction:column;gap:5px;padding:12px 4px;min-height:68px}
+ .kae-access a>span{font-size:9px;letter-spacing:.06em}
+ .kae-access strong{font-size:12px}
+ .has-kae-discovery .whatsapp{bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+ body.kae-discovery-input .kae-access,body.kae-discovery-cart .kae-access{visibility:hidden;pointer-events:none}
+ body.kae-discovery-input .whatsapp{display:none!important}
+ body.kae-discovery-visual-active .whatsapp{display:none!important}
+ .launch-home.kae-discovery-home{grid-template-columns:1fr;gap:28px}
+ .kae-discovery-home .launch-actions{flex-direction:row;align-items:center}
+}
+@media(max-width:480px){.kae-tonality-button{left:14px;right:14px;bottom:14px;gap:12px;padding:13px 15px;min-height:50px;font-size:11px}}
+@media(prefers-reduced-motion:reduce){html:has(.kae-access){scroll-behavior:auto}.kae-tonality-button{transition:none}.kae-tonality-button:hover{transform:none}}

@@ -55,6 +55,14 @@
     }
     sceneControl.addEventListener('change', () => loadScene(sceneControl.value));
     const read = () => Object.fromEntries(names.map(name => [name, fields[name].value]));
+    let seen = false, started = false;
+    new IntersectionObserver(entries => {if (entries.some(e => e.isIntersecting)) seen = true;}).observe(section);
+    for (const name of ['color','tone1','tone2','ratio']) fields[name].addEventListener('change', event => {
+      if (event.isTrusted && seen && !started && selection(read())) {
+        started = true;
+        window.kaementoTrack?.('microcemento_simulator_start',{button_id:'color-preview'});
+      }
+    });
     function selection(values) {
       const shared = {productId:'microcemento-kaemento-launch',quantity:1,sealer:values.sealer || 'mate',colorMode:values.mode};
       return config.normalize(values.mode === 'standard' ? {...shared, color:values.color} : {

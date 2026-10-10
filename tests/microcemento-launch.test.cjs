@@ -24,6 +24,14 @@ test('Promotion measurement only accepts the fixed campaign and strips personal 
   }
   assert.equal(sandbox.window.dataLayer.length,n);assert.equal(bridge.dataLayer.length,m);
  }
+ for(const name of ['microcemento_simulator_open','microcemento_simulator_start']) {
+  const params={button_id:'color-preview',name:'PRIVATE',email:'PRIVATE',phone:'PRIVATE',value:365500,transaction_id:'PRIVATE'};
+  sandbox.window.kaementoTrack(name,params);
+  const event=sandbox.window.dataLayer.at(-1);
+  assert.equal(event.event,name);assert.equal(event.button_id,'color-preview');assert.ok(!JSON.stringify(event).includes('PRIVATE'));assert.equal(event.value,undefined);
+  listener({origin:location.origin,source:parent,data:{type:'kaemento-event',event:name,params}});
+  assert.equal(bridge.dataLayer.at(-1)[1],name);assert.ok(!JSON.stringify(bridge.dataLayer.at(-1)).includes('PRIVATE'));assert.equal(bridge.dataLayer.at(-1)[2].value,undefined);
+ }
 });
 test('Campaign configuration matches the approved server price without changing checkout',()=>{
  const box={window:{}};vm.runInNewContext(fs.readFileSync(path.join(root,'microcemento-launch-config.js'),'utf8'),box);

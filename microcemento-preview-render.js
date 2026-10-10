@@ -5,7 +5,7 @@
   else root.KaementoColorPreview = factory(root.KaementoPreviewScenes);
 })(typeof window === 'object' ? window : globalThis, scenes => {
   const palette = Object.freeze({
-    'extra-blanco': '#e6e1dc', arena: '#bfac9a', 'gris-cemento': '#989694',
+    'extra-blanco': '#e6e1dc', arena: '#bfac9a', 'gris-cemento': '#a8a6a4',
     negro: '#2b2b2a', terracota: '#a06145'
   });
   const rgb = hex => hex.slice(1).match(/../g).map(n => parseInt(n, 16));
@@ -170,12 +170,18 @@
         const target = rgb(colors[surface]);
         const mask = masks[surface];
         // Both finishes soften veining; gloss retains more mineral detail than matte.
-        const profile = finishes[surface] === 'brillante' ? 2 : 4;
+        const glossy = finishes[surface] === 'brillante';
+        const profile = glossy ? 2 : 4;
+        // Gloss reveals a little more existing veining; the approved matte fields stay intact.
+        // Pure gray in matte retains its prior detail blend. Never invent a new pattern.
+        const detail = glossy ? .1 : colors[surface] === palette['gris-cemento'] ? .18 : 0;
         for (let i = 0; i < mask.length; i += 6) {
-          const p = mask[i], alpha = mask[i + 1], shade = mask[i + profile];
+          const p = mask[i], alpha = mask[i + 1];
+          const shade = mask[i + profile] + detail * (mask[i + 2] - mask[i + 4]);
           for (let c = 0; c < 3; c++) {
-            let value = Math.min(255, target[c] * shade);
-            if (finishes[surface] === 'brillante') value += (Math.max(value,246)-value)*mask[i+profile+1];
+            // A subtle sealed appearance under the local reflection, without changing the mix.
+            let value = Math.min(255, target[c] * shade * (glossy ? .96 : 1));
+            if (glossy) value += (Math.max(value,246)-value)*mask[i+profile+1];
             output.data[p + c] = source.data[p + c] * (1 - alpha) + value * alpha;
           }
         }

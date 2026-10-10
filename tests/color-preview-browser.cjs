@@ -11,7 +11,7 @@ fs.mkdirSync(output,{recursive:true});
 (async()=>{
   const server=http.createServer((req,res)=>{
     const url=new URL(req.url,'http://fixture');
-    if(url.pathname==='/api/bold/promotion') {res.writeHead(200,{'Content-Type':'application/json'});return res.end('{"state":"active","remaining":24,"capacity":30}');}
+    if(url.pathname==='/api/bold/promotion') {res.writeHead(200,{'Content-Type':'application/json'});return res.end('{"state":"active","remaining":24,"capacity":30,"endsAt":"2026-10-19T00:29:14Z"}');}
     const file=path.resolve(root,'.'+(url.pathname==='/'?'/index.html':url.pathname));
     if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);return res.end('Not found');}
     const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.webp':'image/webp','.avif':'image/avif','.mp4':'video/mp4'};
@@ -71,11 +71,22 @@ fs.mkdirSync(output,{recursive:true});
         assert.ok(median.every((value,c)=>Math.abs(value-expected[c])<=1),surface+' reference lighting preserves '+color);
       }
       const original=await pixels(true);
+      const unlitWall=()=>page.evaluate(()=>{
+        const data=document.querySelector('[data-color-preview] canvas').getContext('2d').getImageData(950,180,80,100).data;
+        let total=0;for(let p=0;p<data.length;p+=4)total+=.2126*data[p]+.7152*data[p+1]+.0722*data[p+2];
+        return total/(data.length/4);
+      });
       for(const color of config.colors.keys()){
-        await select('mode','standard');await select('color',color);await tick();
+        await select('mode','standard');await select('color',color);await select('sealer','mate');await tick();
         const current=await pixels();assert.notDeepEqual(current.wall,original.wall);assert.deepEqual(current.floor,original.floor);
         for(const key of ['wood','sofa','table','ceiling','chair'])assert.deepEqual(current[key],original[key],key+' remains untouched');
         await assertReferenceTone('walls',preview.palette[color]);
+        const matteTone=await unlitWall();await select('sealer','brillante');await tick();
+        const glossTone=await unlitWall();
+        assert.ok(glossTone<matteTone*.99 && glossTone>matteTone*.92,color+' gloss subtly darkens away from the reflection');
+        const gloss=await pixels();assert.deepEqual(gloss.floor,original.floor);
+        for(const key of ['wood','sofa','table','ceiling','chair'])assert.deepEqual(gloss[key],original[key]);
+        await select('sealer','mate');await tick();assert.deepEqual(await pixels(),current,'returning to matte restores its exact appearance');
       }
       await select('color','extra-blanco');await select('sealer','mate');await panel.locator('[data-bold-quantity]').fill('1');await tick();
       const whiteWall=(await pixels()).wall;
@@ -83,7 +94,7 @@ fs.mkdirSync(output,{recursive:true});
       await select('mode','mix');await select('tone1','arena');await select('tone2','gris-cemento');await select('ratio','70');
       await select('sealer','mate');await panel.locator('[data-bold-quantity]').fill('2');await tick();
       let current=await pixels();assert.deepEqual(current.wall,whiteWall);assert.notDeepEqual(current.floor,original.floor);
-      await assertReferenceTone('floor','#b3a598');
+      await assertReferenceTone('floor','#b8aa9d');
       await select('sealer','brillante');await tick();
       for(const key of ['wood','sofa','table','ceiling','chair'])assert.deepEqual(current[key],original[key]);
       const firstFloor=current.floor;await select('ratio','30');await tick();assert.notDeepEqual((await pixels()).floor,firstFloor);await select('ratio','70');
