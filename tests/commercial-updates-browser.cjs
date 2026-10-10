@@ -80,10 +80,21 @@ fs.mkdirSync(output,{recursive:true});
    await panel.locator('[data-bold-color]').scrollIntoViewIfNeeded();await panel.locator('[data-bold-color]').focus();
    await panel.locator('[data-bold-color]').selectOption('arena');await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
    const image=await panel.locator('.kae-preview-scene').boundingBox();
-   assert.ok(image.y>=70&&image.y+image.height<=844,'full image visible while choosing tone '+width+' '+JSON.stringify(image));
+   const workspace=await panel.locator('.kae-preview-workspace').boundingBox();
+   assert.ok(Math.abs(image.width-workspace.width)<1,'photo fills the whole workspace '+width);
+   assert.ok(Math.abs(image.width/image.height-1.5)<.01,'photo preserves its complete 3:2 composition '+width);
+   if(width<720)assert.ok(image.y>=70&&image.y+image.height<=844,'mobile image remains visible while choosing tone '+width);
+   else {
+    const controls=await panel.locator('.kae-preview-controls').boundingBox();
+    assert.ok(controls.y>=image.y+image.height,'desktop controls sit below the full-width photo');
+   }
    await panel.locator('[data-bold-sealer]').scrollIntoViewIfNeeded();await panel.locator('[data-bold-sealer]').focus();await panel.locator('[data-bold-sealer]').selectOption('brillante');
    await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
-   const sealed=await panel.locator('.kae-preview-scene').boundingBox();assert.ok(sealed.y>=70&&sealed.y+sealed.height<=844,'full image visible while choosing sealer '+width);
+   const sealed=await panel.locator('.kae-preview-scene').boundingBox();
+   if(width<720)assert.ok(sealed.y>=70&&sealed.y+sealed.height<=844,'mobile image remains visible while choosing sealer '+width);
+   await panel.locator('.kae-preview-jump').click();
+   assert.equal(await page.evaluate(()=>document.activeElement.dataset.previewSurface),'floor');
+   assert.ok((await panel.locator('.kae-preview-scene').boundingBox()).y>=70,'return to the full-width combination');
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
    await page.screenshot({path:path.join(output,'simulator-editing-'+width+'.png')});
   }

@@ -40,13 +40,13 @@
     const status = section.querySelector('.kae-preview-editing');
     const sceneControl = section.querySelector('[data-preview-scene]'), frame = section.querySelector('.kae-preview-scene');
     const caption = section.querySelector('figcaption'), captionText = caption.textContent;
-    // The photograph and controls share a workspace so the whole image can stay in view.
+    // Keep the complete photograph above the controls; mobile can keep it in view while editing.
     const workspace = document.createElement('div'); workspace.className = 'kae-preview-workspace';
     const figure = section.querySelector('figure');
     figure.before(workspace); workspace.append(figure, controls);
     controls.prepend(status);
     controls.addEventListener('focusin', event => {
-      if (!matchMedia('(max-width:719px)').matches || !event.target.matches('input,select,button')) return;
+      if (getComputedStyle(figure).position !== 'sticky' || !event.target.matches('input,select,button')) return;
       requestAnimationFrame(() => {
         const bottom = figure.getBoundingClientRect().bottom, top = event.target.getBoundingClientRect().top;
         if (top < bottom + 12) window.scrollBy({top:top-bottom-12,behavior:'instant'});
