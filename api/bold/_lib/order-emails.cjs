@@ -15,6 +15,7 @@ function emailContent(order, role) {
     ...variants.lines(variants.restore(order.selection)).map((item,index)=>[
       `Producto${order.schemaVersion === 3 ? ' ' + (index+1) : ''}`,
       [['Producto','Microcemento KAEMENTO'],['Cantidad',`${item.quantity} ${item.quantity === 1 ? 'kit' : 'kits'}`],
+       ...(item.surface ? [['Aplicación',variants.surfaces.get(item.surface)]] : []),
        ['Color / mezcla',variants.formula(item)],['Sellador',variants.sealers.get(item.sealer)],
        ['Precio unitario',money(order.unitPrice)],['Subtotal',money(order.unitPrice*item.quantity)]]]),
     ['Total del pedido', [['Cantidad total',`${order.quantity} kits`],['Total',money(order.total)]]],

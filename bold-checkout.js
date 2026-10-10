@@ -3,7 +3,6 @@
   window.kaementoBoldInitialized = true;
   const sdkUrl = 'https://checkout.bold.co/library/boldPaymentButton.js';
   const variants = window.KaementoBoldConfig;
-  const unitAmount = 365500;
   const format = amount => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount);
   const errorText = 'No pudimos abrir el pago en este momento. Intenta nuevamente o contáctanos por WhatsApp.';
   let sdkPromise;
@@ -20,7 +19,7 @@
   function loadCustomerStep() {
     if (customerPromise) return customerPromise;
     customerPromise = Promise.all([
-      ['script','/order-customer.js?v=3'], ['link','/order-customer.css']
+      ['script','/order-customer.js?v=4'], ['link','/order-customer.css']
     ].map(([tag,url])=>new Promise((resolve,reject)=>{
       const element = document.createElement(tag);
       if (tag === 'script') element.src = url;
@@ -55,6 +54,7 @@
     return sdkPromise;
   }
   document.querySelectorAll('[data-bold-purchase]').forEach(panel => {
+    let unitAmount = variants.unitPrice;
     const input = panel.querySelector('[data-bold-quantity]');
     const colorInput = panel.querySelector('[data-bold-color]');
     const mode = panel.querySelector('[data-bold-mode]');
@@ -88,6 +88,7 @@
     const variantControls = [mode, colorInput, tone1, tone2, ratio, sealerInput];
     function requestBody(n) {
       const base = {productId:'microcemento-kaemento-launch',quantity:n,colorMode:mode.value,sealer:sealerInput.value};
+      if (variants.surfaces.has(panel.dataset?.kitSurface)) base.surface = panel.dataset.kitSurface;
       return mode.value === 'standard' ? {...base,color:colorInput.value} : {...base,color1:tone1.value,color2:tone2.value,percentage1:Number(ratio.value),percentage2:100-Number(ratio.value)};
     }
     function refresh() {
@@ -107,7 +108,7 @@
     // Track only validated product selections; never buyer details or checkout tokens.
     function cartEvent(event, selection) {
       if (!selection.length) return;
-      window.kaementoTrack?.(event, {currency:'COP',value:selection.reduce((n,x)=>n+x.quantity,0)*unitAmount,items:variants.analyticsItems({items:selection})});
+      window.kaementoTrack?.(event, {currency:'COP',value:selection.reduce((n,x)=>n+x.quantity,0)*unitAmount,items:variants.analyticsItems({items:selection},unitAmount)});
     }
     const lineKey = item => JSON.stringify({...item,quantity:0});
     function trackChanges(previous, next) {
@@ -138,7 +139,7 @@
       items.forEach((item,index)=>{
         const row=document.createElement('li'); row.className='kae-cart-line';
         const summary=document.createElement('div'), name=document.createElement('strong'), detail=document.createElement('p');
-        name.textContent=variants.formula(item); detail.textContent='Sellador '+variants.sealers.get(item.sealer)+' · '+format(unitAmount)+' / kit';
+        name.textContent=(item.surface ? variants.surfaces.get(item.surface)+' · ' : '')+variants.formula(item); detail.textContent='Sellador '+variants.sealers.get(item.sealer)+' · '+format(unitAmount)+' / kit';
         summary.append(name,detail);
         const controls=document.createElement('div'); controls.className='kae-cart-controls';
         const label=document.createElement('label'); label.textContent='Kits';
@@ -165,6 +166,7 @@
         const edit=document.createElement('button');edit.type='button';edit.textContent='Editar';edit.setAttribute('aria-label','Editar '+variants.formula(item));
         edit.addEventListener('click',()=>{
           const item=items[index];
+          panel.dispatchEvent(new CustomEvent('kaemento:configuration-editing',{detail:{...item}}));
           editing=index;mode.value=item.colorMode;sealerInput.value=item.sealer;input.value=item.quantity;
           colorInput.value=item.color || '';tone1.value=item.color1 || '';tone2.value=item.color2 || '';ratio.value=item.percentage1 || '';
           refresh();total.textContent=format(item.quantity*unitAmount);add.textContent='GUARDAR CONFIGURACIÓN';cancelEdit.hidden=false;button.disabled=true;mode.focus();
@@ -223,6 +225,16 @@
     // Also reset when Back/Forward restores the document from the browser's page cache.
     window.addEventListener('pageshow', event => { if (event.persisted) clearDraft(); });
     clearDraft();
+    function updatePrice(data) {
+      if (preparing || !['active','ended','sold_out','upcoming'].includes(data.state)) return;
+      const price = data.state === 'active' ? variants.unitPrice : variants.regularPrice;
+      unitAmount = price;
+      panel.querySelectorAll('[data-bold-unit]').forEach(el => {el.textContent = format(price);});
+      if (quantity()) total.textContent = format(quantity()*price);
+      renderCart();
+    }
+    if (window.KaementoPromotion) window.KaementoPromotion.subscribe(updatePrice);
+    else window.addEventListener('kaemento:promotion-ready',() => window.KaementoPromotion.subscribe(updatePrice),{once:true});
     button.addEventListener('click', async () => {
       if (preparing || editing>=0 || [...cartList.querySelectorAll('input')].some(x=>!x.reportValidity())) return;
       const selected = variants.restore({items});
@@ -243,8 +255,8 @@
       try {
         await loadCustomerStep();
         if (activeVisit !== visit) return;
-        const data = await window.KaementoOrderCustomer.open(selected, async customer => {
-          const payload=JSON.stringify({...body,customer});
+        const data = await window.KaementoOrderCustomer.open(selected, async (customer,reviewedPrice) => {
+          const payload=JSON.stringify({...body,customer,expectedUnitPrice:reviewedPrice});
           const idempotencyKey=await requestKey(payload);
           const response = await fetch('/api/bold/checkout', {
             method:'POST', headers:{'Content-Type':'application/json','Idempotency-Key':idempotencyKey}, body:payload,
@@ -253,15 +265,18 @@
           if (!response.ok) {
             const failure = await response.json().catch(()=>({}));
             const error = new Error('Order unavailable');
-            error.code = response.status === 409 && failure.code === 'CAMPAIGN_CLOSED' ? 'CAMPAIGN_CLOSED' : ({400:'INVALID_CUSTOMER',409:'ORDER_PROCESSED',429:'RATE_LIMITED'})[response.status] || 'UNAVAILABLE';
+            error.code = response.status === 409 && failure.code === 'PRICE_CHANGED' ? 'PRICE_CHANGED' : ({400:'INVALID_CUSTOMER',409:'ORDER_PROCESSED',429:'RATE_LIMITED'})[response.status] || 'UNAVAILABLE';
+            error.unitPrice = failure.unitPrice;
             throw error;
           }
-          return response.json();
-        });
+          const prepared = await response.json();
+          if (prepared.amount !== n * reviewedPrice) throw new Error('Unexpected reviewed total');
+          return prepared;
+        },unitAmount);
         if (!data || activeVisit !== visit) { status.textContent = ''; return; }
         await loadSdk();
         if (activeVisit !== visit) return;
-        if (!Number.isInteger(data.amount) || data.amount !== n * unitAmount || data.currency !== 'COP' ||
+        if (!Number.isInteger(data.amount) || ![variants.unitPrice,variants.regularPrice].includes(data.amount/n) || data.currency !== 'COP' ||
             data.tax !== 'vat-19' || variants.kitCount(data.selection || {}) !== n ||
             JSON.stringify(data.selection) !== JSON.stringify(selected) || !/^[A-Za-z0-9_-]{1,60}$/.test(data.orderId) ||
             !/^[a-f0-9]{64}$/.test(data.integritySignature) || !/^[a-f0-9]{64}$/.test(data.statusToken) || typeof data.apiKey !== 'string' || !data.apiKey) {
@@ -295,7 +310,7 @@
         // Only after open() completes without error. This is not a confirmed purchase.
         window.kaementoTrack?.('begin_checkout', {
           currency: 'COP', value: data.amount,
-          items: variants.analyticsItems(selected)
+          items: variants.analyticsItems(selected,data.amount/n)
         });
       } catch (_) {
         status.textContent = errorText;
@@ -304,6 +319,7 @@
         // Retain the lock briefly after opening, including the second click of a double-click.
         if (opened) await new Promise(resolve => setTimeout(resolve, 1200));
         preparing = false;
+        if (window.KaementoPromotion) updatePrice(window.KaementoPromotion.getState());
         cartControls.forEach(field=>field.disabled=false);
         renderCart();
         input.disabled = false;

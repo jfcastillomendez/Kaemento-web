@@ -11,9 +11,9 @@ async function invoke(handler,method='GET') {
  await handler({method},{setHeader(k,v){result.headers[k]=v;},set statusCode(v){result.status=v;},end(v){result.body=JSON.parse(v);}});
  return result;
 }
-test('Launch quota includes four historical orders and one slot per genuinely approved order, not per kit',{skip:!process.env.REDIS_SERVER_BIN},async()=>{
+test('Launch quota includes seven external paid orders and one slot per genuinely approved online order, not per kit',{skip:!process.env.REDIS_SERVER_BIN},async()=>{
  const redis=await redisFixture();try {
-  const store=payments.createStore(env,redis.transport),handler=createPromotion(env,()=>store,()=>Date.parse('2026-09-30T12:00:00Z'));
+  const store=payments.createStore(env,redis.transport),handler=createPromotion(env,()=>store,()=>Date.parse('2026-10-10T12:00:00Z'));
   const events=[];
   async function order(quantity=1) {
    const id=`KAE-MICRO-${Date.now()}-${randomBytes(8).toString('hex')}`;
@@ -22,17 +22,17 @@ test('Launch quota includes four historical orders and one slot per genuinely ap
    events.push(event);return event;
   }
   const first=await order(3),second=await order();
-  assert.equal((await invoke(handler)).body.remaining,26); // Pending carts do not consume quota.
+  assert.equal((await invoke(handler)).body.remaining,23); // Pending carts do not consume quota.
   await store.process(first);await store.process(second);
-  const baseline=await invoke(handler);assert.equal(baseline.status,200);assert.deepEqual(baseline.body,{capacity:30,remaining:24,state:'active',endsAt:'2026-10-19T00:29:14Z'});
+  const baseline=await invoke(handler);assert.equal(baseline.status,200);assert.deepEqual(baseline.body,{capacity:30,remaining:21,state:'active',endsAt:'2026-11-18T00:29:14Z'});
   const next=await order(2);await Promise.all(Array.from({length:12},()=>store.process(next)));
-  assert.equal((await invoke(handler)).body.remaining,23);
+  assert.equal((await invoke(handler)).body.remaining,20);
   await store.process({...next,id:randomBytes(16).toString('hex')});
-  assert.equal((await invoke(handler)).body.remaining,23);
+  assert.equal((await invoke(handler)).body.remaining,20);
   const failed=await order();await store.process({...failed,type:'SALE_REJECTED'});
-  assert.equal((await invoke(handler)).body.remaining,23);
+  assert.equal((await invoke(handler)).body.remaining,20);
   await store.process({...next,id:randomBytes(16).toString('hex'),type:'VOID_APPROVED'});
-  assert.equal((await invoke(handler)).body.remaining,24);
+  assert.equal((await invoke(handler)).body.remaining,21);
   for(let i=0;i<26;i++)await store.process(await order());
   assert.equal((await invoke(handler)).body.remaining,0);
   assert.deepEqual(Object.keys(baseline.body).sort(),['capacity','endsAt','remaining','state']);

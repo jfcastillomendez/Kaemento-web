@@ -35,7 +35,7 @@ test('Promotion measurement only accepts the fixed campaign and strips personal 
 });
 test('Campaign configuration matches the approved server price without changing checkout',()=>{
  const box={window:{}};vm.runInNewContext(fs.readFileSync(path.join(root,'microcemento-launch-config.js'),'utf8'),box);
- const c=box.window.KaementoLaunchCampaign;assert.equal(c.launchPrice,365500);assert.equal(c.regularPrice*(100-c.discount)/100,c.launchPrice);assert.equal(c.maxCustomers,30);assert.equal(c.durationDays,30);
+ const c=box.window.KaementoLaunchCampaign;assert.equal(c.launchPrice,365500);assert.equal(c.regularPrice*(100-c.discount)/100,c.launchPrice);assert.equal(c.maxCustomers,30);assert.equal(c.durationDays,60);
 });
 test('Product view is emitted once on the product route with a fixed public item and no supplied personal fields',()=>{
  const frame={contentWindow:{postMessage(){}},setAttribute(){}},location={pathname:'/productos/microcemento-kaemento.html',origin:'https://preview.example',hostname:'preview.example',search:'?servicio=PRIVATE'};

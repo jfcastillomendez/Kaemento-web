@@ -2,7 +2,7 @@
   if (window.KaementoOrderCustomer) return;
   const format = amount => new Intl.NumberFormat('es-CO', {style:'currency',currency:'COP',maximumFractionDigits:0}).format(amount);
   window.KaementoOrderCustomer = {
-    open(selection, prepare) {
+    open(selection, prepare, unitPrice = window.KaementoBoldConfig.unitPrice) {
       return new Promise(resolve => {
         const dialog = document.createElement('dialog');
         dialog.className = 'kae-order-dialog';
@@ -31,12 +31,16 @@
         const form = dialog.querySelector('form'), status = dialog.querySelector('.kae-order-message');
         const variants=window.KaementoBoldConfig;
         const summary=dialog.querySelector('.kae-order-summary');
-        for(const item of variants.lines(selection)) {
-          const line=document.createElement('span');line.style.display='block';
-          line.textContent=`${item.quantity} ${item.quantity === 1 ? 'kit' : 'kits'} · ${variants.formula(item)} · Sellador ${variants.sealers.get(item.sealer)} · ${format(item.quantity*365500)}`;
-          summary.append(line);
+        function renderSummary() {
+          summary.replaceChildren();
+          for(const item of variants.lines(selection)) {
+            const line=document.createElement('span');line.style.display='block';
+            line.textContent=`${item.quantity} ${item.quantity === 1 ? 'kit' : 'kits'} · ${item.surface ? variants.surfaces.get(item.surface)+' · ' : ''}${variants.formula(item)} · Sellador ${variants.sealers.get(item.sealer)} · ${format(item.quantity*unitPrice)}`;
+            summary.append(line);
+          }
+          const total=document.createElement('strong');total.textContent=`Total: ${format(variants.kitCount(selection)*unitPrice)} IVA incluido`;summary.append(total);
         }
-        const total=document.createElement('strong');total.textContent=`Total: ${format(variants.kitCount(selection)*365500)} IVA incluido`;summary.append(total);
+        renderSummary();
         let busy = false, finished = false;
         function finish(value) {
           if (finished) return;
@@ -63,9 +67,15 @@
           controls.forEach(el=>el.disabled = true);
           form.setAttribute('aria-busy','true');
           status.textContent = 'Guardando tu pedido…';
-          try { finish(await prepare(customer)); }
+          try { finish(await prepare(customer,unitPrice)); }
           catch (error) {
             if (finished) return;
+            if (error.code === 'PRICE_CHANGED' && [variants.unitPrice,variants.regularPrice].includes(error.unitPrice)) {
+              unitPrice = error.unitPrice;
+              renderSummary();
+              status.textContent = 'El precio vigente ha cambiado. Hemos actualizado el total. Revísalo y pulsa nuevamente CONTINUAR AL PAGO SEGURO si estás de acuerdo.';
+              return;
+            }
             // Display only fixed application errors supplied by our caller, never provider responses.
             status.textContent = ({CAMPAIGN_CLOSED:'La promoción de lanzamiento ha finalizado. Consulta disponibilidad y precio con KAEMENTO antes de pagar.',INVALID_CUSTOMER:'Revisa tus datos: identificación válida, correo, teléfono de 7 a 15 dígitos y dirección completa.',ORDER_PROCESSED:'Este pedido ya fue procesado. Revisa tu comprobante o consulta con KAEMENTO antes de volver a pagar.',RATE_LIMITED:'Has realizado varios intentos. Espera un momento o escríbenos para ayudarte.'})[error.code] || 'No pudimos guardar tu pedido. Intenta nuevamente o contáctanos en kaemento@gmail.com.';
           } finally {

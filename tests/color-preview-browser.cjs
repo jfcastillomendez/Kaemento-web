@@ -11,7 +11,7 @@ fs.mkdirSync(output,{recursive:true});
 (async()=>{
   const server=http.createServer((req,res)=>{
     const url=new URL(req.url,'http://fixture');
-    if(url.pathname==='/api/bold/promotion') {res.writeHead(200,{'Content-Type':'application/json'});return res.end('{"state":"active","remaining":24,"capacity":30,"endsAt":"2026-10-19T00:29:14Z"}');}
+    if(url.pathname==='/api/bold/promotion') {res.writeHead(200,{'Content-Type':'application/json'});return res.end('{"state":"active","remaining":24,"capacity":30,"endsAt":"2026-11-18T00:29:14Z"}');}
     const file=path.resolve(root,'.'+(url.pathname==='/'?'/index.html':url.pathname));
     if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);return res.end('Not found');}
     const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.webp':'image/webp','.avif':'image/avif','.mp4':'video/mp4'};
@@ -49,6 +49,10 @@ fs.mkdirSync(output,{recursive:true});
       const tick=()=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
       const select=(name,value)=>panel.locator('[data-bold-'+name+']').selectOption(value);
       const surface=name=>panel.locator('[data-preview-surface="'+name+'"]');
+      assert.equal(await panel.locator('[data-preview-surface]').first().getAttribute('data-preview-surface'),'floor');
+      assert.equal(await surface('floor').getAttribute('aria-pressed'),'true');
+      assert.ok((await surface('floor').boundingBox()).y < (await panel.locator('.kae-preview-scene').boundingBox()).y);
+      await surface('walls').click();
       async function pixels(original=false){
         return page.evaluate(original=>{
           const frame=document.querySelector('[data-color-preview]');
@@ -137,16 +141,16 @@ fs.mkdirSync(output,{recursive:true});
       }
       await page.locator('.kae-order-continue').click();await page.waitForFunction(()=>window.__bold.length===1);
       assert.deepEqual(requests.at(-1).items,[
-        {productId:'microcemento-kaemento-launch',quantity:1,colorMode:'standard',sealer:'mate',color:'extra-blanco'},
-        {productId:'microcemento-kaemento-launch',quantity:2,colorMode:'mix',sealer:'brillante',color1:'arena',color2:'gris-cemento',percentage1:40,percentage2:60}
+        {productId:'microcemento-kaemento-launch',quantity:1,colorMode:'standard',sealer:'mate',surface:'walls',color:'extra-blanco'},
+        {productId:'microcemento-kaemento-launch',quantity:2,colorMode:'mix',sealer:'brillante',surface:'floor',color1:'arena',color2:'gris-cemento',percentage1:40,percentage2:60}
       ]);
       await page.waitForFunction(()=>!document.querySelector('[data-bold-buy]').hasAttribute('aria-busy'));
       await rows.nth(0).getByRole('button',{name:/Quitar/}).click();await tick();assert.equal(await surface('walls').locator('small').innerText(),'Sin seleccionar');
       await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pagehide')));await tick();
       assert.equal(await panel.locator('[data-cart-count]').innerText(),'0 kits');assert.equal(await surface('floor').locator('small').innerText(),'Sin seleccionar');
       await page.reload();await panel.locator('[data-color-preview]').waitFor();assert.equal(await panel.locator('[data-bold-mode]').inputValue(),'');
-      checks.push({route,independentSurfaces:true,linkedColorIndependentKits:true,cartResetRetainsAppliedPreview:true,editRemove:true,orderPayloadUnchanged:true,lifecycleCleared:true});
-      await panel.locator('[data-color-preview]').scrollIntoViewIfNeeded();
+      checks.push({route,independentSurfaces:true,linkedColorIndependentKits:true,cartResetRetainsAppliedPreview:true,editRemove:true,orderSurfacePreserved:true,lifecycleCleared:true});
+      await panel.locator('[data-color-preview]').scrollIntoViewIfNeeded();await surface('walls').click();
       await select('mode','standard');await select('color','terracota');await select('sealer','mate');
       await surface('floor').click();await select('mode','standard');await select('color','negro');await select('sealer','mate');
       const anchors={

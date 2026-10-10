@@ -15,9 +15,10 @@ const mime={'.html':'text/html','.css':'text/css','.js':'text/javascript','.svg'
 (async()=>{
   fs.mkdirSync(output,{recursive:true}); const redis=await redisFixture(),store=payments.createStore(env,redis.transport);
   let requests=0,lastOrder;
-  const checkout=createCheckout(env,()=>({...store,async saveOrder(order){await store.saveOrder(order);lastOrder=order.orderId;}}));
+  const checkout=createCheckout(env,()=>({...store,async claimCheckout(...args){const result=await store.claimCheckout(...args);lastOrder=result.order?.orderId;return result;}}));
   const server=http.createServer(async(req,res)=>{
     const url=new URL(req.url,'http://localhost');
+    if(url.pathname==='/api/bold/promotion'){res.writeHead(200,{'content-type':'application/json'});return res.end(JSON.stringify({state:'active',remaining:21,capacity:30,endsAt:'2026-11-18T00:29:14Z'}));}
     if(url.pathname==='/api/bold/checkout'){let raw='';for await(const chunk of req)raw+=chunk;req.body=raw;requests++;return checkout(req,res);}
     let name=url.pathname==='/'?'/index.html':url.pathname==='/pagos/resultado'?'/pagos/resultado.html':decodeURIComponent(url.pathname);
     const file=path.resolve(root,'.'+name);
@@ -29,35 +30,36 @@ const mime={'.html':'text/html','.css':'text/css','.js':'text/javascript','.svg'
   const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH});
   const results=[];
   try {
-    for(const width of [1440,1024,768,390,320])for(const route of ['/','/productos/microcemento-kaemento.html']) {
-      const context=await browser.newContext({viewport:{width,height:width<500?844:1000}}),page=await context.newPage(),errors=[],missing=[];
+    for(const width of (process.env.ORDER_TEST_WIDTHS || '1440,1024,768,390,320').split(',').map(Number))for(const route of ['/','/productos/microcemento-kaemento.html']) {
+      const context=await browser.newContext({viewport:{width,height:width<500?844:1000},reducedMotion:'reduce'}),page=await context.newPage(),errors=[],missing=[];
       page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.url().startsWith(origin)&&r.status()>=400)missing.push(r.url());});
       await page.route('**/*',r=>(r.request().url().startsWith(origin)||/^https:\/\/(fonts.googleapis.com|fonts.gstatic.com)\//.test(r.request().url()))?r.continue():r.fulfill({status:200,body:'',contentType:'text/plain'}));
       await page.addInitScript(()=>{window.__bold=[];window.BoldCheckout=class{constructor(config){this.config=config;}async open(){window.__bold.push(this.config);}};});
       await page.goto(origin+route,{waitUntil:'networkidle'});
       const panel=page.locator('[data-bold-purchase]').first();await panel.scrollIntoViewIfNeeded();
-      await panel.locator('[data-bold-mode]').selectOption('standard');await panel.locator('[data-bold-color]').selectOption('arena');await panel.locator('[data-bold-sealer]').selectOption('mate');
+      await panel.locator('[data-bold-mode]').selectOption('standard');await panel.locator('[data-bold-color]').selectOption('arena');await panel.locator('[data-bold-sealer]').selectOption('mate');await panel.locator('[data-bold-quantity]').fill('1');await panel.locator('[data-cart-add]').click();
+      assert.equal(await panel.locator('[data-cart-count]').innerText(),'1 kit',JSON.stringify({route,width,fields:await panel.locator('[data-bold-mode],[data-bold-color],[data-bold-sealer],[data-bold-quantity]').evaluateAll(xs=>xs.map(x=>({value:x.value,valid:x.validity.valid,message:x.validationMessage}))),message:await panel.locator('[data-cart-message]').innerText()}));
       const baselineWidth = await page.evaluate(()=>document.documentElement.scrollWidth);
       await panel.locator('[data-bold-buy]').click();await page.locator('dialog[open]').waitFor();
       await page.screenshot({path:path.join(output,`${route==='/'?'home':'producto'}-${width}.png`)});
       const before=requests;await page.locator('.kae-order-continue').click();assert.equal(requests,before,'required fields prevent checkout');
-      const geometry=await page.evaluate(()=>{const d=document.querySelector('dialog');return {page:document.documentElement.scrollWidth<=innerWidth+1,dialog:d.scrollWidth<=d.clientWidth+1,rect:d.getBoundingClientRect().toJSON()};});
+      const geometry=await page.evaluate(()=>{const d=document.querySelector('.kae-order-dialog');return {page:document.documentElement.scrollWidth<=innerWidth+1,dialog:d.scrollWidth<=d.clientWidth+1,rect:d.getBoundingClientRect().toJSON()};});
       const overflow = await page.evaluate(()=>({width:document.documentElement.scrollWidth,elements:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1&&getComputedStyle(e).visibility!=='hidden').slice(0,10).map(e=>({tag:e.tagName,cls:e.className,right:e.getBoundingClientRect().right}))}));
       assert.ok(geometry.page&&geometry.dialog,JSON.stringify({route,width,baselineWidth,geometry,overflow}));assert.ok(geometry.rect.x>=0&&geometry.rect.right<=width);
       if(width>=768)await page.keyboard.press('Escape');else await page.locator('.kae-order-close').click();
-      assert.equal(await page.locator('dialog').count(),0);await panel.locator('[data-bold-buy]').click();
+      assert.equal(await page.locator('.kae-order-dialog').count(),0);await panel.locator('[data-bold-buy]').click();
       for(const [key,value] of Object.entries(customer)) {
         const field=page.locator(`dialog [name="${key}"]`);
         if(key==='privacyAccepted')await field.check();else if(key==='documentType')await field.selectOption(value);else await field.fill(value);
       }
       await page.locator('.kae-order-continue').dblclick();
       await page.waitForFunction(()=>window.__bold.length===1);
-      assert.equal(requests,before+1);assert.equal(await page.locator('dialog').count(),0);
+      assert.equal(requests,before+1);assert.equal(await page.locator('.kae-order-dialog').count(),0);
       const saved=await store.readOrder(lastOrder);assert.equal(saved.customerEmail,customer.email);assert.equal(saved.paymentStatus,'pending');
       const client=await page.evaluate(()=>({bold:window.__bold,events:window.dataLayer,session:JSON.stringify(sessionStorage),local:JSON.stringify(localStorage)}));
       const active=client.events.filter(e=>e.event==='begin_checkout');assert.equal(active.length,1);assert.equal(active[0].value,365500);
       for(const value of [customer.email,customer.document,customer.phone,customer.address,customer.name])assert.ok(!JSON.stringify(client).includes(value));
-      assert.equal(client.bold[0].orderId,lastOrder);assert.equal(client.bold[0].description,'Microcemento KAEMENTO | Arena | Mate | 1 kit');
+      assert.equal(client.bold[0].orderId,lastOrder);assert.equal(client.bold[0].description,'Microcemento KAEMENTO | 1 Arena Mate');
       assert.ok(!client.events.some(e=>e.event==='purchase'||e.event==='generate_lead'));
       assert.deepEqual(errors,[]);assert.deepEqual(missing,[]);
       results.push({route,width,requiredFields:true,cancel:true,singleCheckout:true,persistentOrder:true,analyticsNoPII:true,overflow:false,jsErrors:0,missingAssets:0});
@@ -72,11 +74,11 @@ const mime={'.html':'text/html','.css':'text/css','.js':'text/javascript','.svg'
     assert.equal(await panel.locator('[data-bold-tone2] option[value="arena"]').evaluate(option=>option.disabled),true);
     await panel.locator('[data-bold-tone2]').selectOption('gris-cemento');await panel.locator('[data-bold-ratio]').selectOption('40');
     await panel.locator('[data-bold-sealer]').selectOption('brillante');await panel.locator('[data-bold-quantity]').fill('3');
-    await panel.locator('[data-bold-buy]').click();
+    await panel.locator('[data-cart-add]').click();await panel.locator('[data-bold-buy]').click();
     for(const [key,value]of Object.entries(customer)){const el=page.locator(`dialog [name="${key}"]`);if(key==='privacyAccepted')await el.check();else if(key==='documentType')await el.selectOption(value);else await el.fill(value);}
     await page.locator('.kae-order-continue').click();await page.waitForFunction(()=>window.__bold.length===1);
-    const order=await store.readOrder(lastOrder);assert.equal(order.total,1096500);assert.equal(order.color1Percentage,40);assert.equal(order.color2Percentage,60);
-    assert.equal(order.sealer,'brillante');
+    const order=await store.readOrder(lastOrder);assert.equal(order.total,1096500);assert.equal(order.items[0].percentage1,40);assert.equal(order.items[0].percentage2,60);
+    assert.equal(order.items[0].sealer,'brillante');assert.equal(order.items[0].surface,'floor');
     const event={id:randomBytes(16).toString('hex'),type:'SALE_APPROVED',paymentId:'browser-payment',orderId:order.orderId,amount:order.total,currency:'COP',paymentMethod:'PSE'};
     assert.equal(await store.process(event),'confirmed');const paid=await store.readOrder(order.orderId);
     for(const role of ['sales','customer'])fs.writeFileSync(path.join(output,`email-${role}.html`),emails.emailContent(paid,role).html);
@@ -92,6 +94,6 @@ const mime={'.html':'text/html','.css':'text/css','.js':'text/javascript','.svg'
       for(const role of ['sales','customer']){await page.setContent(emails.emailContent(paid,role).html);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:path.join(output,`email-${role}-${width}.png`),fullPage:true});}
     }
     fs.writeFileSync(path.join(output,'browser-results.json'),JSON.stringify(results,null,2));
-    console.log(JSON.stringify({status:'PASS',responsiveFlows:10,mixedFlow:true,emailPreviews:8,output}));
+    console.log(JSON.stringify({status:'PASS',responsiveFlows:results.filter(x=>x.width).length,mixedFlow:true,emailPreviews:8,output}));
   } finally {await browser.close();await new Promise(r=>server.close(r));await redis.close();}
 })().catch(e=>{console.error(e.stack);process.exitCode=1;});

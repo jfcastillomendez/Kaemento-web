@@ -1,5 +1,6 @@
 const variants = require('../../../bold-config.js');
-const UNIT_PRICE = 365500;
+const campaign = require('../../../microcemento-launch-config.js');
+const UNIT_PRICE = campaign.launchPrice;
 const DOCUMENT_TYPES = new Set(['CC', 'NIT', 'CE', 'PASAPORTE', 'PPT']);
 const CUSTOMER_KEYS = ['name', 'documentType', 'document', 'email', 'phone', 'city', 'address', 'privacyAccepted'];
 
@@ -23,9 +24,10 @@ function customerData(body) {
 }
 function checkoutInput(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
-  const {customer, ...configuration} = body;
+  const {customer, expectedUnitPrice, ...configuration} = body;
+  if (Object.hasOwn(body, 'expectedUnitPrice') && ![campaign.launchPrice,campaign.regularPrice].includes(expectedUnitPrice)) return null;
   const selection = variants.normalizeOrder(configuration), buyer = customerData(customer);
-  return selection && buyer ? {selection, customer:buyer} : null;
+  return selection && buyer ? {selection, customer:buyer, ...(expectedUnitPrice !== undefined ? {expectedUnitPrice} : {})} : null;
 }
 function record(orderId, selection, customer, now = Date.now()) {
   const buyer = customerData(customer);
@@ -36,6 +38,7 @@ function record(orderId, selection, customer, now = Date.now()) {
     colorMode:selection.colorMode, standardColor:selection.colorMode === 'standard' ? selection.color : null,
     color1:selection.color1 || null, color1Percentage:selection.percentage1 || null,
     color2:selection.color2 || null, color2Percentage:selection.percentage2 || null, sealer:selection.sealer,
+    ...(selection.surface ? {surface:selection.surface} : {}),
     ...(selection.items ? {items:selection.items.map(item=>({...item,productId:'microcemento-kaemento-launch',productName:'Microcemento KAEMENTO',unitPrice:UNIT_PRICE,subtotal:UNIT_PRICE*item.quantity}))} : {}),
     unitPrice:UNIT_PRICE, subtotal:UNIT_PRICE * variants.kitCount(selection), total:UNIT_PRICE * variants.kitCount(selection), currency:'COP',
     customerName:buyer.name, customerDocumentType:buyer.documentType, customerDocument:buyer.document,

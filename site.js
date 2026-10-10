@@ -5,7 +5,7 @@ if (!document.querySelector('script[data-kae-search]')) {
   searchStyle.rel = 'stylesheet';
   searchStyle.href = '/site-search.css?v=2';
   const searchScript = document.createElement('script');
-  searchScript.src = '/site-search.js?v=1';
+  searchScript.src = '/site-search.js?v=2';
   searchScript.dataset.kaeSearch = 'true';
   document.head.append(searchStyle, searchScript);
 }
@@ -54,7 +54,7 @@ function trackWhatsApp(buttonId) {
   const now = performance.now();
   if (now - (whatsappClicks.get(buttonId) ?? -Infinity) < 1000) return;
   whatsappClicks.set(buttonId, now);
-  track('whatsapp_click', buttonId);
+  track('whatsapp_click', buttonId, {lead_stage:'whatsapp_handoff'});
 }
 // Capture the explicit CTA before other click handlers. Do not prevent navigation
 // or stop propagation: automatic Google events keep their existing behavior.
@@ -73,22 +73,26 @@ document.addEventListener('click', event => {
   if(a.pathname.endsWith('/catalogo-comercial-microcemento-kaemento-2026.pdf'))track('microcemento_catalog_download',id);
   if(a.pathname.endsWith('/manual-aplicacion-microcemento-kaemento.pdf'))track('microcemento_manual_download',id);
 });
-// Retain only the selected service context; do not store contact details.
+// Retain only a known product/service context; never echo arbitrary query text.
 (() => {
   const choices = {
     'arquitectura-obras':'Proyecto arquitectónico u obra civil',
     mantenimiento:'Mantenimiento de edificaciones', fachadas:'Fachadas e impermeabilización',
     'alto-trafico':'Pisos industriales y alto tráfico', garajes:'Garajes y sótanos',
-    bodegas:'Bodegas y centros logísticos', microcemento:'Microcemento KAEMENTO'
+    bodegas:'Bodegas y centros logísticos', microcemento:'Microcemento KAEMENTO',
+    'boquilla-magica':'Boquilla Mágica', 'roof-planter-system':'Roof & Planter System',
+    'garage-system':'Garage System', 'facade-protect':'Facade Protect',
+    'micro-high-traffic':'Micro High Traffic', 'level-protect':'Level Protect', 'micro-coat':'Micro Coat'
   };
   const field = document.querySelector('#quote-form select[name="servicio"]');
-  const key = new URLSearchParams(location.search).get('servicio');
+  const params = new URLSearchParams(location.search);
+  const key = params.get('producto') || params.get('servicio');
   if (field && Object.hasOwn(choices, key) && !field.value) field.value = choices[key];
 })();
 
 document.querySelectorAll('form:not([data-network-form])').forEach(form => {
   const micro=form.id==='microcemento-form';
-  if(micro)form.addEventListener('focusin',()=>track('microcemento_form_start','microcemento-form'),{once:true});
+  if(micro || form.id==='quote-form')form.addEventListener('focusin',()=>track(micro?'microcemento_form_start':'quote_form_start',form.id),{once:true});
   form.addEventListener('submit',event=>{
     event.preventDefault();
     if(!form.reportValidity())return;
@@ -182,7 +186,7 @@ document.querySelectorAll('form:not([data-network-form])').forEach(form => {
 
 // Persistent commercial entry points, kept separate from navigation and checkout logic.
 if (!location.pathname.startsWith('/pagos/') && !document.querySelector('script[data-kae-discovery]')) {
-  const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = '/commercial-access.css?v=2';
-  const js = document.createElement('script'); js.src = '/commercial-access.js?v=2'; js.dataset.kaeDiscovery = 'true';
+  const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = '/commercial-access.css?v=3';
+  const js = document.createElement('script'); js.src = '/commercial-access.js?v=3'; js.dataset.kaeDiscovery = 'true';
   document.head.append(css,js);
 }

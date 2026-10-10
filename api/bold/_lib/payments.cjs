@@ -36,11 +36,12 @@ function orderRecord(orderId, selection, customer) {
 }
 function purchaseEvent(order) {
   const selection = variants.restore(order?.selection);
+  const unitPrice = selection ? order.amount / variants.kitCount(selection) : null;
   if (!selection || order.status !== 'approved' || !ORDER_ID.test(order.orderId || '') ||
-      !EVENT_ID.test(order.paymentId || '') || order.currency !== 'COP' || order.amount !== UNIT_AMOUNT * variants.kitCount(selection)) return null;
+      !EVENT_ID.test(order.paymentId || '') || order.currency !== 'COP' || ![variants.unitPrice,variants.regularPrice].includes(unitPrice)) return null;
   // This is an outbox payload, not a browser event and not an HTTP request to GA4.
   return { name:'purchase', params:{ transaction_id:order.orderId, currency:'COP', value:order.amount,
-    items:variants.analyticsItems(selection) } };
+    items:variants.analyticsItems(selection,unitPrice) } };
 }
 
 // One Redis transaction checks and changes all state. It survives restarts and concurrent Functions.
@@ -82,7 +83,7 @@ if event.type == 'SALE_APPROVED' then
       currency=order.currency, selection=order.selection, status='approved', confirmedAt=order.confirmedAt,
       campaign=order.campaign, analyticsStatus='awaiting_configuration'}
     redis.call('SET', KEYS[5], cjson.encode(purchase))
-    redis.call('SADD', KEYS[6], order.orderId)
+    if order.campaign == 'microcemento_kaemento_launch_2026' then redis.call('SADD', KEYS[6], order.orderId) end
     if (order.schemaVersion == 2 or order.schemaVersion == 3) and order.customerEmail then
       for index=7,8 do
         local role = index == 7 and 'sales' or 'customer'

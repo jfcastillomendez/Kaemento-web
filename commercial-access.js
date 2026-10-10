@@ -34,15 +34,29 @@
     const active = data.state === 'active' && campaign?.enabled;
     currentState = active ? 'active' : data.state === 'active' ? 'ended' : data.state;
     const label = active ? `LANZAMIENTO · ${campaign.discount}%` : 'MICROCEMENTO KAEMENTO';
-    const action = data.state === 'ended' || data.state === 'sold_out' ? 'Conoce el sistema ↗' : 'Ver promoción ↗';
+    const regular = ['ended','sold_out','upcoming'].includes(data.state);
+    const action = regular ? 'Configura tu kit ↗' : 'Ver promoción ↗';
     bar.querySelector('[data-discovery-label]').textContent = label;
     bar.querySelector('[data-discovery-action]').textContent = action;
     bar.dataset.state = currentState;
-    const message = active ? `${campaign.discount}% de lanzamiento · $${new Intl.NumberFormat('es-CO').format(campaign.launchPrice)} IVA incluido por kit` : data.state === 'ended' ? 'La promoción de lanzamiento ha finalizado.' : data.state === 'sold_out' ? 'Los cupos de lanzamiento se han completado.' : 'Consulta la disponibilidad de la promoción con KAEMENTO.';
+    const message = active ? `${campaign.discount}% de lanzamiento · $${new Intl.NumberFormat('es-CO').format(campaign.launchPrice)} IVA incluido por kit` : regular ? 'Precio regular · $430.000 IVA incluido por kit' : 'Consulta la disponibilidad de la promoción con KAEMENTO.';
     document.querySelectorAll('[data-discovery-offer]').forEach(el => {el.textContent = message;});
     document.querySelectorAll('[data-discovery-live]').forEach(el => {el.hidden = !active;});
     const buy = document.querySelector('[data-discovery-buy]');
-    if (buy) buy.textContent = active ? 'COMPRAR CON DESCUENTO ↗' : 'CONOCE EL SISTEMA ↗';
+    if (buy) buy.textContent = active ? 'COMPRAR CON DESCUENTO ↗' : 'CONFIGURA TU KIT ↗';
+    document.body.classList.toggle('kae-regular-sale',regular);
+    // Keep the approved campaign artwork intact; show the existing kit asset after its validity.
+    document.querySelectorAll('.campaign-art').forEach(art => {
+      if (!regular || art.nextElementSibling?.classList.contains('campaign-standard-art')) return;
+      const image = document.createElement('img');
+      image.src = '/products/contenido-kit-microcemento-kaemento.webp?v=150ml';
+      image.alt = 'Componentes del kit Microcemento KAEMENTO';
+      image.width = 1122; image.height = 1402; image.className = 'campaign-standard-art';
+      art.after(image);
+    });
+    document.querySelectorAll('.campaign-mobile-cta').forEach(link => {
+      link.textContent = `CONFIGURA TU KIT · $${new Intl.NumberFormat('es-CO').format(regular ? 430000 : 365500)} IVA incluido por kit`;
+    });
     viewedPromotion();
   }
   function load(src, ready) {
@@ -56,8 +70,8 @@
     });
   }
   present({state:'unknown'});
-  load('/microcemento-launch-config.js?v=2',()=>!!window.KaementoLaunchCampaign)
-    .then(()=>load('/launch-availability.js?v=3',()=>!!window.KaementoPromotion))
+  load('/microcemento-launch-config.js?v=3',()=>!!window.KaementoLaunchCampaign)
+    .then(()=>load('/launch-availability.js?v=4',()=>!!window.KaementoPromotion))
     .then(()=>window.KaementoPromotion.subscribe(present)).catch(()=>present({state:'unknown'}));
   document.addEventListener('visibilitychange',viewedPromotion);
   document.addEventListener('scroll',viewedPromotion,{passive:true});

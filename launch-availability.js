@@ -16,7 +16,7 @@
     document.querySelectorAll('[data-bold-purchase]').forEach(panel => {
       let notice = panel.querySelector('[data-launch-status]');
       if (!notice) {notice = document.createElement('p');notice.dataset.launchStatus = '';notice.className = 'launch-limit';panel.prepend(notice);}
-      notice.textContent = data.state === 'active' || data.state === 'unknown' ? '' : message + '. Consulta disponibilidad con KAEMENTO.';
+      notice.textContent = data.state === 'active' || data.state === 'unknown' ? '' : message + '. Puedes continuar tu compra al precio regular de $430.000 IVA incluido por kit.';
       notice.hidden = !notice.textContent;
     });
     listeners.forEach(fn => fn(data));
@@ -58,6 +58,7 @@
     getState() {return {...snapshot};},
     subscribe(fn) {listeners.add(fn);fn(snapshot);resume();return () => {listeners.delete(fn);resume();};}
   };
+  window.dispatchEvent?.(new Event('kaemento:promotion-ready'));
   if ('IntersectionObserver' in window) {
     const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => entry.isIntersecting ? visible.add(entry.target) : visible.delete(entry.target));resume();

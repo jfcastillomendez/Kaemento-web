@@ -53,3 +53,15 @@
 /* Keep the complete kit diagram visible at every viewport size. */
 .feature-media.microcemento-kit-media{min-height:0;align-self:center;border-radius:0;background:transparent}
 .feature-media.microcemento-kit-media img{display:block;position:static;width:100%;height:auto;object-fit:contain}
+.micro-more{padding-block:24px}
+.micro-more details,.micro-ambiences{border-top:1px solid #c7baa6;border-bottom:1px solid #c7baa6}
+.micro-more summary,.micro-ambiences summary{padding:22px 0;cursor:pointer;font-size:17px;line-height:1.5}
+.micro-more-content>.wrap{width:100%;margin:24px 0 44px}
+.micro-more-content .process-steps{margin-top:24px}
+.kae-kit-estimate{border-top:1px solid #c7baa6;border-bottom:1px solid #c7baa6;margin:18px 0;padding:14px 0;font-size:13px}
+.kae-kit-estimate summary{cursor:pointer;font-weight:500}
+.kae-kit-estimate label{display:grid;gap:8px;margin:16px 0 12px}
+.kae-kit-estimate input{font:inherit;width:100%;padding:10px;border:1px solid #c7baa6;background:transparent;color:inherit}
+.kae-kit-estimate output{display:block;font-weight:500}
+.kae-kit-estimate p{font-size:12px;line-height:1.55}
+@media(max-width:720px){.micro-more .detail-body,.micro-more .depth-grid{gap:24px}.micro-ambiences .material-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 14px}.micro-ambiences .material-gallery img{aspect-ratio:4/5;object-fit:cover}.micro-ambiences .material-gallery figcaption{padding:14px 0}.micro-ambiences .material-gallery h3{font-size:25px}.micro-ambiences .material-gallery p{font-size:13px}}

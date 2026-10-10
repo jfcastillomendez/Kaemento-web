@@ -6,6 +6,7 @@
     ['Microcemento KAEMENTO', 'Producto', '/productos/microcemento-kaemento.html', 'Conoce el sistema, sus componentes y acabados.', 'micro cemento kit revestimiento continuo pisos paredes'],
     ['Configura y compra tu kit', 'Compra', '/productos/microcemento-kaemento.html#comprar-microcemento', 'Elige colores, mezcla de tonos, sellador y cantidad de kits.', 'microcemento comprar precio carrito pago bold lanzamiento oferta descuento mate brillante'],
     ['Colores de Microcemento KAEMENTO', 'Producto', '/productos/microcemento-kaemento.html#colores', 'Extra Blanco, Arena, Gris Cemento, Negro y Terracota.', 'paleta color tonos mezcla personalizados'],
+    ['Simulador de tonalidad', 'Herramienta', '/productos/microcemento-kaemento.html#vista-colores-microcemento', 'Prueba tonos y mezclas en paredes y pisos por separado, en seis ambientes.', 'microcemento simulador visualizador tonalidad color mezcla mate brillante sala baño cocina cuarto dormitorio comedor balcon terraza'],
     ['Microcemento arquitectónico', 'Servicio', '/servicios/microcemento-arquitectonico.html', 'Aplicación de microcemento en pisos, muros y espacios arquitectónicos.', 'instalacion instalador aplicacion terraza baño cocina'],
     ['Manual de Aplicación Microcemento KAEMENTO', 'Documento PDF', '/catalogos/manual-aplicacion-microcemento-kaemento.pdf', 'Consulta el paso a paso de aplicación del sistema.', 'descarga instrucciones capas preparacion mezclado sellado'],
     ['Manual Técnico Comercial Microcemento KAEMENTO', 'Documento PDF', '/catalogos/manual-tecnico-comercial-microcemento-kaemento.pdf', 'Información técnica y comercial del microcemento.', 'descarga ficha componentes rendimiento cuidados mantenimiento'],
@@ -40,7 +41,7 @@
   ].map(([title, category, href, description, keywords]) => ({title, category, href, description, keywords}));
 
   const normalize = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-  const aliases = {manuales:'manual', productos:'producto', servicios:'servicio', catalogos:'catalogo', colores:'color', distribuidores:'distribuidor', aliados:'aliado', aplicadores:'aplicador', ferreterias:'ferreteria'};
+  const aliases = {manuales:'manual', productos:'producto', servicios:'servicio', catalogos:'catalogo', colores:'color', tonalidades:'tonalidad', tonos:'tono', mezclas:'mezcla', distribuidores:'distribuidor', aliados:'aliado', aplicadores:'aplicador', ferreterias:'ferreteria'};
   const words = value => normalize(value).split(/\s+/).map(word => aliases[word] || word);
   const stopWords = new Set(['de', 'del', 'la', 'las', 'el', 'los', 'en', 'para', 'y', 'un', 'una', 'con']);
   const indexed = entries.map(entry => ({entry, title:words(entry.title), category:words(entry.category), all:words([entry.title, entry.category, entry.description, entry.keywords].join(' '))}));
@@ -88,7 +89,7 @@
   const status = dialog.querySelector('[role="status"]');
   const clear = dialog.querySelector('.site-search-clear');
   const suggestions = dialog.querySelector('.site-search-suggestions');
-  for (const text of ['Microcemento', 'Manuales', 'Boquilla Mágica', 'Trabaja con KAEMENTO']) {
+  for (const text of ['Simulador de tonalidad', 'Microcemento', 'Manuales', 'Trabaja con KAEMENTO']) {
     const button = document.createElement('button');
     button.type = 'button'; button.textContent = text;
     button.addEventListener('click', () => { input.value = text; render(); input.focus(); });

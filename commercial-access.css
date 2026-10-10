@@ -47,3 +47,7 @@ body:has(dialog[open]) .kae-access,body:has(.nav>nav.open) .kae-access{visibilit
 }
 @media(max-width:480px){.kae-tonality-button{left:14px;right:14px;bottom:14px;gap:12px;padding:13px 15px;min-height:50px;font-size:11px}}
 @media(prefers-reduced-motion:reduce){html:has(.kae-access){scroll-behavior:auto}.kae-tonality-button{transition:none}.kae-tonality-button:hover{transform:none}}
+/* Campaign imagery is preserved as an asset, but never advertised after its validity. */
+.campaign-standard-art{display:none}
+.kae-regular-sale .campaign-art,.kae-regular-sale [data-launch-block],.kae-regular-sale .launch-limit:not([data-launch-status]){display:none!important}
+.kae-regular-sale .campaign-standard-art{display:block;width:100%;height:auto;max-height:620px;object-fit:contain}

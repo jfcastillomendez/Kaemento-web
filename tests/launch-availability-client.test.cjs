@@ -4,7 +4,7 @@ const vm = require('node:vm'), fs = require('node:fs'), path = require('node:pat
 const source = fs.readFileSync(path.join(__dirname,'..','launch-availability.js'),'utf8');
 function fixture() {
   let now = Date.parse('2026-10-10T12:00:00Z'), calls = 0, nextId = 0;
-  let data = {state:'active',remaining:24,capacity:30,endsAt:'2026-10-19T00:29:14Z'}, ok = true;
+  let data = {state:'active',remaining:24,capacity:30,endsAt:'2026-11-18T00:29:14Z'}, ok = true;
   const timers = new Map(), events = {};
   const document = {hidden:false,querySelectorAll(){return [];},addEventListener(name,fn){events[name]=fn;}};
   const window = {addEventListener(name,fn){events[name]=fn;}};
@@ -30,7 +30,7 @@ test('Shared promotion subscribers use one request and stop polling while the pa
 test('Availability failures and malformed responses remove any active discount claim',async()=>{
   const f=fixture();f.api.subscribe(()=>{});await f.flush();assert.equal(f.api.getState().state,'active');
   f.set({},false);await f.advance(60000);assert.equal(f.api.getState().state,'unknown');
-  f.set({state:'active',capacity:30,remaining:-1,endsAt:'2026-10-19T00:29:14Z'});await f.advance(60000);assert.equal(f.api.getState().state,'unknown');
+  f.set({state:'active',capacity:30,remaining:-1,endsAt:'2026-11-18T00:29:14Z'});await f.advance(60000);assert.equal(f.api.getState().state,'unknown');
   f.set({state:'active',capacity:30,remaining:24});await f.advance(60000);assert.equal(f.api.getState().state,'unknown');
 });
 test('The published deadline closes the offer even if a cached server response still says active',async()=>{
@@ -41,7 +41,7 @@ test('The published deadline closes the offer even if a cached server response s
 });
 test('No remaining quota is presented as sold out and server lifecycle states are preserved',async()=>{
   for(const state of ['upcoming','ended','sold_out','active']) {
-    const f=fixture();f.set({state,capacity:30,remaining:0,endsAt:'2026-10-19T00:29:14Z'});
+    const f=fixture();f.set({state,capacity:30,remaining:0,endsAt:'2026-11-18T00:29:14Z'});
     f.api.subscribe(()=>{});await f.flush();assert.equal(f.api.getState().state,state==='active'?'sold_out':state);
   }
 });

@@ -12,17 +12,17 @@
     const list=document.getElementById('payment-items');list.replaceChildren();
     for(const item of variants.lines(selected)) {
       const row=document.createElement('li');
-      row.textContent=`${item.quantity} ${item.quantity===1?'kit':'kits'} · ${variants.formula(item)} · Sellador ${variants.sealers.get(item.sealer)}`;
+      row.textContent=`${item.quantity} ${item.quantity===1?'kit':'kits'} · ${item.surface ? variants.surfaces.get(item.surface)+' · ' : ''}${variants.formula(item)} · Sellador ${variants.sealers.get(item.sealer)}`;
       list.append(row);
     }
-    document.getElementById('payment-total').textContent=money(amount)+' IVA incluido';
+    document.getElementById('payment-total').textContent=Number.isSafeInteger(amount) ? money(amount)+' IVA incluido' : 'Consultando total del pedido…';
     document.getElementById('payment-selection').hidden=false;
     document.getElementById('payment-selection-unavailable').hidden=true;
   }
   try {
     if(/^KAE-MICRO-\d{13}-[a-f0-9]{16}$/.test(orderId||'')) {
       const selected=variants.restore(JSON.parse(sessionStorage.getItem('kaemento-bold-selections')||'{}')[orderId]);
-      if(selected)renderSelection(selected,variants.kitCount(selected)*variants.unitPrice);
+      if(selected)renderSelection(selected,null);
       token=JSON.parse(sessionStorage.getItem('kaemento-order-access')||'{}')[orderId];
     }
   }catch(_){}

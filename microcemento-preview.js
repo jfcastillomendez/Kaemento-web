@@ -9,20 +9,20 @@
     const buy = panel.querySelector('[data-bold-buy]'), cancel = panel.querySelector('[data-cart-cancel]');
     if (!formula || !buy || !cancel || Object.values(fields).some(field => !field)) return;
     const empty = () => Object.fromEntries(names.map(name => [name, '']));
-    let selections = {walls: empty(), floor: empty()}, applied = {walls:null, floor:null}, active = 'walls', writing = false;
+    let selections = {walls: empty(), floor: empty()}, applied = {walls:null, floor:null}, active = 'floor', writing = false;
     const section = document.createElement('section');
     section.className = 'kae-color-preview'; section.dataset.colorPreview = '';
     section.id = 'vista-colores-microcemento' + (index ? '-' + index : '');
     section.setAttribute('aria-labelledby', 'kae-preview-title-' + index);
-    section.innerHTML = `<h4 id="kae-preview-title-${index}">Imagina la combinación en tu espacio.</h4>
-      <p class="kae-preview-intro">Prueba tu combinación en distintos espacios. Paredes y piso conservan su color, mezcla y acabado.</p>
-      <label class="kae-preview-room">Elige tu espacio<select data-preview-scene>${Object.entries(preview.scenes).map(([id,scene])=>'<option value="'+id+'">'+scene.label+'</option>').join('')}</select></label>
+    section.innerHTML = `<h4 id="kae-preview-title-${index}">Tu tonalidad, en cada espacio.</h4>
+      <p class="kae-preview-intro">Cambia de ambiente y prueba tu tonalidad en piso y muros.</p>
+      <label class="kae-preview-room">Cambia de ambiente · 6 espacios<select data-preview-scene>${Object.entries(preview.scenes).map(([id,scene])=>'<option value="'+id+'">'+scene.label+'</option>').join('')}</select></label>
+      <div class="kae-preview-surfaces" role="group" aria-label="Superficie que estás configurando">
+        <button type="button" data-preview-surface="floor" aria-pressed="true"><strong><span class="kae-preview-chip" aria-hidden="true"></span>Piso</strong><span class="kae-preview-recipe-label">Tu selección</span><small data-preview-summary>Sin seleccionar</small><span class="kae-preview-order-state" hidden>En carrito</span><span class="kae-preview-finish" hidden></span></button>
+        <button type="button" data-preview-surface="walls" aria-pressed="false"><strong><span class="kae-preview-chip" aria-hidden="true"></span>Muros</strong><span class="kae-preview-recipe-label">Tu selección</span><small data-preview-summary>Sin seleccionar</small><span class="kae-preview-order-state" hidden>En carrito</span><span class="kae-preview-finish" hidden></span></button>
+      </div>
       <figure><div class="kae-preview-scene"><img src="/assets/microcemento/visualizador/sala-base.webp" width="1536" height="1024" loading="lazy" decoding="async" alt="Ambiente ilustrativo con pared principal y piso de microcemento, sofá claro y muebles de madera."><canvas aria-hidden="true" hidden></canvas></div>
       <figcaption>Simulación de color y acabado. Valida una muestra física: el resultado depende de la mezcla, la aplicación, la luz y la pantalla.</figcaption></figure>
-      <div class="kae-preview-surfaces" role="group" aria-label="Superficie que estás configurando">
-        <button type="button" data-preview-surface="walls" aria-pressed="true"><strong><span class="kae-preview-chip" aria-hidden="true"></span>Paredes</strong><span class="kae-preview-recipe-label">Tu selección</span><small data-preview-summary>Sin seleccionar</small><span class="kae-preview-order-state" hidden>En carrito</span><span class="kae-preview-finish" hidden></span></button>
-        <button type="button" data-preview-surface="floor" aria-pressed="false"><strong><span class="kae-preview-chip" aria-hidden="true"></span>Piso</strong><span class="kae-preview-recipe-label">Tu selección</span><small data-preview-summary>Sin seleccionar</small><span class="kae-preview-order-state" hidden>En carrito</span><span class="kae-preview-finish" hidden></span></button>
-      </div>
       <label class="kae-preview-link"><input type="checkbox" data-preview-linked><span>Usar el mismo tono en ambos</span></label>
       <p class="kae-preview-editing" role="status" aria-live="polite"></p>`;
     const layout = document.createElement('div'), controls = document.createElement('div');
@@ -41,6 +41,18 @@
     const status = section.querySelector('.kae-preview-editing');
     const sceneControl = section.querySelector('[data-preview-scene]'), frame = section.querySelector('.kae-preview-scene');
     const caption = section.querySelector('figcaption'), captionText = caption.textContent;
+    // The photograph and controls share a workspace so the whole image can stay in view.
+    const workspace = document.createElement('div'); workspace.className = 'kae-preview-workspace';
+    const figure = section.querySelector('figure');
+    figure.before(workspace); workspace.append(figure, controls);
+    controls.prepend(linked.closest('label'), status);
+    controls.addEventListener('focusin', event => {
+      if (!matchMedia('(max-width:719px)').matches || !event.target.matches('input,select,button')) return;
+      requestAnimationFrame(() => {
+        const bottom = figure.getBoundingClientRect().bottom, top = event.target.getBoundingClientRect().top;
+        if (top < bottom + 12) window.scrollBy({top:top-bottom-12,behavior:'instant'});
+      });
+    });
     let renderer, activeScene = 'sala';
     function loadScene(id) {
       if (!preview.scenes[id]) return;
@@ -70,6 +82,7 @@
       });
     }
     function paint() {
+      panel.dataset.kitSurface = active;
       const colors = {}, descriptions = {}, finishes = {};
       for (const button of buttons) {
         const surface = button.dataset.previewSurface, draft = selection(selections[surface]), chosen = draft || applied[surface];
@@ -83,8 +96,8 @@
           config.colors.get(chosen.color1) + ' ' + chosen.percentage1 + '%',
           '+ ' + config.colors.get(chosen.color2) + ' ' + chosen.percentage2 + '%'
         ];
-        summary.replaceChildren(...parts.map(text => {
-          const line = document.createElement('span'); line.textContent = text; return line;
+        summary.replaceChildren(...parts.map((text,index) => {
+          const line = document.createElement('span'); line.textContent = (index ? ' ' : '') + text; return line;
         }));
         button.querySelector('.kae-preview-order-state').hidden = !!draft || !applied[surface];
         const finish = button.querySelector('.kae-preview-finish');
@@ -97,7 +110,7 @@
       const busy = buy.getAttribute('aria-busy') === 'true', editing = !cancel.hidden;
       for (const control of [...buttons, linked]) control.disabled = busy || editing;
       status.textContent = editing ? 'Estás editando una configuración del carrito. Guarda o cancela para cambiar de superficie.' :
-        'Configurando: ' + (active === 'walls' ? 'paredes' : 'piso') + '. Elige el sellador y los kits para esta configuración; después añádela al carrito.';
+        'Configurando: ' + (active === 'walls' ? 'muros' : 'piso') + '. Elige el sellador y los kits para esta configuración; después añádela al carrito.';
     }
     function sync() {
       if (writing) return;
@@ -129,6 +142,11 @@
       }
       sync();
     });
+    panel.addEventListener('kaemento:configuration-editing',event => {
+      active = event.detail.surface === 'walls' ? 'walls' : 'floor';
+      linked.checked = false;
+      paint();
+    });
     panel.addEventListener('kaemento:configuration-added', event => {
       applied[active] = {...event.detail};
       sync();
@@ -149,7 +167,7 @@
     observer.observe(cancel, {attributes:true, attributeFilter:['hidden']});
     observer.observe(buy, {attributes:true, attributeFilter:['aria-busy']});
     function clear() {
-      selections = {walls:empty(), floor:empty()}; applied = {walls:null, floor:null}; active = 'walls'; linked.checked = false; paint();
+      selections = {walls:empty(), floor:empty()}; applied = {walls:null, floor:null}; active = 'floor'; linked.checked = false; paint();
     }
     window.addEventListener('pagehide', clear);
     window.addEventListener('pageshow', event => { if (event.persisted) clear(); });

@@ -31,7 +31,7 @@ function createCheckout(env = process.env, storeFactory = payments.createStore) 
     if (!apiKey?.trim() || !secretKey?.trim() || !payments.enabled(env)) {
       return reply(503, {error:'El pago no está disponible en este momento.'});
     }
-    const amount = orders.UNIT_PRICE * variants.kitCount(selection);
+    let amount, unitPrice;
     let orderId = `KAE-MICRO-${Date.now()}-${randomBytes(8).toString('hex')}`;
     const hmac = value => createHmac('sha256', secretKey).update(value).digest('hex');
     const statusToken = id => hmac('kaemento-order-status:' + id);
@@ -41,16 +41,19 @@ function createCheckout(env = process.env, storeFactory = payments.createStore) 
         statusTokenHash:createHash('sha256').update(statusToken(orderId)).digest('hex'),
         statusAccessUntil:Date.now() + 30 * 86400000};
       const ip = String(req.headers['x-vercel-forwarded-for'] || req.socket?.remoteAddress || 'local').split(',')[0].trim();
-      const claim = await storeFactory(env).claimCheckout(requestId,record,hmac(JSON.stringify(input)),hmac('checkout-ip:'+ip));
+      const claim = await storeFactory(env).claimCheckout(requestId,record,hmac(JSON.stringify(input)),hmac('checkout-ip:'+ip),input.expectedUnitPrice);
       if (claim.status === 'limited') { res.setHeader('Retry-After','3600'); return reply(429,{error:'Espera un momento antes de crear otro pedido.'}); }
-      if (claim.status === 'campaign_closed') return reply(409,{code:'CAMPAIGN_CLOSED',error:'La promoción de lanzamiento ha finalizado. Consulta disponibilidad con KAEMENTO.'});
+      if (claim.status === 'price_changed') return reply(409,{code:'PRICE_CHANGED',unitPrice:claim.unitPrice,error:'El precio vigente cambió. Revisa el total y confirma nuevamente antes de pagar.'});
       if (claim.status === 'conflict') return reply(409,{error:'La configuración cambió. Inicia nuevamente el pago.'});
       if (!['created','existing'].includes(claim.status) || !claim.order) throw new Error('Order unavailable');
       if (['paid','refunded'].includes(claim.order.paymentStatus)) return reply(409,{error:'Este pedido ya fue procesado. Consulta su resultado antes de volver a pagar.'});
       orderId = claim.order.orderId;
+      amount = claim.order.amount;
+      unitPrice = claim.order.unitPrice;
+      if (![variants.unitPrice,variants.regularPrice].includes(unitPrice) || amount !== unitPrice * variants.kitCount(selection) || claim.order.total !== amount) throw new Error('Invalid persisted amount');
     } catch (_) { return reply(503, {error:'No pudimos guardar tu pedido. Intenta nuevamente.'}); }
     const integritySignature = createHash('sha256').update(`${orderId}${amount}COP${secretKey}`, 'utf8').digest('hex');
-    return reply(200, {orderId, amount, currency:'COP', apiKey, integritySignature, tax:'vat-19', description, selection, statusToken:statusToken(orderId)});
+    return reply(200, {orderId, amount, unitPrice, currency:'COP', apiKey, integritySignature, tax:'vat-19', description, selection, statusToken:statusToken(orderId)});
   };
 }
 module.exports = createCheckout();
