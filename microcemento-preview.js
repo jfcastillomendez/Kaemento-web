@@ -23,7 +23,6 @@
       </div>
       <figure><div class="kae-preview-scene"><img src="/assets/microcemento/visualizador/sala-base.webp" width="1536" height="1024" loading="lazy" decoding="async" alt="Ambiente ilustrativo con pared principal y piso de microcemento, sofá claro y muebles de madera."><canvas aria-hidden="true" hidden></canvas></div>
       <figcaption>Simulación de color y acabado. Valida una muestra física: el resultado depende de la mezcla, la aplicación, la luz y la pantalla.</figcaption></figure>
-      <label class="kae-preview-link"><input type="checkbox" data-preview-linked><span>Usar el mismo tono en ambos</span></label>
       <p class="kae-preview-editing" role="status" aria-live="polite"></p>`;
     const layout = document.createElement('div'), controls = document.createElement('div');
     layout.className = 'kae-configurator-layout'; controls.className = 'kae-preview-controls';
@@ -36,7 +35,7 @@
       section.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
       section.querySelector('[data-preview-surface="'+active+'"]').focus({preventScroll:true});
     });
-    const image = section.querySelector('img'), linked = section.querySelector('[data-preview-linked]');
+    const image = section.querySelector('img');
     const buttons = [...section.querySelectorAll('[data-preview-surface]')];
     const status = section.querySelector('.kae-preview-editing');
     const sceneControl = section.querySelector('[data-preview-scene]'), frame = section.querySelector('.kae-preview-scene');
@@ -45,7 +44,7 @@
     const workspace = document.createElement('div'); workspace.className = 'kae-preview-workspace';
     const figure = section.querySelector('figure');
     figure.before(workspace); workspace.append(figure, controls);
-    controls.prepend(linked.closest('label'), status);
+    controls.prepend(status);
     controls.addEventListener('focusin', event => {
       if (!matchMedia('(max-width:719px)').matches || !event.target.matches('input,select,button')) return;
       requestAnimationFrame(() => {
@@ -108,17 +107,13 @@
       image.alt = preview.scenes[activeScene].alt + '. Simulación de microcemento. Pared principal: ' + descriptions.walls + '. Piso: ' + descriptions.floor + '. Mobiliario sin cambios.';
       renderer?.update(colors, finishes);
       const busy = buy.getAttribute('aria-busy') === 'true', editing = !cancel.hidden;
-      for (const control of [...buttons, linked]) control.disabled = busy || editing;
+      for (const control of buttons) control.disabled = busy || editing;
       status.textContent = editing ? 'Estás editando una configuración del carrito. Guarda o cancela para cambiar de superficie.' :
-        'Configurando: ' + (active === 'walls' ? 'muros' : 'piso') + '. Elige el sellador y los kits para esta configuración; después añádela al carrito.';
+        'Configurando: ' + (active === 'walls' ? 'muros' : 'piso') + '. Solo cambia esta superficie. Elige el sellador y los kits; después añade tu selección al carrito.';
     }
     function sync() {
       if (writing) return;
       selections[active] = read();
-      if (linked.checked) {
-        const other = active === 'walls' ? 'floor' : 'walls';
-        for (const name of ['mode','color','tone1','tone2','ratio']) selections[other][name] = selections[active][name];
-      }
       paint();
     }
     function write(values) {
@@ -134,17 +129,8 @@
       if (button.disabled || button.dataset.previewSurface === active) return;
       sync(); active = button.dataset.previewSurface; write(selections[active]);
     });
-    linked.addEventListener('change', () => {
-      if (linked.checked && !selection(read()) && applied[active]) {
-        const item = applied[active];
-        selections[active] = {...read(),mode:item.colorMode,color:item.color || '',tone1:item.color1 || '',tone2:item.color2 || '',ratio:String(item.percentage1 || '')};
-        write(selections[active]);
-      }
-      sync();
-    });
     panel.addEventListener('kaemento:configuration-editing',event => {
       active = event.detail.surface === 'walls' ? 'walls' : 'floor';
-      linked.checked = false;
       paint();
     });
     panel.addEventListener('kaemento:configuration-added', event => {
@@ -167,7 +153,7 @@
     observer.observe(cancel, {attributes:true, attributeFilter:['hidden']});
     observer.observe(buy, {attributes:true, attributeFilter:['aria-busy']});
     function clear() {
-      selections = {walls:empty(), floor:empty()}; applied = {walls:null, floor:null}; active = 'floor'; linked.checked = false; paint();
+      selections = {walls:empty(), floor:empty()}; applied = {walls:null, floor:null}; active = 'floor'; paint();
     }
     window.addEventListener('pagehide', clear);
     window.addEventListener('pageshow', event => { if (event.persisted) clear(); });
