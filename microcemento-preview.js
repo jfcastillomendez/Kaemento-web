@@ -16,11 +16,11 @@
     section.setAttribute('aria-labelledby', 'kae-preview-title-' + index);
     section.innerHTML = `<h4 id="kae-preview-title-${index}">Tu tonalidad, en cada espacio.</h4>
       <p class="kae-preview-intro">Cambia de ambiente y prueba tu tonalidad en piso y muros.</p>
-      <label class="kae-preview-room">Cambia de ambiente · 6 espacios<select data-preview-scene>${Object.entries(preview.scenes).map(([id,scene])=>'<option value="'+id+'">'+scene.label+'</option>').join('')}</select></label>
       <div class="kae-preview-surfaces" role="group" aria-label="Superficie que estás configurando">
         <button type="button" data-preview-surface="floor" aria-pressed="true"><strong><span class="kae-preview-chip" aria-hidden="true"></span>Piso</strong><span class="kae-preview-recipe-label">Tu selección</span><small data-preview-summary>Sin seleccionar</small><span class="kae-preview-order-state" hidden>En carrito</span><span class="kae-preview-finish" hidden></span></button>
         <button type="button" data-preview-surface="walls" aria-pressed="false"><strong><span class="kae-preview-chip" aria-hidden="true"></span>Muros</strong><span class="kae-preview-recipe-label">Tu selección</span><small data-preview-summary>Sin seleccionar</small><span class="kae-preview-order-state" hidden>En carrito</span><span class="kae-preview-finish" hidden></span></button>
       </div>
+      <label class="kae-preview-room">Cambia de ambiente · 6 espacios<select data-preview-scene>${Object.entries(preview.scenes).map(([id,scene])=>'<option value="'+id+'">'+scene.label+'</option>').join('')}</select></label>
       <figure><div class="kae-preview-scene"><img src="/assets/microcemento/visualizador/sala-base.webp" width="1536" height="1024" loading="lazy" decoding="async" alt="Ambiente ilustrativo con pared principal y piso de microcemento, sofá claro y muebles de madera."><canvas aria-hidden="true" hidden></canvas></div>
       <figcaption>Simulación de color y acabado. Valida una muestra física: el resultado depende de la mezcla, la aplicación, la luz y la pantalla.</figcaption></figure>
       <p class="kae-preview-editing" role="status" aria-live="polite"></p>`;
@@ -40,13 +40,13 @@
     const status = section.querySelector('.kae-preview-editing');
     const sceneControl = section.querySelector('[data-preview-scene]'), frame = section.querySelector('.kae-preview-scene');
     const caption = section.querySelector('figcaption'), captionText = caption.textContent;
-    // Keep the complete photograph above the controls; mobile can keep it in view while editing.
+    // Keep tone controls beside the complete photograph on desktop, below it on mobile.
     const workspace = document.createElement('div'); workspace.className = 'kae-preview-workspace';
     const figure = section.querySelector('figure');
     figure.before(workspace); workspace.append(figure, controls);
     controls.prepend(status);
     controls.addEventListener('focusin', event => {
-      if (getComputedStyle(figure).position !== 'sticky' || !event.target.matches('input,select,button')) return;
+      if (!window.matchMedia('(max-width:719px)').matches || getComputedStyle(figure).position !== 'sticky' || !event.target.matches('input,select,button')) return;
       requestAnimationFrame(() => {
         const bottom = figure.getBoundingClientRect().bottom, top = event.target.getBoundingClientRect().top;
         if (top < bottom + 12) window.scrollBy({top:top-bottom-12,behavior:'instant'});
