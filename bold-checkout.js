@@ -219,12 +219,21 @@
     }
     window.addEventListener('pagehide', () => {
       visit++;
-      clearDraft();
+      if (!window.KaementoConsultation?.keep()) clearDraft();
       checkoutAttempts.clear();
     });
     // Also reset when Back/Forward restores the document from the browser's page cache.
-    window.addEventListener('pageshow', event => { if (event.persisted) clearDraft(); });
+    window.addEventListener('pageshow', event => { if (event.persisted && !window.KaementoConsultation?.keep()) clearDraft(); });
     clearDraft();
+    window.KaementoConsultation?.register(panel, 'cart', {
+      save: () => ({items:items.map(item => ({...item})), viewedCart}),
+      restore(value) {
+        const selected = variants.restore({items:value.items});
+        if (!selected) return;
+        items = selected.items; viewedCart = value.viewedCart === true;
+        renderCart();
+      }
+    });
     function updatePrice(data) {
       if (preparing || !['active','ended','sold_out','upcoming'].includes(data.state)) return;
       const price = data.state === 'active' ? variants.unitPrice : variants.regularPrice;
@@ -239,6 +248,7 @@
       if (preparing || editing>=0 || [...cartList.querySelectorAll('input')].some(x=>!x.reportValidity())) return;
       const selected = variants.restore({items});
       if (!selected) {cartMessage.textContent='Añade al menos una configuración al carrito.';return;}
+      window.KaementoConsultation?.discard();
       const activeVisit = visit;
       const n = variants.kitCount(selected);
       const body = {items:selected.items.map(item=>({productId:'microcemento-kaemento-launch',...item}))};

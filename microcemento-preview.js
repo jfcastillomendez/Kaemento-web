@@ -10,6 +10,7 @@
     if (!formula || !buy || !cancel || Object.values(fields).some(field => !field)) return;
     const empty = () => Object.fromEntries(names.map(name => [name, '']));
     let selections = {walls: empty(), floor: empty()}, applied = {walls:null, floor:null}, active = 'floor', writing = false;
+    let areas = {walls:'', floor:''}, appliedAreas = {walls:'', floor:''};
     const section = document.createElement('section');
     section.className = 'kae-color-preview'; section.dataset.colorPreview = '';
     section.id = 'vista-colores-microcemento' + (index ? '-' + index : '');
@@ -40,11 +41,85 @@
     const status = section.querySelector('.kae-preview-editing');
     const sceneControl = section.querySelector('[data-preview-scene]'), frame = section.querySelector('.kae-preview-scene');
     const caption = section.querySelector('figcaption'), captionText = caption.textContent;
+    const toolbar = document.createElement('div'); toolbar.className = 'kae-preview-toolbar';
+    const room = section.querySelector('.kae-preview-room'); room.before(toolbar); toolbar.append(room);
+    const calculator = document.createElement('details'); calculator.className = 'kae-area-calculator';
+    calculator.innerHTML = `<summary>Calcular kits por área</summary><div class="kae-area-fields">
+      <label>Área de <span data-area-surface>piso</span> · m²<input type="number" data-preview-area min="0.01" step="0.01" inputmode="decimal" placeholder="Ej. 26"></label>
+      <output data-area-result aria-live="polite">10 m² por kit. Redondeamos al kit completo superior.</output>
+      <small>Rendimiento orientativo. Ajusta la cantidad según el soporte y la aplicación.</small></div>`;
+    toolbar.append(calculator);
+    const areaInput = calculator.querySelector('input'), areaResult = calculator.querySelector('output');
+    calculator.addEventListener('keydown', event => {
+      if (event.key === 'Escape') { calculator.open = false; calculator.querySelector('summary').focus(); }
+    });
+    document.addEventListener('click', event => { if (!calculator.contains(event.target)) calculator.open = false; });
+    function areaEstimate(value) {
+      const area = Number(value);
+      return Number.isFinite(area) && area > 0 && area <= 100000 && /^\d+(?:\.\d{1,2})?$/.test(value) ? Math.ceil(Math.round(area * 100) / 1000) : null;
+    }
+    function paintArea() {
+      if (areaInput.value !== areas[active]) areaInput.value = areas[active];
+      calculator.querySelector('[data-area-surface]').textContent = active === 'floor' ? 'piso' : 'muros';
+      const kits = areaEstimate(areas[active]);
+      calculator.querySelector('summary').textContent = kits ? `${Number(areas[active]).toLocaleString('es-CO')} m² · ${kits} ${kits === 1 ? 'kit' : 'kits'}` : 'Calcular kits por área';
+      areaResult.textContent = kits > 20 ? `${kits} kits sugeridos. Para más de 20 kits, cotiza con KAEMENTO por WhatsApp.` : kits ?
+        `${kits} ${kits === 1 ? 'kit sugerido' : 'kits sugeridos'} a 10 m² por kit. Puedes ajustar la cantidad antes de añadir.` :
+        areas[active] ? 'Indica un área mayor que cero, con hasta dos decimales.' : '10 m² por kit. Redondeamos al kit completo superior.';
+    }
+    areaInput.addEventListener('input', () => {
+      areas[active] = areaInput.value;
+      const kits = areaEstimate(areaInput.value);
+      fields.quantity.value = kits && kits <= 20 ? String(kits) : '';
+      fields.quantity.dispatchEvent(new Event('input', {bubbles:true}));
+      paintArea();
+    });
     // Keep tone controls beside the complete photograph on desktop, below it on mobile.
     const workspace = document.createElement('div'); workspace.className = 'kae-preview-workspace';
     const figure = section.querySelector('figure');
     figure.before(workspace); workspace.append(figure, controls);
     controls.prepend(status);
+    const consultation = document.createElement('div'); consultation.className = 'kae-application-consultation';
+    consultation.innerHTML = `<strong>¿También necesitas la aplicación?</strong>
+      <a id="microcemento-application-whatsapp-${index}" target="_blank" rel="noopener noreferrer">Cotizar material + aplicación por WhatsApp <span aria-hidden="true">↗</span></a>
+      <small>Llevamos tu selección a la conversación. Puedes volver y continuar aquí.</small>
+      <p role="status" aria-live="polite" hidden></p>`;
+    controls.append(consultation);
+    const consultationLink = consultation.querySelector('a'), consultationStatus = consultation.querySelector('[role="status"]');
+    function consultationUrl() {
+      const lines = ['Hola KAEMENTO, quiero cotizar material + aplicación de Microcemento KAEMENTO.', '', 'Ambiente de referencia: ' + preview.scenes[activeScene].label];
+      const cart = window.KaementoConsultation?.read(panel, 'cart')?.items || [];
+      if (cart.length) {
+        lines.push('', 'Configuraciones en mi carrito:');
+        for (const item of cart) {
+          lines.push(config.description(item));
+          const previous = applied[item.surface], area = appliedAreas[item.surface];
+          if (areaEstimate(area) && previous && config.lineKey(previous) === config.lineKey(item) && previous.quantity === item.quantity) {
+            lines.push('Área de referencia: ' + Number(area).toLocaleString('es-CO') + ' m²');
+          }
+        }
+      }
+      for (const surface of ['floor','walls']) {
+        const values = selections[surface], chosen = selection(values), area = areaEstimate(areas[surface]);
+        if (!chosen && !area) continue;
+        lines.push('', config.surfaces.get(surface) + ' · selección en simulador (aún no añadida al carrito):');
+        if (chosen) lines.push('Tonalidad: ' + config.formula(chosen));
+        lines.push('Sellador: ' + (config.sealers.get(values.sealer) || 'Por definir'));
+        if (area) lines.push('Área: ' + Number(areas[surface]).toLocaleString('es-CO') + ' m² · Sugerencia: ' + area + ' kits a 10 m²/kit');
+        const quantity = /^\d+$/.test(values.quantity) && Number(values.quantity) >= 1 && Number(values.quantity) <= 20 ? values.quantity : 'Por definir';
+        lines.push('Cantidad elegida: ' + quantity + (quantity === 'Por definir' ? '' : ' kits'));
+      }
+      lines.push('', 'Quiero confirmar la aplicación y su cotización según mi ciudad, el área y el estado de la superficie.');
+      return 'https://wa.me/573003671548?text=' + encodeURIComponent(lines.join('\n'));
+    }
+    consultationLink.addEventListener('click', event => {
+      if (consultationLink.getAttribute('aria-disabled') === 'true') { event.preventDefault(); return; }
+      sync();
+      consultationLink.href = consultationUrl();
+      window.KaementoConsultation?.arm();
+      consultationStatus.hidden = false;
+      consultationStatus.textContent = 'Revisa y envía el mensaje en WhatsApp. Tu selección sigue disponible al regresar a esta pestaña.';
+    });
     controls.addEventListener('focusin', event => {
       if (!window.matchMedia('(max-width:719px)').matches || getComputedStyle(figure).position !== 'sticky' || !event.target.matches('input,select,button')) return;
       requestAnimationFrame(() => {
@@ -108,6 +183,11 @@
       renderer?.update(colors, finishes);
       const busy = buy.getAttribute('aria-busy') === 'true', editing = !cancel.hidden;
       for (const control of buttons) control.disabled = busy || editing;
+      areaInput.disabled = busy || editing;
+      consultationLink.setAttribute('aria-disabled', String(busy || editing));
+      if (busy || editing) consultationLink.removeAttribute('href');
+      else consultationLink.href = consultationUrl();
+      paintArea();
       status.textContent = editing ? 'Estás editando una configuración del carrito. Guarda o cancela para cambiar de superficie.' :
         'Configurando: ' + (active === 'walls' ? 'muros' : 'piso') + '. Solo cambia esta superficie. Elige el sellador y los kits; después añade tu selección al carrito.';
     }
@@ -131,10 +211,13 @@
     });
     panel.addEventListener('kaemento:configuration-editing',event => {
       active = event.detail.surface === 'walls' ? 'walls' : 'floor';
+      areas[active] = '';
       paint();
     });
     panel.addEventListener('kaemento:configuration-added', event => {
       applied[active] = {...event.detail};
+      appliedAreas[active] = areas[active];
+      areas[active] = '';
       sync();
     });
     panel.addEventListener('kaemento:cart-updated', event => {
@@ -153,11 +236,33 @@
     observer.observe(cancel, {attributes:true, attributeFilter:['hidden']});
     observer.observe(buy, {attributes:true, attributeFilter:['aria-busy']});
     function clear() {
-      selections = {walls:empty(), floor:empty()}; applied = {walls:null, floor:null}; active = 'floor'; paint();
+      selections = {walls:empty(), floor:empty()}; applied = {walls:null, floor:null}; areas = {walls:'',floor:''}; appliedAreas = {walls:'',floor:''}; active = 'floor'; paint();
     }
-    window.addEventListener('pagehide', clear);
-    window.addEventListener('pageshow', event => { if (event.persisted) clear(); });
+    window.addEventListener('pagehide', () => { if (!window.KaementoConsultation?.keep()) clear(); });
+    window.addEventListener('pageshow', event => { if (event.persisted && !window.KaementoConsultation?.keep()) clear(); });
     loadScene('sala'); sync();
+    window.KaementoConsultation?.register(panel, 'preview', {
+      save: () => ({selections, applied, areas, appliedAreas, active, scene:activeScene}),
+      restore(value) {
+        const cart = window.KaementoConsultation.read(panel, 'cart')?.items || [];
+        for (const surface of ['floor','walls']) {
+          const draft = value.selections?.[surface];
+          for (const name of names) {
+            const v = draft?.[name];
+            selections[surface][name] = typeof v === 'string' && (name === 'quantity' ? /^\d{1,2}$/.test(v) && Number(v) >= 1 && Number(v) <= 20 : [...fields[name].options].some(opt => opt.value === v)) ? v : '';
+          }
+          const chosen = config.restore(value.applied?.[surface]);
+          applied[surface] = chosen && cart.some(item => config.lineKey(item) === config.lineKey(chosen)) ? chosen : null;
+          const area = value.areas?.[surface];
+          areas[surface] = typeof area === 'string' && areaEstimate(area) ? area : '';
+          const previousArea = value.appliedAreas?.[surface];
+          appliedAreas[surface] = applied[surface] && typeof previousArea === 'string' && areaEstimate(previousArea) ? previousArea : '';
+        }
+        active = value.active === 'walls' ? 'walls' : 'floor';
+        write(selections[active]);
+        if (Object.hasOwn(preview.scenes, value.scene)) { sceneControl.value = value.scene; loadScene(value.scene); }
+      }
+    });
     if (window.location.hash === '#' + section.id) requestAnimationFrame(() => section.scrollIntoView({block:'start',behavior:'instant'}));
   });
 })();
