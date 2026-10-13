@@ -76,6 +76,10 @@
     const status = panel.querySelector('[data-bold-status]');
     const total = panel.querySelector('[data-bold-total]');
     const contact = panel.querySelector('[data-bold-help]');
+    const areaPrice = panel.querySelector('[data-bold-unit-area]');
+    // Material reference for the complete finish, using the calculator's 10 m² per kit.
+    // This is informational only; quantities and checkout totals remain priced per kit.
+    if (areaPrice && window.KaementoKitCoverage) areaPrice.textContent = format(unitAmount / window.KaementoKitCoverage.m2PerKit);
     function quantity() {
       const n = Number(input.value);
       return /^\d+$/.test(input.value) && Number.isInteger(n) && n >= 1 && n <= 20 ? n : null;
@@ -239,6 +243,7 @@
       const price = data.state === 'active' ? variants.unitPrice : variants.regularPrice;
       unitAmount = price;
       panel.querySelectorAll('[data-bold-unit]').forEach(el => {el.textContent = format(price);});
+      if (areaPrice && window.KaementoKitCoverage) areaPrice.textContent = format(price / window.KaementoKitCoverage.m2PerKit);
       if (quantity()) total.textContent = format(quantity()*price);
       renderCart();
     }

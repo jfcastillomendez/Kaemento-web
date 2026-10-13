@@ -19,6 +19,8 @@
 .kae-purchase .kae-area-fields input { display:block; width:100%; margin:8px 0; min-height:44px; font-size:16px; }
 .kae-area-fields output,.kae-area-fields small { display:block; font-size:12px; line-height:1.5; }
 .kae-area-fields small { margin-top:8px; color:#696157; font-size:11px; }
+.kae-purchase .kae-quantity-reference { grid-column:1 / -1; display:block; font-size:11px; line-height:1.5; color:#696157; }
+.kae-purchase .kae-quantity-reference[hidden] { display:none; }
 .kae-application-consultation { margin-top:18px; padding-top:14px; border-top:1px solid #c9c1b5; }
 .kae-application-consultation strong { display:block; color:#30291f; font-size:13px; font-weight:500; }
 .kae-application-consultation a { display:block; margin:8px 0; padding:10px 12px; border:1px solid #9c7b4e; color:#65481f; font-size:13px; font-weight:600; line-height:1.5; text-decoration:none; transition:background-color .18s ease; }

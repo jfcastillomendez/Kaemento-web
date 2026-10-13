@@ -6,6 +6,20 @@
 .kae-purchase .kae-purchase-prices del { color: var(--muted); font-size: 17px; }
 .kae-purchase .kae-purchase-prices strong { font-size: clamp(26px, 4vw, 34px); font-weight: 500; }
 .kae-purchase .kae-purchase-prices small { font-size: 12px; }
+.kae-finished-cost { margin:18px 0 24px; padding-left:16px; border-left:2px solid #a78553; }
+.kae-purchase .kae-finished-cost-value { display:flex; align-items:center; flex-wrap:wrap; gap:6px 12px; margin:0 0 8px; }
+.kae-finished-cost-value strong { font-size:clamp(24px,3vw,30px); font-weight:500; line-height:1.2; font-variant-numeric:tabular-nums; }
+.kae-finished-cost-value span { font-size:14px; line-height:1.45; }
+.kae-finished-cost-value small { display:block; color:#625e56; font-size:11px; }
+.kae-purchase .kae-finished-cost-copy { margin:0 0 6px; font-size:13px; line-height:1.6; }
+.kae-finished-cost > small { display:block; color:#625e56; font-size:11px; line-height:1.6; }
+.kae-purchase-support { margin:16px 0 0; padding-top:14px; border-top:1px solid var(--line,#ddd6ca); }
+.kae-purchase-support > strong { display:block; font-size:13px; font-weight:500; line-height:1.5; }
+.kae-purchase-support nav { display:flex; flex-wrap:wrap; gap:2px 18px; margin-top:6px; }
+.kae-purchase-support a { display:inline-flex; align-items:center; min-height:36px; color:#65481f; font-size:12px; line-height:1.5; text-decoration:underline; text-underline-offset:3px; }
+.kae-purchase-support a:hover { color:#30291f; }
+.kae-purchase-support a:focus-visible { outline:2px solid #8c683a; outline-offset:3px; }
+.kae-purchase-support a[aria-disabled="true"] { opacity:.5; cursor:default; }
 .kae-purchase .kae-purchase-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 20px 28px; margin-top: 24px; }
 .kae-purchase label { display: grid; gap: 8px; font-size: 13px; }
 .kae-purchase input { width: 90px; min-height: 46px; padding: 10px 12px; border: 1px solid var(--line); background: transparent; color: inherit; border-radius: 0; font: inherit; }

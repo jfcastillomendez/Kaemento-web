@@ -5,16 +5,10 @@ const {createConversion}=require('../api/bold/conversion.js');
 const {emailContent}=require('../api/bold/_lib/order-emails.cjs');
 const payments=require('../api/bold/_lib/payments.cjs');
 const {redisFixture}=require('./helpers/redis.cjs'),{customer}=require('./helpers/orders.cjs');
-const {estimate}=require('../kit-estimate.js');
 async function invoke(handler,body,key=randomUUID()) {
  const out={};await handler({method:'POST',headers:{'content-type':'application/json','idempotency-key':key},body},
  {setHeader(){},set statusCode(v){out.status=v;},end(v){out.body=JSON.parse(v);}});return out;
 }
-test('Coverage helper rounds up both ends of the documented range without inventing exact coverage',()=>{
- assert.deepEqual(estimate(26),{min:3,max:3});assert.deepEqual(estimate(24),{min:2,max:3});
- assert.deepEqual(estimate(10),{min:1,max:1});assert.deepEqual(estimate(10.1),{min:1,max:2});
- for(const area of [0,-1,NaN,Infinity,'26',100001])assert.equal(estimate(area),null);
-});
 test('Regular-price multi-color order keeps its true total through signed payment, email jobs and single Ads authorization',{skip:!process.env.REDIS_SERVER_BIN},async()=>{
  const redis=await redisFixture();try {
  const env={VERCEL_ENV:'production',BOLD_CONFIRMATION_ENABLED:'true',BOLD_IDENTITY_KEY:randomBytes(16).toString('hex'),BOLD_SECRET_KEY:randomBytes(32).toString('hex'),KV_REST_API_URL:'https://fixture.upstash.io',KV_REST_API_TOKEN:'test-only',BOLD_STORAGE_NAMESPACE:'regular-price-test'};

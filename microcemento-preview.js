@@ -1,6 +1,7 @@
 (() => {
-  const config = window.KaementoBoldConfig, preview = window.KaementoColorPreview;
-  if (!config || !preview) return;
+  const config = window.KaementoBoldConfig, preview = window.KaementoColorPreview, coverage = window.KaementoKitCoverage;
+  if (!config || !preview || !coverage) return;
+  const {estimate:areaEstimate, m2PerKit} = coverage;
   document.querySelectorAll('[data-bold-purchase]').forEach((panel, index) => {
     if (panel.querySelector('[data-color-preview]')) return;
     const names = ['mode', 'color', 'tone1', 'tone2', 'ratio', 'sealer', 'quantity'];
@@ -27,7 +28,7 @@
       <p class="kae-preview-editing" role="status" aria-live="polite"></p>`;
     const layout = document.createElement('div'), controls = document.createElement('div');
     layout.className = 'kae-configurator-layout'; controls.className = 'kae-preview-controls';
-    const existing = [...panel.querySelectorAll('.kae-purchase-variants, .kae-purchase-formula, .kae-purchase-controls')];
+    const existing = [...panel.querySelectorAll('.kae-purchase-variants, .kae-purchase-formula, .kae-purchase-controls, .kae-purchase-support')];
     existing[0].before(layout); controls.append(...existing); layout.append(section, controls);
     const jump = document.createElement('button');
     jump.type = 'button'; jump.className = 'kae-preview-jump'; jump.textContent = 'Ver combinación ↑';
@@ -45,27 +46,40 @@
     const room = section.querySelector('.kae-preview-room'); room.before(toolbar); toolbar.append(room);
     const calculator = document.createElement('details'); calculator.className = 'kae-area-calculator';
     calculator.innerHTML = `<summary>Calcular kits por área</summary><div class="kae-area-fields">
-      <label>Área de <span data-area-surface>piso</span> · m²<input type="number" data-preview-area min="0.01" step="0.01" inputmode="decimal" placeholder="Ej. 26"></label>
-      <output data-area-result aria-live="polite">10 m² por kit. Redondeamos al kit completo superior.</output>
+      <label>Área de <span data-area-surface>piso</span> · m²<input type="number" data-preview-area min="0.01" max="100000" step="0.01" inputmode="decimal" placeholder="Ej. 26"></label>
+      <output data-area-result aria-live="polite"></output>
       <small>Rendimiento orientativo. Ajusta la cantidad según el soporte y la aplicación.</small></div>`;
     toolbar.append(calculator);
     const areaInput = calculator.querySelector('input'), areaResult = calculator.querySelector('output');
+    const quantityNote = document.createElement('small');
+    quantityNote.className = 'kae-quantity-reference'; quantityNote.id = 'kae-quantity-reference-' + index;
+    quantityNote.setAttribute('role', 'status');
+    fields.quantity.closest('label').after(quantityNote);
+    fields.quantity.setAttribute('aria-describedby', [fields.quantity.getAttribute('aria-describedby'), quantityNote.id].filter(Boolean).join(' '));
     calculator.addEventListener('keydown', event => {
       if (event.key === 'Escape') { calculator.open = false; calculator.querySelector('summary').focus(); }
     });
     document.addEventListener('click', event => { if (!calculator.contains(event.target)) calculator.open = false; });
-    function areaEstimate(value) {
-      const area = Number(value);
-      return Number.isFinite(area) && area > 0 && area <= 100000 && /^\d+(?:\.\d{1,2})?$/.test(value) ? Math.ceil(Math.round(area * 100) / 1000) : null;
-    }
     function paintArea() {
       if (areaInput.value !== areas[active]) areaInput.value = areas[active];
-      calculator.querySelector('[data-area-surface]').textContent = active === 'floor' ? 'piso' : 'muros';
+      const surface = active === 'floor' ? 'piso' : 'muros';
+      calculator.querySelector('[data-area-surface]').textContent = surface;
       const kits = areaEstimate(areas[active]);
-      calculator.querySelector('summary').textContent = kits ? `${Number(areas[active]).toLocaleString('es-CO')} m² · ${kits} ${kits === 1 ? 'kit' : 'kits'}` : 'Calcular kits por área';
+      const area = Number(areas[active]).toLocaleString('es-CO');
+      const suggested = `${kits} ${kits === 1 ? 'kit sugerido' : 'kits sugeridos'}`;
+      const quantity = Number(fields.quantity.value);
+      const validQuantity = /^\d+$/.test(fields.quantity.value) && quantity >= 1 && quantity <= 20;
+      // The toolbar shows the measured area; only the existing quantity field chooses kits.
+      calculator.querySelector('summary').textContent = kits ? `Área de ${surface} · ${area} m²` : 'Calcular kits por área';
       areaResult.textContent = kits > 20 ? `${kits} kits sugeridos. Para más de 20 kits, cotiza con KAEMENTO por WhatsApp.` : kits ?
-        `${kits} ${kits === 1 ? 'kit sugerido' : 'kits sugeridos'} a 10 m² por kit. Puedes ajustar la cantidad antes de añadir.` :
-        areas[active] ? 'Indica un área mayor que cero, con hasta dos decimales.' : '10 m² por kit. Redondeamos al kit completo superior.';
+        `${suggested} a ${m2PerKit} m² por kit. La cantidad se completa en «Cantidad de kits»; puedes ajustarla allí.` :
+        areas[active] ? 'Indica un área entre 0,01 y 100.000 m², con hasta dos decimales.' : `${m2PerKit} m² por kit. Redondeamos al kit completo superior.`;
+      quantityNote.hidden = !kits;
+      quantityNote.textContent = !kits ? '' : kits > 20 ? `Tu área requiere ${kits} kits de referencia. Cotiza el proyecto por WhatsApp.` :
+        !validQuantity ? `Para ${area} m² de ${surface}: ${suggested}. Elige una cantidad para continuar.` :
+        quantity === kits ? `Para tus ${area} m² de ${surface} · ${m2PerKit} m² por kit.` :
+        `Cantidad ajustada manualmente. Para ${area} m² de ${surface}: ${suggested}.`;
+      if (kits && validQuantity && quantity !== kits) areaResult.textContent += ` Cantidad elegida: ${quantity} ${quantity === 1 ? 'kit' : 'kits'}.`;
     }
     areaInput.addEventListener('input', () => {
       areas[active] = areaInput.value;
@@ -86,8 +100,9 @@
       <p role="status" aria-live="polite" hidden></p>`;
     controls.append(consultation);
     const consultationLink = consultation.querySelector('a'), consultationStatus = consultation.querySelector('[role="status"]');
-    function consultationUrl() {
-      const lines = ['Hola KAEMENTO, quiero cotizar material + aplicación de Microcemento KAEMENTO.', '', 'Ambiente de referencia: ' + preview.scenes[activeScene].label];
+    const technicalLink = panel.querySelector('[data-technical-whatsapp]');
+    function consultationUrl(technical = false) {
+      const lines = [technical ? 'Hola KAEMENTO, quiero asesoría técnica sobre preparación, aplicación y cuidados de Microcemento KAEMENTO.' : 'Hola KAEMENTO, quiero cotizar material + aplicación de Microcemento KAEMENTO.', '', 'Ambiente de referencia: ' + preview.scenes[activeScene].label];
       const cart = window.KaementoConsultation?.read(panel, 'cart')?.items || [];
       if (cart.length) {
         lines.push('', 'Configuraciones en mi carrito:');
@@ -105,21 +120,23 @@
         lines.push('', config.surfaces.get(surface) + ' · selección en simulador (aún no añadida al carrito):');
         if (chosen) lines.push('Tonalidad: ' + config.formula(chosen));
         lines.push('Sellador: ' + (config.sealers.get(values.sealer) || 'Por definir'));
-        if (area) lines.push('Área: ' + Number(areas[surface]).toLocaleString('es-CO') + ' m² · Sugerencia: ' + area + ' kits a 10 m²/kit');
+        if (area) lines.push('Área: ' + Number(areas[surface]).toLocaleString('es-CO') + ' m² · Sugerencia: ' + area + ' kits a ' + m2PerKit + ' m²/kit');
         const quantity = /^\d+$/.test(values.quantity) && Number(values.quantity) >= 1 && Number(values.quantity) <= 20 ? values.quantity : 'Por definir';
         lines.push('Cantidad elegida: ' + quantity + (quantity === 'Por definir' ? '' : ' kits'));
       }
-      lines.push('', 'Quiero confirmar la aplicación y su cotización según mi ciudad, el área y el estado de la superficie.');
+      lines.push('', technical ? 'Quiero orientación técnica para mi proyecto y la selección que estoy preparando.' : 'Quiero confirmar la aplicación y su cotización según mi ciudad, el área y el estado de la superficie.');
       return 'https://wa.me/573003671548?text=' + encodeURIComponent(lines.join('\n'));
     }
-    consultationLink.addEventListener('click', event => {
-      if (consultationLink.getAttribute('aria-disabled') === 'true') { event.preventDefault(); return; }
-      sync();
-      consultationLink.href = consultationUrl();
-      window.KaementoConsultation?.arm();
-      consultationStatus.hidden = false;
-      consultationStatus.textContent = 'Revisa y envía el mensaje en WhatsApp. Tu selección sigue disponible al regresar a esta pestaña.';
-    });
+    for (const link of [consultationLink, technicalLink].filter(Boolean)) {
+      link.addEventListener('click', event => {
+        if (link.getAttribute('aria-disabled') === 'true') { event.preventDefault(); return; }
+        sync();
+        link.href = consultationUrl(link === technicalLink);
+        window.KaementoConsultation?.arm();
+        consultationStatus.hidden = false;
+        consultationStatus.textContent = 'Revisa y envía el mensaje en WhatsApp. Tu selección sigue disponible al regresar a esta pestaña.';
+      });
+    }
     controls.addEventListener('focusin', event => {
       if (!window.matchMedia('(max-width:719px)').matches || getComputedStyle(figure).position !== 'sticky' || !event.target.matches('input,select,button')) return;
       requestAnimationFrame(() => {
@@ -184,9 +201,11 @@
       const busy = buy.getAttribute('aria-busy') === 'true', editing = !cancel.hidden;
       for (const control of buttons) control.disabled = busy || editing;
       areaInput.disabled = busy || editing;
-      consultationLink.setAttribute('aria-disabled', String(busy || editing));
-      if (busy || editing) consultationLink.removeAttribute('href');
-      else consultationLink.href = consultationUrl();
+      for (const link of [consultationLink, technicalLink].filter(Boolean)) {
+        link.setAttribute('aria-disabled', String(busy || editing));
+        if (busy || editing) link.removeAttribute('href');
+        else link.href = consultationUrl(link === technicalLink);
+      }
       paintArea();
       status.textContent = editing ? 'Estás editando una configuración del carrito. Guarda o cancela para cambiar de superficie.' :
         'Configurando: ' + (active === 'walls' ? 'muros' : 'piso') + '. Solo cambia esta superficie. Elige el sellador y los kits; después añade tu selección al carrito.';

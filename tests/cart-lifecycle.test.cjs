@@ -18,11 +18,12 @@ class Element {
 }
 function fixture({customerStep}={}) {
  const controls=new Map(),events={},removed=[],opened=[],tracked=[],requests=[],uiEvents=[];
+ let notifyPromotion, promotionState = {state:'unknown'};
  const session=new Map([['kaemento-order-access','{"previous":"retained-token"}'],['kaemento-bold-selections','{"previous":{"quantity":1}}']]);
- const panel={dispatchEvent(event){uiEvents.push(event);},querySelector(selector){if(!controls.has(selector))controls.set(selector,new Element());return controls.get(selector);}};
+ const panel={dispatchEvent(event){uiEvents.push(event);},querySelector(selector){if(!controls.has(selector))controls.set(selector,new Element());return controls.get(selector);},querySelectorAll(selector){assert.equal(selector,'[data-bold-unit]');return [this.querySelector(selector)];}};
  const control=name=>panel.querySelector(`[data-${name}]`);
  const document={querySelectorAll:()=>[panel],createElement(tag){const el=new Element();el.tag=tag;return el;},head:{appendChild(el){queueMicrotask(()=>el.onload());}}};
- const window={KaementoBoldConfig:variants,location:{origin:'https://example.invalid'},addEventListener(name,fn){(events[name]??=[]).push(fn);},kaementoTrack:(...args)=>tracked.push(args),BoldCheckout:class{constructor(config){this.config=config;}async open(){opened.push(this.config);}},KaementoOrderCustomer:{async open(selection,prepare){return customerStep?customerStep(selection,prepare):prepare({name:'Synthetic buyer'},365500);}}};
+ const window={KaementoBoldConfig:variants,KaementoKitCoverage:require('../kit-estimate.js'),KaementoPromotion:{subscribe(fn){notifyPromotion=fn;fn(promotionState);},getState(){return promotionState;}},location:{origin:'https://example.invalid'},addEventListener(name,fn){(events[name]??=[]).push(fn);},kaementoTrack:(...args)=>tracked.push(args),BoldCheckout:class{constructor(config){this.config=config;}async open(){opened.push(this.config);}},KaementoOrderCustomer:{async open(selection,prepare){return customerStep?customerStep(selection,prepare):prepare({name:'Synthetic buyer'},365500);}}};
  const result=selection=>({amount:variants.kitCount(selection)*365500,currency:'COP',tax:'vat-19',selection,orderId:'KAE-CART-TEST',integritySignature:'a'.repeat(64),statusToken:'b'.repeat(64),apiKey:'public-fixture',description:'Synthetic cart'});
  const context={window,document,localStorage:{removeItem:key=>removed.push(key),getItem(){throw Error('must not restore');},setItem(){throw Error('must not persist');}},sessionStorage:{getItem:key=>session.get(key)||null,setItem:(key,value)=>session.set(key,value)},crypto:webcrypto,TextEncoder,AbortSignal,Intl,URL,console,setTimeout:fn=>{queueMicrotask(fn);return 1;},clearTimeout(){},async fetch(url,options){const body=JSON.parse(options.body);requests.push({url,body});return Response.json(result(variants.restore({items:body.items})));}};
  context.CustomEvent=class{constructor(type,options){this.type=type;this.detail=options.detail;}};
@@ -32,8 +33,28 @@ function fixture({customerStep}={}) {
   control('bold-mode').value='standard';control('bold-color').value=color;control('bold-sealer').value=sealer;control('bold-quantity').value=String(quantity);
   await control('bold-mode').emit('change');await control('cart-add').emit('click');
  }
- return {control,add,event,removed,session,opened,tracked,requests,result,uiEvents};
+ return {control,add,event,removed,session,opened,tracked,requests,result,uiEvents,promotion:state=>{promotionState={state};notifyPromotion(promotionState);}};
 }
+test('Finished-material reference follows the current kit price while cart totals remain whole-kit totals',async()=>{
+ const f=fixture();
+ assert.match(f.control('bold-unit-area').textContent,/36\.550/);
+ await f.add('extra-blanco');await f.add('arena',2,'brillante');
+ f.control('bold-quantity').value='2';
+ for(const state of ['ended','sold_out','upcoming','unknown']) {
+  f.promotion(state);
+  assert.match(f.control('bold-unit-area').textContent,/43\.000/);
+  assert.match(f.control('bold-unit').textContent,/430\.000/);
+  assert.match(f.control('bold-total').textContent,/860\.000/);
+  assert.match(f.control('cart-total').textContent,/1\.290\.000/);
+  assert.equal(f.control('cart-count').textContent,'3 kits');
+ }
+ f.promotion('active');
+ assert.match(f.control('bold-unit-area').textContent,/36\.550/);
+ assert.match(f.control('bold-total').textContent,/731\.000/);
+ assert.match(f.control('cart-total').textContent,/1\.096\.500/);
+ assert.equal(f.requests.length,0);assert.equal(f.opened.length,0);
+ assert.deepEqual(f.tracked.map(x=>x[0]),['add_to_cart','add_to_cart']);
+});
 test('Cart starts empty, removes only its legacy key and never restores a previous visit',async()=>{
  const f=fixture(),retained=[...f.session];
  assert.deepEqual(f.removed,['kaemento-microcemento-cart-v1']);assert.equal(f.control('cart-count').textContent,'0 kits');assert.ok(f.control('bold-buy').disabled);

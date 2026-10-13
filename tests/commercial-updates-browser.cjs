@@ -43,8 +43,10 @@ fs.mkdirSync(output,{recursive:true});
   await load('/index.html?producto=boquilla-magica#cotizar');assert.equal(await page.locator('#quote-form select[name="servicio"]').inputValue(),'Boquilla Mágica');
   await load('/productos/microcemento-kaemento.html');
   const panel=page.locator('[data-bold-purchase]');
-  await panel.locator('.kae-kit-estimate summary').click();await panel.locator('.kae-kit-estimate input').fill('26');
-  assert.match(await panel.locator('.kae-kit-estimate output').innerText(),/3 kits/);assert.equal(await panel.locator('[data-cart-count]').innerText(),'0 kits');
+  await panel.locator('.kae-area-calculator summary').click();await panel.locator('[data-preview-area]').fill('26');
+  assert.match(await panel.locator('[data-area-result]').innerText(),/3 kits/);assert.equal(await panel.locator('[data-cart-count]').innerText(),'0 kits');
+  assert.equal(await panel.locator('[data-bold-quantity]').inputValue(),'3');
+  assert.equal(await panel.locator('.kae-kit-estimate').count(),0);
   assert.equal(await page.locator('#detalles-tecnicos details').getAttribute('open'),null);
   await page.locator('#detalles-tecnicos summary').click();assert.ok(await page.locator('#detalles-tecnicos details').evaluate(el=>el.open));
   for(const [surface,quantity] of [['floor','1'],['walls','2']]){
