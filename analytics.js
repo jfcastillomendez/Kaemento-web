@@ -9,7 +9,7 @@ function validCheckoutVariant(value) {
   const match = /^([a-z-]+):(10|20|30|40|50|60|70|80|90)\+([a-z-]+):(10|20|30|40|50|60|70|80|90)$/.exec(value);
   return !!match && colors.includes(match[1]) && colors.includes(match[3]) && match[1] !== match[3] && Number(match[2]) + Number(match[4]) === 100;
 }
-  const allowed = new Set(['page_view','phone_click','whatsapp_click','microcemento_cta_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start','quote_form_start','begin_checkout','add_to_cart','remove_from_cart','view_cart','view_item','select_promotion','view_promotion','microcemento_simulator_open','microcemento_simulator_start']);
+  const allowed = new Set(['page_view','phone_click','whatsapp_click','microcemento_cta_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start','quote_form_start','quote_form_success','distributor_request','product_document_download','begin_checkout','add_to_cart','remove_from_cart','view_cart','view_item','select_promotion','view_promotion','microcemento_simulator_open','microcemento_simulator_start']);
   // Explicit, page-scoped test signal; never persist it or copy the full query.
   const debugSignal = new URLSearchParams(location.search).get('gtm_debug');
   const debugSession = ['127.0.0.1', 'localhost'].includes(location.hostname) && /^(?:x|[0-9]{1,16})$/.test(debugSignal || '');
@@ -39,6 +39,9 @@ function validCheckoutVariant(value) {
   function send(event, values = {}) {
     if (!allowed.has(event)) return;
     const payload = { ...context };
+    const trafficPage = /^\/pintura-de-trafico(?:\.html)?\/?$/.test(cleanPath);
+    if (['quote_form_success','distributor_request','product_document_download'].includes(event) && !trafficPage) return;
+    if (trafficPage && ['whatsapp_click','quote_form_start','quote_form_success','distributor_request','product_document_download'].includes(event)) payload.product_id='pintura-de-trafico';
     if (/^[a-z0-9_-]{1,80}$/.test(values.button_id || '')) payload.button_id = values.button_id;
     if (values.lead_stage === 'whatsapp_handoff') payload.lead_stage = 'whatsapp_handoff';
     if (['select_promotion','view_promotion'].includes(event)) {

@@ -36,7 +36,7 @@ http.createServer(async (req, res) => {
   if (name.split('/').some(part => part.startsWith('.')) || /^\/(api|tests|scripts)(\/|$)/.test(name) || /\.(md|cjs)$/.test(name)) {
     res.writeHead(404); return res.end();
   }
-  if (name === '/pagos/resultado') name += '.html';
+  if (['/pagos/resultado','/pintura-de-trafico'].includes(name)) name += '.html';
   if (name.endsWith('/')) name += 'index.html';
   const file = path.resolve(root, '.' + name);
   if (!file.startsWith(root + path.sep)) { res.writeHead(404); return res.end(); }

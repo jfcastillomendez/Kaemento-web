@@ -3,6 +3,7 @@
   'use strict';
   // Curated destinations: no personal information, prices or live order data.
   const entries = [
+    ['Pintura de Tráfico KAEMENTO', 'Producto', '/pintura-de-trafico', 'Pintura acrílica base solvente para demarcación y señalización. Solicita cotización.', 'pintura trafico demarcacion señalizacion parqueaderos amarillo blanco negro azul galon accesible vias internas'],
     ['Microcemento KAEMENTO', 'Producto', '/productos/microcemento-kaemento.html', 'Conoce el sistema, sus componentes y acabados.', 'micro cemento kit revestimiento continuo pisos paredes'],
     ['Configura y compra tu kit', 'Compra', '/productos/microcemento-kaemento.html#comprar-microcemento', 'Elige colores, mezcla de tonos, sellador y cantidad de kits.', 'microcemento comprar precio carrito pago bold lanzamiento oferta descuento mate brillante'],
     ['Colores de Microcemento KAEMENTO', 'Producto', '/productos/microcemento-kaemento.html#colores', 'Extra Blanco, Arena, Gris Cemento, Negro y Terracota.', 'paleta color tonos mezcla personalizados'],

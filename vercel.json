@@ -14,12 +14,21 @@
       "source": "/catalogos/catalogo-microcemento-kaemento.pdf",
       "destination": "/catalogos/catalogo-comercial-microcemento-kaemento-2026.pdf",
       "permanent": true
+    },
+    {
+      "source": "/pintura-de-trafico.html",
+      "destination": "/pintura-de-trafico",
+      "permanent": true
     }
   ],
   "rewrites": [
     {
       "source": "/pagos/resultado",
       "destination": "/pagos/resultado.html"
+    },
+    {
+      "source": "/pintura-de-trafico",
+      "destination": "/pintura-de-trafico.html"
     }
   ]
 }

@@ -1,11 +1,13 @@
 const {createHash} = require('node:crypto');
 const {createStore} = require('./bold/_lib/payments.cjs');
 const {emailConfig,sendEmail} = require('./bold/_lib/order-emails.cjs');
+const trafficLead = require('./_lib/traffic-lead.cjs');
 const profiles={independiente:'Aplicador independiente',capacitacion:'Capacitación',vinculacion:'Vinculación directa',distribuidor:'Distribuidor',ferreteria:'Ferretería',especializado:'Punto de venta especializado',aliado:'Aliado comercial'};
 const areas={microcemento:'Microcemento',fachadas:'Fachadas',impermeabilizacion:'Impermeabilizaciones',obras:'Obras generales'};
 const clean=(v,min,max)=>typeof v==='string' && v.length<=max && !/[\x00-\x1f\x7f<>]/.test(v) && v.trim().length>=min ? v.trim() : null;
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function normalize(body) {
+  if(body?.kind==='cotizacion-trafico')return trafficLead.normalize(body);
   if(!body || Array.isArray(body) || !['aplicadores','aliados'].includes(body.kind))return null;
   const keys=['requestId','kind','name','email','phone','city','profile','message','privacyAccepted','website',...(body.kind==='aplicadores'?['areas','experience']:['business'])];
   if(Object.keys(body).length!==keys.length || keys.some(k=>!Object.hasOwn(body,k)) || !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(body.requestId || '') || body.privacyAccepted!==true || body.website!=='')return null;
@@ -21,6 +23,7 @@ function normalize(body) {
   return result;
 }
 function payload(data,config) {
+  if(data.kind==='cotizacion-trafico')return trafficLead.payload(data,config);
   const rows=[['Solicitud',profiles[data.profile]],['Nombre',data.name],['Correo',data.email],['Teléfono',data.phone],['Ciudad',data.city],
     ...(data.kind==='aplicadores'?[['Especialidades',data.areas.map(a=>areas[a]).join(', ')],['Experiencia',({'sin-experiencia':'Quiero aprender','menos-1':'Menos de 1 año','1-3':'1 a 3 años','mas-3':'Más de 3 años'})[data.experience]]]:[['Establecimiento / empresa',data.business]]),
     ['Mensaje',data.message||'Sin comentario adicional'],['Consentimiento','Autorizó el tratamiento de datos para gestionar esta solicitud'],['Referencia',data.requestId]];

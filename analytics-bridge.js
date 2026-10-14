@@ -21,10 +21,13 @@ for (const key of ['gclid','gbraid','wbraid']) {
 }
 gtag('config','AW-18358591293',{...debugOptions,send_page_view:false,page_location:'https://www.kaemento.com/' + (adsLanding.size ? '?' + adsLanding.toString() : ''),page_referrer:'',allow_ad_personalization_signals:false});
 // Ads purchases have a separate backend-authorized path in analytics-purchase.js.
-const allowedEvents=new Set(['page_view','phone_click','whatsapp_click','microcemento_cta_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start','quote_form_start','begin_checkout','add_to_cart','remove_from_cart','view_cart','view_item','select_promotion','view_promotion','microcemento_simulator_open','microcemento_simulator_start']);
+const allowedEvents=new Set(['page_view','phone_click','whatsapp_click','microcemento_cta_click','microcemento_catalog_download','microcemento_manual_download','microcemento_form_start','quote_form_start','quote_form_success','distributor_request','product_document_download','begin_checkout','add_to_cart','remove_from_cart','view_cart','view_item','select_promotion','view_promotion','microcemento_simulator_open','microcemento_simulator_start']);
 window.addEventListener('message',event=>{
  if(event.origin!==location.origin || event.source!==parent || event.data?.type!=='kaemento-event' || !allowedEvents.has(event.data.event))return;
  const p=event.data.params || {}, safe={};
+ const trafficPage = /^\/pintura-de-trafico(?:\.html)?\/?$/.test(p.page_path || '');
+ if (['quote_form_success','distributor_request','product_document_download'].includes(event.data.event) && !trafficPage) return;
+ if (trafficPage && p.product_id==='pintura-de-trafico' && ['whatsapp_click','quote_form_start','quote_form_success','distributor_request','product_document_download'].includes(event.data.event)) safe.product_id='pintura-de-trafico';
  if(debugSession)safe.debug_mode=true;
  for(const key of ['utm_source','utm_medium','utm_campaign','utm_content','button_id']) if(typeof p[key]==='string'&&/^[a-z][a-z0-9_-]{0,79}$/i.test(p[key])&&!/\d{7,}/.test(p[key]))safe[key]=p[key];
  if(typeof p.page_path==='string'&&/^\/[a-z0-9/_\-.]*$/i.test(p.page_path)){safe.page_path=p.page_path;safe.page_location='https://www.kaemento.com'+p.page_path;}

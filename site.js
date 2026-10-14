@@ -5,7 +5,7 @@ if (!document.querySelector('script[data-kae-search]')) {
   searchStyle.rel = 'stylesheet';
   searchStyle.href = '/site-search.css?v=2';
   const searchScript = document.createElement('script');
-  searchScript.src = '/site-search.js?v=2';
+  searchScript.src = '/site-search.js?v=3';
   searchScript.dataset.kaeSearch = 'true';
   document.head.append(searchStyle, searchScript);
 }
@@ -90,7 +90,7 @@ document.addEventListener('click', event => {
   if (field && Object.hasOwn(choices, key) && !field.value) field.value = choices[key];
 })();
 
-document.querySelectorAll('form:not([data-network-form])').forEach(form => {
+document.querySelectorAll('form:not([data-network-form]):not([data-traffic-form])').forEach(form => {
   const micro=form.id==='microcemento-form';
   if(micro || form.id==='quote-form')form.addEventListener('focusin',()=>track(micro?'microcemento_form_start':'quote_form_start',form.id),{once:true});
   form.addEventListener('submit',event=>{
@@ -171,7 +171,7 @@ document.querySelectorAll('form:not([data-network-form])').forEach(form => {
 
 // Keep the mobile floating shortcut clear of visible quote fields and keyboard focus.
 (() => {
-  const forms = [...document.querySelectorAll('#quote-form, #microcemento-form, [data-network-form], [data-bold-purchase]')];
+  const forms = [...document.querySelectorAll('#quote-form, #microcemento-form, [data-network-form], [data-traffic-form], [data-bold-purchase]')];
   if (!forms.length) return;
   const visible = new Set();
   const update = () => document.body.classList.toggle('quote-form-active', visible.size > 0 || forms.some(form => form.contains(document.activeElement)));

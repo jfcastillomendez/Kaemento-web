@@ -30,7 +30,8 @@ test('Every public search destination and anchor exists; downloads and navigatio
     assert.ok(entry.href.startsWith('/') && !entry.href.startsWith('//'));
     assert.ok(!entry.href.includes('?'));
     const [file, anchor] = entry.href.split('#');
-    const destination = path.join(root, file);
+    const rewrite = JSON.parse(fs.readFileSync(path.join(root,'vercel.json'),'utf8')).rewrites.find(route => route.source === file);
+    const destination = path.join(root, rewrite?.destination || file);
     assert.ok(fs.existsSync(destination), entry.href);
     if (anchor) {
       const generated = anchor === 'vista-colores-microcemento' && fs.readFileSync(path.join(root,'microcemento-preview.js'),'utf8').includes("section.id = 'vista-colores-microcemento'");
@@ -40,7 +41,7 @@ test('Every public search destination and anchor exists; downloads and navigatio
   assert.equal(entries.filter(e => e.href.endsWith('.pdf')).length, 6);
   const navigation = JSON.parse(fs.readFileSync(path.join(root, 'data/site.json'), 'utf8'));
   for (const [kind, routes] of [['productos', navigation.products], ['servicios', navigation.services]]) {
-    for (const [slug] of routes) assert.ok(entries.some(e => e.href === `/${kind}/${slug}.html`), slug);
+    for (const [slug] of routes) assert.ok(entries.some(e => e.href === (slug.startsWith('/') ? slug : `/${kind}/${slug}.html`)), slug);
   }
 });
 
