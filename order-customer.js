@@ -35,7 +35,7 @@
           summary.replaceChildren();
           for(const item of variants.lines(selection)) {
             const line=document.createElement('span');line.style.display='block';
-            line.textContent=`${item.quantity} ${item.quantity === 1 ? 'kit' : 'kits'} · ${item.surface ? variants.surfaces.get(item.surface)+' · ' : ''}${variants.formula(item)} · Sellador ${variants.sealers.get(item.sealer)} · ${format(item.quantity*unitPrice)}`;
+            line.textContent=variants.isTraffic?.(selection) ? `${item.quantity} galón(es) · ${variants.trafficColor(item.color)} · ${format(item.quantity*unitPrice)}` : `${item.quantity} ${item.quantity === 1 ? 'kit' : 'kits'} · ${item.surface ? variants.surfaces.get(item.surface)+' · ' : ''}${variants.formula(item)} · Sellador ${variants.sealers.get(item.sealer)} · ${format(item.quantity*unitPrice)}`;
             summary.append(line);
           }
           const total=document.createElement('strong');total.textContent=`Total: ${format(variants.kitCount(selection)*unitPrice)} IVA incluido`;summary.append(total);

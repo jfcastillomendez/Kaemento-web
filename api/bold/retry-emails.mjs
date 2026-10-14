@@ -23,7 +23,7 @@ export async function handle(request, env = process.env, storeFactory = payments
     body = JSON.parse(raw);
   } catch (_) { return reply(400,'invalid_request'); }
   if (!body || Array.isArray(body) || Object.keys(body).some(k=>k !== 'orderId') ||
-      (body.orderId !== undefined && !/^KAE-MICRO-\d{13}-[a-f0-9]{16}$/.test(body.orderId))) return reply(400,'invalid_request');
+      (body.orderId !== undefined && !/^KAE-(?:MICRO|TRAFICO)-\d{13}-[a-f0-9]{16}$/.test(body.orderId))) return reply(400,'invalid_request');
   try {
     const store = storeFactory(env);
     // One order per invocation keeps the authenticated manual retry within Function duration.

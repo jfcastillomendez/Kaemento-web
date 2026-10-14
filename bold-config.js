@@ -7,6 +7,19 @@
   const sealers = new Map([['mate','Mate'],['brillante','Brillante']]);
   const surfaces = new Map([['floor','Piso'],['walls','Muros'],['both','Piso y muros']]);
   const percentages = [10,20,30,40,50,60,70,80,90];
+  const trafficPrice = 108885;
+  const isTraffic = s => s?.productId === 'pintura-trafico';
+  function normalizeTraffic(body) {
+    if (!isTraffic(body) || Object.keys(body).length !== 2 || !Array.isArray(body.items) || !body.items.length || body.items.length > 2) return null;
+    const counts = new Map();
+    for (const item of body.items) {
+      if (!item || Object.keys(item).length !== 2 || !['amarillo','negro'].includes(item.color) || !validQuantity(item.quantity) || counts.has(item.color)) return null;
+      counts.set(item.color,item.quantity);
+    }
+    const items = [...counts].sort(([a],[b])=>a.localeCompare(b)).map(([color,quantity])=>({color,quantity}));
+    return validQuantity(items.reduce((n,x)=>n+x.quantity,0)) ? {productId:'pintura-trafico',items} : null;
+  }
+  const trafficColor = color => ({amarillo:'Amarillo',negro:'Negro'})[color];
   function normalize(body) {
     if (!body || typeof body !== 'object' || Array.isArray(body) || body.productId !== 'microcemento-kaemento-launch' ||
         !validQuantity(body.quantity) || !sealers.has(body.sealer)) return null;
@@ -53,12 +66,14 @@
     return validQuantity(kitCount(selection)) ? selection : null;
   }
   // Public requests are strict; restore projects stored non-personal selections through the same rules.
-  const normalizeOrder = body => Object.hasOwn(body || {}, 'items') ? normalizeCart(body) : normalize(body);
+  const normalizeOrder = body => isTraffic(body) ? normalizeTraffic(body) : Object.hasOwn(body || {}, 'items') ? normalizeCart(body) : normalize(body);
   function restore(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    if (isTraffic(value)) return normalizeTraffic(value);
     return Object.hasOwn(value,'items') ? normalizeCart({items:Array.isArray(value.items) ? value.items.map(item=>({productId:'microcemento-kaemento-launch',...item})) : null}) : normalize({productId:'microcemento-kaemento-launch',...value});
   }
   function orderDescription(selection) {
+    if (isTraffic(selection)) return 'Pintura Tráfico KAEMENTO | '+selection.items.map(x=>x.quantity+' gal '+trafficColor(x.color)).join(' + ');
     if (!selection.items) {
       const detail = description(selection);
       return detail.length <= 100 ? detail : `Microcemento KAEMENTO | ${selection.quantity} kits | ${surfaces.get(selection.surface) || 'Sistema completo'} | ${sealers.get(selection.sealer)}`;
@@ -67,5 +82,5 @@
     return detail.length<=100 ? detail : `Microcemento KAEMENTO | ${kitCount(selection)} kits | ${selection.items.length} configuraciones`;
   }
   const analyticsItems = (selection, price = unitPrice) => lines(selection).map(item=>({item_id:'microcemento-kaemento',item_name:'Microcemento KAEMENTO',price,quantity:item.quantity,item_variant:itemVariant(item),sealer_type:item.sealer}));
-  return {colors,sealers,surfaces,normalize,formula,description,itemVariant,unitPrice,regularPrice,validQuantity,kitCount,lines,lineKey,normalizeCart,normalizeOrder,restore,orderDescription,analyticsItems};
+  return {trafficPrice,isTraffic,normalizeTraffic,trafficColor,colors,sealers,surfaces,normalize,formula,description,itemVariant,unitPrice,regularPrice,validQuantity,kitCount,lines,lineKey,normalizeCart,normalizeOrder,restore,orderDescription,analyticsItems};
 });

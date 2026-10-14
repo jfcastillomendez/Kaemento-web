@@ -11,8 +11,12 @@
     colorStatus.textContent = colors[value] + ' · Pintura de Tráfico KAEMENTO';
     colorLink.textContent = 'Cotizar ' + colors[value].toLowerCase() + ' ↗';
     colorLink.href = 'https://wa.me/573003671548?text=' + encodeURIComponent('Hola KAEMENTO, quiero cotizar Pintura de Tráfico KAEMENTO, color ' + colors[value] + ', presentación de 1 galón.');
+    const purchasable=['amarillo','negro'].includes(value);
+    if (purchasable) {colorLink.textContent='Comprar '+colors[value].toLowerCase()+' · $108.885';colorLink.href='#comprar-trafico';colorLink.removeAttribute('target');}
+    else colorLink.target='_blank';
     if (updateForm) form.elements.color.value = value;
   }
+  selectColor('amarillo',false);
   buttons.forEach(button => button.addEventListener('click',() => selectColor(button.dataset.trafficColor)));
   form.elements.color.addEventListener('change',() => selectColor(form.elements.color.value,false));
   const track = (event, buttonId) => window.kaementoTrack?.(event,{button_id:buttonId,product_id:'pintura-de-trafico'});

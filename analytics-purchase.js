@@ -6,7 +6,7 @@
     if (event.data?.type === 'kaemento-ads-probe') { parent.postMessage('kaemento-ads-ready',location.origin); return; }
     if (event.data?.type !== 'kaemento-ads-purchase') return;
     const {orderId,ticket}=event.data;
-    if (!/^KAE-MICRO-\d{13}-[a-f0-9]{16}$/.test(orderId || '') || !/^[a-f0-9]{64}$/.test(ticket || '') || seen.has(orderId)) return;
+    if (!/^KAE-(?:MICRO|TRAFICO)-\d{13}-[a-f0-9]{16}$/.test(orderId || '') || !/^[a-f0-9]{64}$/.test(ticket || '') || seen.has(orderId)) return;
     seen.add(orderId);
     try {
       // No client-supplied amount/status/destination can authorize a Google event.

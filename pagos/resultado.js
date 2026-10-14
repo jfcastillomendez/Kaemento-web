@@ -9,10 +9,16 @@
   const money=amount=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(amount);
   let token, timer, tries=0, busy=false, complete=false;
   function renderSelection(selected,amount) {
+    if (variants.isTraffic(selected)) {
+      document.querySelector('main .eyebrow').textContent='PINTURA DE TRÁFICO KAEMENTO';
+      retry.href='/pintura-de-trafico#comprar-trafico';
+      const back=document.getElementById('payment-back');back.href='/pintura-de-trafico';back.textContent='Volver a Pintura de Tráfico ↗';
+      document.querySelector('a.whatsapp').href='https://wa.me/573003671548?text='+encodeURIComponent('Hola KAEMENTO, quiero consultar mi pedido de Pintura de Tráfico.');
+    }
     const list=document.getElementById('payment-items');list.replaceChildren();
     for(const item of variants.lines(selected)) {
       const row=document.createElement('li');
-      row.textContent=`${item.quantity} ${item.quantity===1?'kit':'kits'} · ${item.surface ? variants.surfaces.get(item.surface)+' · ' : ''}${variants.formula(item)} · Sellador ${variants.sealers.get(item.sealer)}`;
+      row.textContent=variants.isTraffic(selected) ? `${item.quantity} galón(es) · Pintura de Tráfico KAEMENTO · ${variants.trafficColor(item.color)}` : `${item.quantity} ${item.quantity===1?'kit':'kits'} · ${item.surface ? variants.surfaces.get(item.surface)+' · ' : ''}${variants.formula(item)} · Sellador ${variants.sealers.get(item.sealer)}`;
       list.append(row);
     }
     document.getElementById('payment-total').textContent=Number.isSafeInteger(amount) ? money(amount)+' IVA incluido' : 'Consultando total del pedido…';
@@ -20,7 +26,7 @@
     document.getElementById('payment-selection-unavailable').hidden=true;
   }
   try {
-    if(/^KAE-MICRO-\d{13}-[a-f0-9]{16}$/.test(orderId||'')) {
+    if(/^KAE-(?:MICRO|TRAFICO)-\d{13}-[a-f0-9]{16}$/.test(orderId||'')) {
       const selected=variants.restore(JSON.parse(sessionStorage.getItem('kaemento-bold-selections')||'{}')[orderId]);
       if(selected)renderSelection(selected,null);
       token=JSON.parse(sessionStorage.getItem('kaemento-order-access')||'{}')[orderId];

@@ -19,7 +19,7 @@ function createConversion(env = process.env, storeFactory = payments.createStore
     } catch (_) { return reply(400,{error:'Solicitud no válida.'}); }
     const action=input?.action, key=action === 'prepare' ? 'token' : 'ticket';
     if (!input || Array.isArray(input) || !['prepare','consume'].includes(action) || Object.keys(input).length !== 3 ||
-        typeof input.orderId !== 'string' || !/^KAE-MICRO-\d{13}-[a-f0-9]{16}$/.test(input.orderId) ||
+        typeof input.orderId !== 'string' || !/^KAE-(?:MICRO|TRAFICO)-\d{13}-[a-f0-9]{16}$/.test(input.orderId) ||
         typeof input[key] !== 'string' || !/^[a-f0-9]{64}$/.test(input[key])) return reply(400,{error:'Solicitud no válida.'});
     // Preview/local traffic cannot consume production conversion authorizations.
     if (env.VERCEL_ENV !== 'production' || !payments.enabled(env)) return reply(200,{status:'disabled'});

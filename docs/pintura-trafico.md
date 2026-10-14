@@ -143,3 +143,13 @@ A esa instrucción se agregó la escena correspondiente:
 - `tests/site-search.test.cjs`
 - `tests/traffic-paint.test.cjs`
 - `vercel.json`
+
+## Compra directa — 14 de octubre de 2026
+
+Precio confirmado por KAEMENTO: $108.885 COP por galón, IVA incluido, con el 20% ya aplicado (pleno $136.106,25). Disponible para cualquier comprador en amarillo y negro; blanco y azul conservan cotización. Sin fecha de caducidad inventada. Cantidades independientes de ambos colores en un solo pedido, sin tope comercial de 20; el borrador se limpia al abandonar o recargar.
+
+La compra reutiliza `/api/bold/checkout`, persistencia Redis, firma de Bold, webhook auténtico, estado privado, correos independientes y retry. Las referencias `KAE-TRAFICO-…` identifican estos pedidos. El servidor fija el precio, persiste antes de firmar y mantiene esta promoción separada del cupo de microcemento. Los correos detallan galones y colores; no prometen el despacho de 48 horas del microcemento. Facturación fiscal sigue pendiente.
+
+Google Ads conserva su destino y autorización única desde el backend: solo un pedido aprobado por webhook puede emitir conversión al regresar al sitio y cargar Google. Las pruebas usan Redis temporal, datos sintéticos y transportes simulados; no envían compras, correos o conversiones a proveedores.
+
+Verificación local: resumen de 12 amarillos + 8 negros = $2.177.700, formulario del comprador, limpieza al recargar y selección de blanco/azul por consulta. El control de viewport del navegador no aplicó el tamaño móvil solicitado (continuó reportando 1280 px); no se da esa revisión responsive por confirmada. Continúa apareciendo un error genérico previo de MutationObserver sin URL de origen en la herramienta; los controles revisados funcionan.

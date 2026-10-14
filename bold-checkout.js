@@ -19,7 +19,7 @@
   function loadCustomerStep() {
     if (customerPromise) return customerPromise;
     customerPromise = Promise.all([
-      ['script','/order-customer.js?v=4'], ['link','/order-customer.css']
+      ['script','/order-customer.js?v=5'], ['link','/order-customer.css']
     ].map(([tag,url])=>new Promise((resolve,reject)=>{
       const element = document.createElement(tag);
       if (tag === 'script') element.src = url;

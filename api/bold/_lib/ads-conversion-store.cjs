@@ -1,7 +1,7 @@
 const {createHash, randomBytes} = require('node:crypto');
 // The label is the exact public destination supplied by KAEMENTO from Google Ads.
 const SEND_TO = 'AW-18358591293/UeCLCJPZtpQdEL2-h7JE';
-const ORDER_ID = /^KAE-MICRO-\d{13}-[a-f0-9]{16}$/;
+const ORDER_ID = /^KAE-(?:MICRO|TRAFICO)-\d{13}-[a-f0-9]{16}$/;
 const HEX = /^[a-f0-9]{64}$/;
 // Separate from payment/email records. No expiry after issuance: late returns stay harmless.
 const CONVERSION = `

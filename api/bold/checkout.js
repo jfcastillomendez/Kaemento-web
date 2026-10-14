@@ -25,6 +25,7 @@ function createCheckout(env = process.env, storeFactory = payments.createStore) 
       catch (_) { return reply(403, {error:'Origen no permitido.'}); }
     }
     const {selection, customer} = input;
+    const traffic = variants.isTraffic(selection);
     const description = variants.orderDescription(selection);
     if (description.length > 100) return reply(400, {error:'Selección no válida.'});
     const apiKey = env.BOLD_IDENTITY_KEY, secretKey = env.BOLD_SECRET_KEY;
@@ -32,7 +33,7 @@ function createCheckout(env = process.env, storeFactory = payments.createStore) 
       return reply(503, {error:'El pago no está disponible en este momento.'});
     }
     let amount, unitPrice;
-    let orderId = `KAE-MICRO-${Date.now()}-${randomBytes(8).toString('hex')}`;
+    let orderId = `KAE-${traffic ? 'TRAFICO' : 'MICRO'}-${Date.now()}-${randomBytes(8).toString('hex')}`;
     const hmac = value => createHmac('sha256', secretKey).update(value).digest('hex');
     const statusToken = id => hmac('kaemento-order-status:' + id);
     try {
@@ -50,7 +51,7 @@ function createCheckout(env = process.env, storeFactory = payments.createStore) 
       orderId = claim.order.orderId;
       amount = claim.order.amount;
       unitPrice = claim.order.unitPrice;
-      if (![variants.unitPrice,variants.regularPrice].includes(unitPrice) || amount !== unitPrice * variants.kitCount(selection) || claim.order.total !== amount) throw new Error('Invalid persisted amount');
+      if (!(traffic ? [variants.trafficPrice] : [variants.unitPrice,variants.regularPrice]).includes(unitPrice) || amount !== unitPrice * variants.kitCount(selection) || claim.order.total !== amount) throw new Error('Invalid persisted amount');
     } catch (_) { return reply(503, {error:'No pudimos guardar tu pedido. Intenta nuevamente.'}); }
     const integritySignature = createHash('sha256').update(`${orderId}${amount}COP${secretKey}`, 'utf8').digest('hex');
     return reply(200, {orderId, amount, unitPrice, currency:'COP', apiKey, integritySignature, tax:'vat-19', description, selection, statusToken:statusToken(orderId)});

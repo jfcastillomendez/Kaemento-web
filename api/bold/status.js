@@ -12,7 +12,7 @@ function createStatus(env=process.env, storeFactory=payments.createStore, clock=
       if(Buffer.byteLength(raw||'')>256)return reply(413,{error:'Solicitud no válida.'});
       input=JSON.parse(raw);
     }catch(_){return reply(400,{error:'Solicitud no válida.'});}
-    if(!input || Array.isArray(input) || Object.keys(input).length!==2 || typeof input.orderId!=='string' || typeof input.token!=='string' || !/^KAE-MICRO-\d{13}-[a-f0-9]{16}$/.test(input.orderId||'') || !/^[a-f0-9]{64}$/.test(input.token||''))return reply(400,{error:'Solicitud no válida.'});
+    if(!input || Array.isArray(input) || Object.keys(input).length!==2 || typeof input.orderId!=='string' || typeof input.token!=='string' || !/^KAE-(?:MICRO|TRAFICO)-\d{13}-[a-f0-9]{16}$/.test(input.orderId||'') || !/^[a-f0-9]{64}$/.test(input.token||''))return reply(400,{error:'Solicitud no válida.'});
     if(!payments.enabled(env))return reply(503,{error:'Consulta temporalmente no disponible.'});
     try {
       const order=await storeFactory(env).readOrder(input.orderId);

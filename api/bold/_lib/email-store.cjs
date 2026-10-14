@@ -1,5 +1,5 @@
 const {randomBytes} = require('node:crypto');
-const ORDER_ID = /^KAE-MICRO-\d{13}-[a-f0-9]{16}$/;
+const ORDER_ID = /^KAE-(?:MICRO|TRAFICO)-\d{13}-[a-f0-9]{16}$/;
 const ROLES = new Set(['sales', 'customer']);
 // Resend remembers idempotency keys for 24 hours. Stop at 23 hours if delivery is uncertain.
 const SAFE_RETRY_MS = 23 * 60 * 60 * 1000;

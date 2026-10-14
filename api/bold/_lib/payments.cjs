@@ -5,7 +5,7 @@ const {networkStore} = require('../../_lib/network-store.cjs');
 const {emailStore} = require('./email-store.cjs');
 const {checkoutStore} = require('./checkout-store.cjs');
 const {adsConversionStore} = require('./ads-conversion-store.cjs');
-const ORDER_ID = /^KAE-MICRO-\d{13}-[a-f0-9]{16}$/;
+const ORDER_ID = /^KAE-(?:MICRO|TRAFICO)-\d{13}-[a-f0-9]{16}$/;
 const EVENT_ID = /^[A-Za-z0-9_-]{1,100}$/;
 const TYPES = new Set(['SALE_APPROVED', 'SALE_REJECTED', 'VOID_APPROVED', 'VOID_REJECTED']);
 const UNIT_AMOUNT = 365500;
@@ -31,17 +31,17 @@ function notification(body) {
 function orderRecord(orderId, selection, customer) {
   const canonical = variants.restore(selection);
   if (!ORDER_ID.test(orderId) || !canonical) throw new Error('Invalid order');
-  return { ...orders.record(orderId, canonical, customer), selection: canonical, amount: UNIT_AMOUNT * variants.kitCount(canonical),
-    status:'pending', createdAt:Date.now(), campaign:'microcemento_kaemento_launch_2026' };
+  return { ...orders.record(orderId, canonical, customer), selection: canonical, amount: (variants.isTraffic(canonical) ? variants.trafficPrice : UNIT_AMOUNT) * variants.kitCount(canonical),
+    status:'pending', createdAt:Date.now(), campaign:variants.isTraffic(canonical) ? 'pintura_trafico_launch_20' : 'microcemento_kaemento_launch_2026' };
 }
 function purchaseEvent(order) {
   const selection = variants.restore(order?.selection);
   const unitPrice = selection ? order.amount / variants.kitCount(selection) : null;
   if (!selection || order.status !== 'approved' || !ORDER_ID.test(order.orderId || '') ||
-      !EVENT_ID.test(order.paymentId || '') || order.currency !== 'COP' || ![variants.unitPrice,variants.regularPrice].includes(unitPrice)) return null;
+      !EVENT_ID.test(order.paymentId || '') || order.currency !== 'COP' || !(variants.isTraffic(selection) ? [variants.trafficPrice] : [variants.unitPrice,variants.regularPrice]).includes(unitPrice)) return null;
   // This is an outbox payload, not a browser event and not an HTTP request to GA4.
   return { name:'purchase', params:{ transaction_id:order.orderId, currency:'COP', value:order.amount,
-    items:variants.analyticsItems(selection,unitPrice) } };
+    items:variants.isTraffic(selection) ? selection.items.map(x=>({item_id:'pintura-trafico',item_name:'Pintura de Tráfico KAEMENTO',item_variant:x.color,quantity:x.quantity,price:unitPrice})) : variants.analyticsItems(selection,unitPrice) } };
 }
 
 // One Redis transaction checks and changes all state. It survives restarts and concurrent Functions.

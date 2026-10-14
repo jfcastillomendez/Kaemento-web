@@ -2,7 +2,7 @@
   // The result page calls this only after /status says paid. Redis rechecks independently.
   const attempts = new Set();
   window.kaementoMeasurePaidOrder = async (orderId, token) => {
-    if (attempts.has(orderId) || !/^KAE-MICRO-\d{13}-[a-f0-9]{16}$/.test(orderId || '') || !/^[a-f0-9]{64}$/.test(token || '')) return;
+    if (attempts.has(orderId) || !/^KAE-(?:MICRO|TRAFICO)-\d{13}-[a-f0-9]{16}$/.test(orderId || '') || !/^[a-f0-9]{64}$/.test(token || '')) return;
     attempts.add(orderId);
     let frame;
     const ready = await new Promise(resolve => {
