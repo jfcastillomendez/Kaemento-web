@@ -9,7 +9,7 @@
   const percentages = [10,20,30,40,50,60,70,80,90];
   function normalize(body) {
     if (!body || typeof body !== 'object' || Array.isArray(body) || body.productId !== 'microcemento-kaemento-launch' ||
-        !Number.isInteger(body.quantity) || body.quantity < 1 || body.quantity > 20 || !sealers.has(body.sealer)) return null;
+        !validQuantity(body.quantity) || !sealers.has(body.sealer)) return null;
     const shared = ['productId','quantity','colorMode','sealer'];
     if (Object.hasOwn(body,'surface')) {if (!surfaces.has(body.surface)) return null;shared.push('surface');}
     const fields = body.colorMode === 'standard' ? [...shared,'color'] : body.colorMode === 'mix' ? [...shared,'color1','color2','percentage1','percentage2'] : [];
@@ -30,6 +30,9 @@
   function itemVariant(s) { return s.colorMode === 'standard' ? s.color : `${s.color1}:${s.percentage1}+${s.color2}:${s.percentage2}`; }
   const unitPrice = 365500;
   const regularPrice = 430000;
+  // No commercial kit cap. Keep quantity and totals exactly representable in COP,
+  // including regular pricing and Redis JSON's 14 significant digits.
+  const validQuantity = quantity => Number.isSafeInteger(quantity) && quantity > 0 && Number.isSafeInteger(quantity * regularPrice) && quantity * regularPrice < 1e14;
   const kitCount = selection => selection.items ? selection.items.reduce((n, item) => n + item.quantity, 0) : selection.quantity;
   const lines = selection => selection.items || [selection];
   function lineKey(item) {
@@ -37,7 +40,7 @@
     return item.colorMode + '|' + color + '|' + item.sealer + '|' + (item.surface || '');
   }
   function normalizeCart(body) {
-    if (!body || Array.isArray(body) || Object.keys(body).length !== 1 || !Array.isArray(body.items) || body.items.length < 1 || body.items.length > 20) return null;
+    if (!body || Array.isArray(body) || Object.keys(body).length !== 1 || !Array.isArray(body.items) || body.items.length < 1) return null;
     const items = [], keys = new Map();
     for (const raw of body.items) {
       const item = normalize(raw);
@@ -47,7 +50,7 @@
       else { keys.set(key,item); items.push(item); }
     }
     const selection = {items};
-    return kitCount(selection) <= 20 ? selection : null;
+    return validQuantity(kitCount(selection)) ? selection : null;
   }
   // Public requests are strict; restore projects stored non-personal selections through the same rules.
   const normalizeOrder = body => Object.hasOwn(body || {}, 'items') ? normalizeCart(body) : normalize(body);
@@ -64,5 +67,5 @@
     return detail.length<=100 ? detail : `Microcemento KAEMENTO | ${kitCount(selection)} kits | ${selection.items.length} configuraciones`;
   }
   const analyticsItems = (selection, price = unitPrice) => lines(selection).map(item=>({item_id:'microcemento-kaemento',item_name:'Microcemento KAEMENTO',price,quantity:item.quantity,item_variant:itemVariant(item),sealer_type:item.sealer}));
-  return {colors,sealers,surfaces,normalize,formula,description,itemVariant,unitPrice,regularPrice,kitCount,lines,lineKey,normalizeCart,normalizeOrder,restore,orderDescription,analyticsItems};
+  return {colors,sealers,surfaces,normalize,formula,description,itemVariant,unitPrice,regularPrice,validQuantity,kitCount,lines,lineKey,normalizeCart,normalizeOrder,restore,orderDescription,analyticsItems};
 });

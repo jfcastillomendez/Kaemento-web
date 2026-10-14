@@ -27,7 +27,7 @@ async function invoke(body, method = 'POST', type = 'application/json') {
   });
   return out;
 }
-for (const quantity of [1, 2, 20]) test(`Authoritative total, IVA and signature for ${quantity} kits`, async () => {
+for (const quantity of [1, 2, 20, 21, 50, 125, 1000]) test(`Authoritative total, IVA and signature for ${quantity} kits`, async () => {
   const r = await invoke({ productId: 'microcemento-kaemento-launch', colorMode: 'standard', color: 'arena', sealer: 'mate', quantity });
   assert.equal(r.status, 200); assert.equal(r.body.amount, 365500 * quantity);
   assert.equal(r.body.tax, 'vat-19'); assert.equal(r.body.currency, 'COP');
@@ -44,7 +44,7 @@ test('Unique order IDs for separate attempts', async () => {
   assert.equal(ids.size, 100);
 });
 test('Reject invalid quantities, products and browser supplied totals', async () => {
-  for (const quantity of [0, -1, 21, 1.1, '2', null, true, [], {}, NaN, Infinity]) {
+  for (const quantity of [0, -1, Number.MAX_SAFE_INTEGER, Math.floor(Number.MAX_SAFE_INTEGER / 430000) + 1, 1.1, '2', null, true, [], {}, NaN, Infinity]) {
     assert.equal((await invoke({ productId: 'microcemento-kaemento-launch', colorMode: 'standard', color: 'arena', sealer: 'mate', quantity })).status, 400);
   }
   for (const body of [null, [], {}, 'invalid JSON', {productId:'other',quantity:1},

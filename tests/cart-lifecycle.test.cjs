@@ -80,6 +80,21 @@ test('A completed checkout keeps its order return token after the draft is clear
  assert.equal(f.control('cart-count').textContent,'0 kits');assert.deepEqual([...f.session],retained);
  assert.equal(JSON.parse(f.session.get('kaemento-order-access'))['KAE-CART-TEST'],'b'.repeat(64));
 });
+test('More than twenty kits can be added, edited and passed to the existing checkout',async()=>{
+ const f=fixture();await f.add('extra-blanco',21);await f.add('arena',30,'brillante');
+ assert.equal(f.control('cart-count').textContent,'51 kits');assert.match(f.control('cart-total').textContent,/18\.640\.500/);
+ assert.equal(f.control('bold-quantity').value,'');
+ const qty=f.control('cart-list').children[0].children[1].children[0].children[0];
+ assert.equal(qty.max,undefined);
+ qty.value='50';await qty.emit('input');await qty.emit('change');
+ assert.equal(f.control('cart-count').textContent,'80 kits');assert.match(f.control('cart-total').textContent,/29\.240\.000/);
+ qty.value='-1';await qty.emit('input');assert.ok(f.control('bold-buy').disabled);
+ qty.value='50';await qty.emit('input');assert.equal(f.control('bold-buy').disabled,false);
+ await f.control('bold-buy').emit('click');
+ assert.equal(f.requests.length,1);assert.deepEqual(Array.from(f.requests[0].body.items,x=>x.quantity),[50,30]);
+ assert.equal(f.opened.length,1);assert.equal(f.opened[0].amount,'29240000');
+ assert.equal(f.tracked.filter(x=>x[0]==='begin_checkout').length,1);
+});
 test('Leaving during checkout preparation cannot reopen Bold with a cleared draft on return',async()=>{
  let resolve,selection;const f=fixture({customerStep:s=>{selection=s;return new Promise(r=>{resolve=r;});}});
  await f.add('arena');const checkout=f.control('bold-buy').emit('click');await flush();
@@ -106,8 +121,8 @@ test('Preview receives only accepted selections and observes cart clearing witho
  const added=f.uiEvents.filter(e=>e.type==='kaemento:configuration-added');
  assert.equal(added.length,1);assert.equal(added[0].detail.color,'arena');assert.equal(added[0].detail.quantity,2);
  assert.equal(f.control('bold-mode').value,'');assert.equal(f.control('bold-quantity').value,'');
- await f.add('negro',20);
- assert.equal(f.uiEvents.filter(e=>e.type==='kaemento:configuration-added').length,1,'rejected cart limit cannot update the visual reference');
+ await f.add('negro',Number.MAX_SAFE_INTEGER);
+ assert.equal(f.uiEvents.filter(e=>e.type==='kaemento:configuration-added').length,1,'invalid quantities cannot update the visual reference');
  await f.event('pagehide');
  assert.equal(f.uiEvents.filter(e=>e.type==='kaemento:cart-updated').at(-1).detail.items.length,0);
 });

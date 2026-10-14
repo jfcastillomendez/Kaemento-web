@@ -6,7 +6,7 @@ Disponibles junto al simulador de Inicio y Producto Microcemento. No cambian la 
 
 - «Calcular kits por área» está junto al selector de ambientes. Calcula `ceil(m² / 10)` con hasta dos decimales y rellena el campo de cantidad de la superficie activa. Por ejemplo, 26 m² → 3 kits, 10 m² → 1 kit, 10,01 m² → 2 kits.
 - Piso y muros mantienen áreas, tonalidades, mezclas, acabados y cantidades independientes. El cliente puede modificar manualmente la cantidad sugerida. No se añade nada al carrito automáticamente.
-- Área vacía, cero, negativa o inválida borra la sugerencia de cantidad. Más de 200 m² muestra los kits necesarios y remite a la consulta, conservando el límite existente de 20 kits por pedido. El carrito sigue validando su límite total.
+- Área vacía, cero, negativa o inválida borra la sugerencia de cantidad. No hay tope comercial de 20 kits: por ejemplo, 200,01 m² completa 21 kits y 510 m² completa 51. Se pueden ajustar, combinar y pagar cantidades superiores a 20, y la consulta por WhatsApp las conserva. La validación compartida exige enteros positivos y totales representables con precisión; el servidor conserva el límite de tamaño de solicitud y las validaciones de precio.
 - Añadir al carrito reinicia el área y los controles de esa superficie. Su referencia visual sigue marcada «En carrito». Editar una configuración no reutiliza el área de otra elección.
 
 ## Consulta → WhatsApp → regreso

@@ -68,14 +68,14 @@
       const area = Number(areas[active]).toLocaleString('es-CO');
       const suggested = `${kits} ${kits === 1 ? 'kit sugerido' : 'kits sugeridos'}`;
       const quantity = Number(fields.quantity.value);
-      const validQuantity = /^\d+$/.test(fields.quantity.value) && quantity >= 1 && quantity <= 20;
+      const validQuantity = /^\d+$/.test(fields.quantity.value) && config.validQuantity(quantity);
       // The toolbar shows the measured area; only the existing quantity field chooses kits.
       calculator.querySelector('summary').textContent = kits ? `Área de ${surface} · ${area} m²` : 'Calcular kits por área';
-      areaResult.textContent = kits > 20 ? `${kits} kits sugeridos. Para más de 20 kits, cotiza con KAEMENTO por WhatsApp.` : kits ?
+      areaResult.textContent = kits ?
         `${suggested} a ${m2PerKit} m² por kit. La cantidad se completa en «Cantidad de kits»; puedes ajustarla allí.` :
         areas[active] ? 'Indica un área entre 0,01 y 100.000 m², con hasta dos decimales.' : `${m2PerKit} m² por kit. Redondeamos al kit completo superior.`;
       quantityNote.hidden = !kits;
-      quantityNote.textContent = !kits ? '' : kits > 20 ? `Tu área requiere ${kits} kits de referencia. Cotiza el proyecto por WhatsApp.` :
+      quantityNote.textContent = !kits ? '' :
         !validQuantity ? `Para ${area} m² de ${surface}: ${suggested}. Elige una cantidad para continuar.` :
         quantity === kits ? `Para tus ${area} m² de ${surface} · ${m2PerKit} m² por kit.` :
         `Cantidad ajustada manualmente. Para ${area} m² de ${surface}: ${suggested}.`;
@@ -84,7 +84,7 @@
     areaInput.addEventListener('input', () => {
       areas[active] = areaInput.value;
       const kits = areaEstimate(areaInput.value);
-      fields.quantity.value = kits && kits <= 20 ? String(kits) : '';
+      fields.quantity.value = kits ? String(kits) : '';
       fields.quantity.dispatchEvent(new Event('input', {bubbles:true}));
       paintArea();
     });
@@ -121,7 +121,7 @@
         if (chosen) lines.push('Tonalidad: ' + config.formula(chosen));
         lines.push('Sellador: ' + (config.sealers.get(values.sealer) || 'Por definir'));
         if (area) lines.push('Área: ' + Number(areas[surface]).toLocaleString('es-CO') + ' m² · Sugerencia: ' + area + ' kits a ' + m2PerKit + ' m²/kit');
-        const quantity = /^\d+$/.test(values.quantity) && Number(values.quantity) >= 1 && Number(values.quantity) <= 20 ? values.quantity : 'Por definir';
+        const quantity = /^\d+$/.test(values.quantity) && config.validQuantity(Number(values.quantity)) ? values.quantity : 'Por definir';
         lines.push('Cantidad elegida: ' + quantity + (quantity === 'Por definir' ? '' : ' kits'));
       }
       lines.push('', technical ? 'Quiero orientación técnica para mi proyecto y la selección que estoy preparando.' : 'Quiero confirmar la aplicación y su cotización según mi ciudad, el área y el estado de la superficie.');
@@ -268,7 +268,7 @@
           const draft = value.selections?.[surface];
           for (const name of names) {
             const v = draft?.[name];
-            selections[surface][name] = typeof v === 'string' && (name === 'quantity' ? /^\d{1,2}$/.test(v) && Number(v) >= 1 && Number(v) <= 20 : [...fields[name].options].some(opt => opt.value === v)) ? v : '';
+            selections[surface][name] = typeof v === 'string' && (name === 'quantity' ? /^\d+$/.test(v) && config.validQuantity(Number(v)) : [...fields[name].options].some(opt => opt.value === v)) ? v : '';
           }
           const chosen = config.restore(value.applied?.[surface]);
           applied[surface] = chosen && cart.some(item => config.lineKey(item) === config.lineKey(chosen)) ? chosen : null;

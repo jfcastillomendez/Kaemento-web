@@ -34,7 +34,7 @@ fs.mkdirSync(output,{recursive:true});
       const surface=name=>panel.locator('[data-preview-surface="'+name+'"]');
       const summary=panel.locator('.kae-area-calculator summary'),link=panel.locator('.kae-application-consultation a');
       await summary.click();
-      for(const [value,expected] of [['0.01','1'],['10','1'],['10.01','2'],['26','3'],['200','20'],['200.01',''],['0',''],['-1',''],['','']]) {
+      for(const [value,expected] of [['0.01','1'],['10','1'],['10.01','2'],['26','3'],['200','20'],['200.01','21'],['510','51'],['1000','100'],['0',''],['-1',''],['','']]) {
         await area.fill(value);assert.equal(await quantity.inputValue(),expected,'area '+value);
       }
       await area.pressSequentially('10.01');assert.equal(await area.inputValue(),'10.01');assert.equal(await quantity.inputValue(),'2','decimal typing is not interrupted by re-render');

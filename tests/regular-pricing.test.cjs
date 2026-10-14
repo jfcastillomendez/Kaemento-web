@@ -15,16 +15,16 @@ test('Regular-price multi-color order keeps its true total through signed paymen
  const store=payments.createStore(env,redis.transport),checkout=createCheckout(env,()=>store),ads=createConversion(env,()=>store);
  const prefix='kaemento:'+env.BOLD_STORAGE_NAMESPACE+':';
  await redis.command(['SADD',prefix+'campaign:confirmed-orders',...Array.from({length:23},(_,i)=>'paid-fixture-'+i)]);
- const body={items:[{productId:'microcemento-kaemento-launch',quantity:1,colorMode:'standard',color:'extra-blanco',sealer:'mate',surface:'walls'},
- {productId:'microcemento-kaemento-launch',quantity:2,colorMode:'mix',color1:'arena',color2:'gris-cemento',percentage1:70,percentage2:30,sealer:'brillante',surface:'floor'}],customer};
+ const body={items:[{productId:'microcemento-kaemento-launch',quantity:25,colorMode:'standard',color:'extra-blanco',sealer:'mate',surface:'walls'},
+ {productId:'microcemento-kaemento-launch',quantity:30,colorMode:'mix',color1:'arena',color2:'gris-cemento',percentage1:70,percentage2:30,sealer:'brillante',surface:'floor'}],customer};
  for(const expectedUnitPrice of [1,0,430001,'430000',null])assert.equal((await invoke(checkout,{...body,expectedUnitPrice})).status,400);
  const stale=await invoke(checkout,body);assert.equal(stale.status,409);assert.equal(stale.body.code,'PRICE_CHANGED');assert.equal(stale.body.unitPrice,430000);
  assert.equal(await redis.command(['EVAL',"return #redis.call('KEYS', ARGV[1])",'0',prefix+'order:*']),0);
  const key=randomUUID();const accepted=await invoke(checkout,{...body,expectedUnitPrice:430000},key);
  assert.equal(accepted.status,200);const {orderId,amount,statusToken,integritySignature}=accepted.body;
- assert.equal(amount,1290000);assert.equal(integritySignature,createHash('sha256').update(`${orderId}${amount}COP${env.BOLD_SECRET_KEY}`).digest('hex'));
- const order=await store.readOrder(orderId);assert.equal(order.total,1290000);assert.equal(order.unitPrice,430000);assert.equal(order.campaign,null);
- assert.deepEqual(order.items.map(x=>x.subtotal),[430000,860000]);assert.equal(order.paymentStatus,'pending');
+ assert.equal(amount,23650000);assert.equal(integritySignature,createHash('sha256').update(`${orderId}${amount}COP${env.BOLD_SECRET_KEY}`).digest('hex'));
+ const order=await store.readOrder(orderId);assert.equal(order.total,23650000);assert.equal(order.unitPrice,430000);assert.equal(order.campaign,null);
+ assert.deepEqual(order.items.map(x=>x.subtotal),[10750000,12900000]);assert.equal(order.paymentStatus,'pending');
  const access={action:'prepare',orderId,token:statusToken};assert.equal((await invoke(ads,access)).body.status,'not_paid');
  const {handle}=await import('../api/bold/webhook.mjs');
  async function webhook(total=amount,valid=true) {
@@ -36,13 +36,13 @@ test('Regular-price multi-color order keeps its true total through signed paymen
  assert.equal((await store.readOrder(orderId)).paymentStatus,'pending');assert.equal((await webhook()).status,200);assert.equal((await webhook()).status,200);
  const paid=await store.readOrder(orderId);assert.equal(paid.paymentStatus,'paid');assert.equal(paid.invoiceStatus,'pending');assert.equal(paid.invoiceNumber,null);assert.equal(paid.cufe,null);
  assert.equal(await store.confirmedCampaignOrders(),23); // Regular sales do not consume promotion slots.
- for(const role of ['sales','customer']) {const text=emailContent(paid,role).text;assert.match(text,/1\.290\.000/);assert.match(text,/430\.000/);assert.match(text,/Aplicación: Muros/);assert.match(text,/Aplicación: Piso/);}
+ for(const role of ['sales','customer']) {const text=emailContent(paid,role).text;assert.match(text,/23\.650\.000/);assert.match(text,/430\.000/);assert.match(text,/Aplicación: Muros/);assert.match(text,/Aplicación: Piso/);}
  assert.equal(await redis.command(['EVAL',"return #redis.call('KEYS', ARGV[1])",'0',prefix+'email:KAE*']),2);
  const prepared=await invoke(ads,access);assert.equal(prepared.body.status,'prepared');
  const consume={action:'consume',orderId,ticket:prepared.body.ticket};
  const results=await Promise.all(Array.from({length:8},()=>invoke(ads,consume)));
  const authorized=results.filter(x=>x.body.status==='authorized');assert.equal(authorized.length,1);
- assert.equal(authorized[0].body.conversion.value,1290000);assert.equal(authorized[0].body.conversion.transaction_id,orderId);
+ assert.equal(authorized[0].body.conversion.value,23650000);assert.equal(authorized[0].body.conversion.transaction_id,orderId);
  assert.equal((await invoke(checkout,{...body,expectedUnitPrice:430000},key)).status,409);
  }finally{await redis.close();}
 });

@@ -4,7 +4,7 @@ Rama de trabajo: `codex/pedidos-confirmados-correos`. Implementación para Previ
 
 ## Flujo y fuente oficial
 
-1. El configurador existente conserva los cinco colores, las nueve proporciones entre tonos distintos, Mate / Brillante, 1–20 kits y COP 365.500 IVA incluido por kit.
+1. El configurador existente conserva los cinco colores, las nueve proporciones entre tonos distintos, Mate / Brillante y cantidades enteras positivas sin el antiguo tope de 20 kits. El precio por kit sigue validándose en el servidor (lanzamiento o regular). Se conserva la protección de precisión numérica del total.
 2. COMPRAR AHORA abre un diálogo accesible con nombre/razón social, tipo y número de identificación, email, teléfono, ciudad, dirección y autorización para gestionar el pedido. No se solicitan tarjetas ni RUT.
 3. `POST /api/bold/checkout` recibe la configuración original y un objeto `customer`. Normaliza y valida ambos en servidor, rechaza campos extra (incluidos precio/total) y calcula el importe. **Guarda el pedido completo en Upstash antes de generar la firma**. Si la confirmación persistente está desactivada o Redis no está disponible, devuelve 503 sin firma: esta rama no conserva el antiguo bypass sin persistencia.
 4. El SDK y sus parámetros Bold permanecen iguales; la descripción solo incluye producto, fórmula, sellador y cantidad. La referencia Bold es el `orderId` guardado. Ningún dato personal se pasa al SDK o a Analytics desde esta integración.

@@ -46,15 +46,15 @@ function validCheckoutVariant(value) {
       payload.promotion_name = 'microcemento_kaemento_launch_2026';
     }
     if (['begin_checkout','add_to_cart','remove_from_cart','view_cart'].includes(event)) {
-      if (!Array.isArray(values.items) || !values.items.length || values.items.length > 20) return;
+      if (!Array.isArray(values.items) || !values.items.length) return;
       const items = [];
       let quantity = 0;
       for (const item of values.items) {
-        if (!item || !validCheckoutVariant(item.item_variant) || !['mate','brillante'].includes(item.sealer_type) || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 20) return;
+        if (!item || !validCheckoutVariant(item.item_variant) || !['mate','brillante'].includes(item.sealer_type) || !Number.isSafeInteger(item.quantity) || item.quantity < 1 || !Number.isSafeInteger(item.quantity * 430000)) return;
         quantity += item.quantity;
         items.push({item_id:'microcemento-kaemento',item_name:'Microcemento KAEMENTO',quantity:item.quantity,item_variant:item.item_variant,sealer_type:item.sealer_type});
       }
-      if (quantity > 20 || values.currency !== 'COP' || ![365500,430000].includes(values.value / quantity)) return;
+      if (!Number.isSafeInteger(quantity * 430000) || quantity * 430000 >= 1e14 || !Number.isSafeInteger(values.value) || values.currency !== 'COP' || ![365500,430000].includes(values.value / quantity)) return;
       const unitPrice = values.value / quantity;
       if (values.items.some(item => item.price !== undefined && item.price !== unitPrice)) return;
       items.forEach(item => {item.price = unitPrice;});

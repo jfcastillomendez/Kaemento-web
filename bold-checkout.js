@@ -82,11 +82,11 @@
     if (areaPrice && window.KaementoKitCoverage) areaPrice.textContent = format(unitAmount / window.KaementoKitCoverage.m2PerKit);
     function quantity() {
       const n = Number(input.value);
-      return /^\d+$/.test(input.value) && Number.isInteger(n) && n >= 1 && n <= 20 ? n : null;
+      return /^\d+$/.test(input.value) && variants.validQuantity(n) ? n : null;
     }
     input.addEventListener('input', () => {
       const n = quantity();
-      input.setCustomValidity(n ? '' : 'Selecciona un número entero entre 1 y 20.');
+      input.setCustomValidity(n ? '' : 'Indica una cantidad válida de kits completos, mayor que cero.');
       total.textContent = n ? format(n * unitAmount) : '—';
     });
     const variantControls = [mode, colorInput, tone1, tone2, ratio, sealerInput];
@@ -147,7 +147,7 @@
         summary.append(name,detail);
         const controls=document.createElement('div'); controls.className='kae-cart-controls';
         const label=document.createElement('label'); label.textContent='Kits';
-        const qty=document.createElement('input'); qty.type='number'; qty.min='1';qty.max='20';qty.step='1';qty.required=true;qty.inputMode='numeric';qty.value=String(item.quantity);
+        const qty=document.createElement('input'); qty.type='number'; qty.min='1';qty.step='1';qty.required=true;qty.inputMode='numeric';qty.value=String(item.quantity);
         qty.setAttribute('aria-label','Cantidad de '+variants.formula(item)+' · '+variants.sealers.get(item.sealer));
         let measuredQuantity=item.quantity;
         qty.addEventListener('change',()=>{
@@ -158,7 +158,7 @@
         qty.addEventListener('input',()=>{
           const n=Number(qty.value), candidate=items.map((x,i)=>({...x,quantity:i===index?n:x.quantity}));
           const valid=variants.restore({items:candidate});
-          if (!valid) {qty.setCustomValidity('El pedido admite entre 1 y 20 kits en total, en cantidades enteras.');button.disabled=true;cartMessage.textContent=qty.validationMessage;return;}
+          if (!valid) {qty.setCustomValidity('Revisa la cantidad: debe ser un número válido de kits completos, mayor que cero.');button.disabled=true;cartMessage.textContent=qty.validationMessage;return;}
           qty.setCustomValidity('');items=valid.items;
           subtotal.textContent=format(n*unitAmount);
           const count=variants.kitCount(valid);cartTotal.textContent=format(count*unitAmount);
@@ -203,7 +203,7 @@
       const item=variants.normalize(requestBody(n));if(!item)return;
       const next=items.map(x=>({...x}));if(editing>=0)next[editing]=item;else next.push(item);
       const valid=variants.restore({items:next});
-      if(!valid) {cartMessage.textContent='Puedes comprar hasta 20 kits en un solo pedido. Ajusta las cantidades.';return;}
+      if(!valid) {cartMessage.textContent='Revisa las cantidades de kits antes de añadir la configuración.';return;}
       const wasEditing=editing>=0;
       trackChanges(items,valid.items);
       items=valid.items;endEdit();renderCart();resetSelection();

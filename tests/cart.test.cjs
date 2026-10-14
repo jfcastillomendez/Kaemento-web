@@ -24,15 +24,34 @@ test('Cart combines identical formulas including reversed tone order, but keeps 
  const selection=variants.normalizeCart({items:[line('arena',2),line('arena',3),line('arena',1,'brillante'),mix,{...mix,color1:mix.color2,color2:mix.color1,percentage1:30,percentage2:70}]});
  assert.equal(selection.items.length,3);assert.deepEqual(selection.items.map(x=>x.quantity),[5,1,4]);assert.equal(variants.kitCount(selection),10);
 });
-test('Every color/sealer and a mix can coexist; max twenty kits is aggregate',async()=>{
+test('Every color/sealer and a mix can coexist, including more than twenty kits',async()=>{
  const items=[...variants.colors.keys()].flatMap(c=>[line(c),line(c,1,'brillante')]);items.push(mix);
  const out=await invoke({items});assert.equal(out.status,200);assert.equal(out.body.amount,4386000);
  assert.equal((await invoke({items:[line('extra-blanco',10),line('arena',10)]})).status,200);
- assert.equal((await invoke({items:[line('extra-blanco',10),line('arena',11)]})).status,400);
+ assert.equal((await invoke({items:[line('extra-blanco',10),line('arena',11)]})).status,200);
+});
+test('Large carts persist every line and keep the exact total through email and purchase data',async()=>{
+ let saved;const out=await invoke({items:[line('extra-blanco',25),line('arena',50),{...mix,quantity:30}]},{async saveOrder(order){saved=order;}});
+ assert.equal(out.status,200);assert.equal(saved.quantity,105);assert.equal(out.body.amount,38377500);
+ assert.deepEqual(saved.items.map(x=>x.quantity),[25,50,30]);assert.equal(saved.total,out.body.amount);
+ assert.equal(saved.paymentStatus,'pending');assert.equal(payments.purchaseEvent(saved),null);
+ const paid={...saved,paymentStatus:'paid',status:'approved',paymentId:'fixture-payment',boldPaymentId:'fixture-payment',paidAt:Date.now()};
+ for(const role of ['sales','customer'])assert.match(emails.emailContent(paid,role).text,/38\.377\.500/);
+ const event=payments.purchaseEvent(paid);assert.equal(event.params.value,38377500);assert.equal(event.params.items.length,3);
+ const merged=await invoke({items:Array.from({length:25},()=>line('arena',2))});
+ assert.equal(merged.status,200);assert.equal(merged.body.selection.items[0].quantity,50);
+});
+test('Removing the commercial cap still rejects unsafe quantities and aggregate totals',async()=>{
+ let calls=0;const store={async saveOrder(){calls++;}};
+ const safe=Math.floor((1e14-1)/variants.regularPrice);
+ for(const items of [[line('arena',safe+1)],[line('arena',safe),line('negro')],[line('arena',safe),line('arena')],[line('arena',Infinity)],[line('arena',1.5)]]) {
+  assert.equal((await invoke({items},store)).status,400);
+ }
+ assert.equal(calls,0);
 });
 test('Invalid cart lines, injected prices and malformed data fail before storage/signature',async()=>{
  let calls=0;const store={async saveOrder(){calls++;}};
- for(const data of [{items:[]},{items:null},{items:[null]},{items:Array(21).fill(line('arena'))},{items:[line('arena'),{...line('negro'),quantity:'2'}]},{items:[{...line('arena'),price:1}]},{items:[{...line('arena'),sealer:'other'}]},{items:[{...line('arena'),color:'beige'}]},{items:[{...mix,percentage2:20}]},{items:[{...mix,color2:'arena'}]},{items:[line('arena')],total:1},{items:[line('arena')],productId:'other'}]) {
+ for(const data of [{items:[]},{items:null},{items:[null]},{items:[line('arena'),{...line('negro'),quantity:'2'}]},{items:[{...line('arena'),price:1}]},{items:[{...line('arena'),sealer:'other'}]},{items:[{...line('arena'),color:'beige'}]},{items:[{...mix,percentage2:20}]},{items:[{...mix,color2:'arena'}]},{items:[line('arena')],total:1},{items:[line('arena')],productId:'other'}]) {
  const out=await invoke(data,store);assert.equal(out.status,400);assert.equal(out.body.integritySignature,undefined);
  }assert.equal(calls,0);
  const out=await invoke({items:[line('arena')]},{async saveOrder(){throw new Error('offline');}});assert.equal(out.status,503);assert.equal(out.body.integritySignature,undefined);
@@ -42,16 +61,16 @@ for (const metric of ['begin_checkout','add_to_cart','remove_from_cart','view_ca
  const frame={contentWindow:{postMessage(){}},setAttribute(){}};
  const context={URL,URLSearchParams,location,document:{referrer:'',addEventListener(_,fn){fn();},createElement(){return frame;},body:{appendChild(){}}},sessionStorage:{getItem(){return null;},setItem(){}},window:{addEventListener(){}}};
  vm.runInNewContext(fs.readFileSync('analytics.js','utf8'),context);
- const params={currency:'COP',value:1096500,items:[{quantity:1,item_variant:'extra-blanco',sealer_type:'mate',email:'PRIVATE'},{quantity:2,item_variant:'arena',sealer_type:'brillante',name:'PRIVATE'}],email:'PRIVATE',message:'PRIVATE',phone:'PRIVATE'};
- context.window.kaementoTrack(metric,params);const event=context.window.dataLayer.at(-1);assert.equal(event.items.length,2);assert.equal(event.value,1096500);assert.ok(!JSON.stringify(event).includes('PRIVATE'));
+ const params={currency:'COP',value:18640500,items:[{quantity:21,item_variant:'extra-blanco',sealer_type:'mate',email:'PRIVATE'},{quantity:30,item_variant:'arena',sealer_type:'brillante',name:'PRIVATE'}],email:'PRIVATE',message:'PRIVATE',phone:'PRIVATE'};
+ context.window.kaementoTrack(metric,params);const event=context.window.dataLayer.at(-1);assert.equal(event.items.length,2);assert.equal(event.value,18640500);assert.ok(!JSON.stringify(event).includes('PRIVATE'));
  const before=context.window.dataLayer.length;context.window.kaementoTrack('generate_lead',params);context.window.kaementoTrack(metric,{...params,value:1});assert.equal(context.window.dataLayer.length,before);
  const parent={postMessage(){}};const bridge={URLSearchParams,location,parent,window:{dataLayer:[],addEventListener(_,fn){listener=fn;}}};bridge.dataLayer=bridge.window.dataLayer;vm.runInNewContext(fs.readFileSync('analytics-bridge.js','utf8'),bridge);
  listener({origin:location.origin,source:parent,data:{type:'kaemento-event',event:metric,params}});
- const result=bridge.dataLayer.at(-1);assert.equal(result[2].items.length,2);assert.equal(result[2].debug_mode,true);assert.ok(!JSON.stringify(result).includes('PRIVATE'));
+ const result=bridge.dataLayer.at(-1);assert.equal(result[2].items.length,2);assert.equal(result[2].value,18640500);assert.equal(result[2].debug_mode,true);assert.ok(!JSON.stringify(result).includes('PRIVATE'));
 });
 test('Cart payment, duplicate webhooks and itemized independent emails use real Redis',{skip:!process.env.REDIS_SERVER_BIN},async()=>{
  const redis=await redisFixture();try {
- const store=payments.createStore(env,redis.transport,()=>Date.parse('2026-09-30T12:00:00Z'));const result=await invoke({items:[line('extra-blanco'),line('arena',2),mix]},store);
+ const store=payments.createStore(env,redis.transport,()=>Date.parse('2026-09-30T12:00:00Z'));const result=await invoke({items:[line('extra-blanco',21),line('arena',30),mix]},store);
  assert.equal(result.status,200);const orderId=result.body.orderId;
  const event={id:'cart-event',type:'SALE_APPROVED',paymentId:'cart-payment',orderId,amount:result.body.amount,currency:'COP'};
  assert.equal(await store.process({...event,amount:1}),'mismatch');
@@ -59,7 +78,7 @@ test('Cart payment, duplicate webhooks and itemized independent emails use real 
  const order=await store.readOrder(orderId);assert.equal(order.paymentStatus,'paid');assert.equal(order.items.length,3);
  const sent=[];const transport=async(_url,options)=>{sent.push(JSON.parse(options.body));return Response.json({id:'fixture-'+sent.length});};
  await emails.deliverOrder(orderId,store,env,transport);await emails.deliverOrder(orderId,store,env,transport);
- assert.equal(sent.length,2);for(const mail of sent){for(const value of ['Extra Blanco','Arena','70 % Arena + 30 % Gris Cemento','Brillante','1.827.500'])assert.ok(mail.text.includes(value));}
+ assert.equal(sent.length,2);for(const mail of sent){for(const value of ['Extra Blanco','Arena','70 % Arena + 30 % Gris Cemento','Brillante','19.371.500'])assert.ok(mail.text.includes(value));}
  const purchase=payments.purchaseEvent(order);assert.equal(purchase.params.items.length,3);assert.ok(!JSON.stringify(purchase).includes(customer.email));
  }finally{await redis.close();}
 });
