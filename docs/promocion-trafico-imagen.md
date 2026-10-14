@@ -1,0 +1,9 @@
+# Promoción compacta y pintura blanca
+
+Imagen creada con la herramienta integrada image_gen. Archivo: `assets/pintura-trafico/promocion-lanzamiento.webp`. Ubicación: después de la navegación interna, antes del producto, máximo 540 px de ancho, sin modificar la portada. Toda la imagen enlaza a `#comprar-trafico`.
+
+Blanco autorizado por KAEMENTO al mismo precio final de $108.885 IVA incluido. Azul permanece por cotización. Pruebas: 123 aprobadas; enlace y resumen de un galón blanco comprobados en navegador local. No se efectuaron compras reales.
+
+## Prompt final
+
+Use case: ads-marketing. Create a premium horizontal 16:9 launch campaign banner for the top of the KAEMENTO traffic paint website. Input image is the official approved one-gallon paint can, supporting product insert: preserve its exact black/gold label, metal can shape, proportions, typography and logo, no redesign. Photoreal advertising still life, can on right third on a realistic concrete parking garage floor with precise yellow lane markings and white directional arrow, architectural depth, dark charcoal background, dramatic warm golden side light, premium black/gold/ivory brand palette. Can realistic one gallon scale, no giant can relative to parking architecture; use foreground camera perspective. Left half clean dark area with exceptionally clear editorial Spanish text: small 'PINTURA DE TRÁFICO KAEMENTO', very large '20% DE LANZAMIENTO', prominent '$108.885', smaller 'POR GALÓN · IVA INCLUIDO', and 'Amarillo · Blanco · Negro'. Small final line 'Descuento ya aplicado'. Do not include blue in promo text. No invented expiration or stock counts, no extra claims. No website UI, no simulated buttons, no border, no collage, no workers. Visually striking yet photographic, refined hierarchy, all text comfortably inset safe margins. Deliver one finished wide campaign image.

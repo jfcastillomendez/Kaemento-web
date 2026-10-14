@@ -2,14 +2,14 @@
   const panel=document.getElementById('comprar-trafico');
   if (!panel) return;
   const variants=window.KaementoBoldConfig, price=variants.trafficPrice;
-  const yellow=panel.querySelector('[name="amarillo"]'), black=panel.querySelector('[name="negro"]');
+  const yellow=panel.querySelector('[name="amarillo"]'), black=panel.querySelector('[name="negro"]'), white=panel.querySelector('[name="blanco"]');
   const buy=panel.querySelector('[data-traffic-buy]'), status=panel.querySelector('[role="status"]');
   const money=n=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(n);
   let busy=false, visit=0, sdkPromise;
   const attempts=new Map();
   function selection() {
     const items=[];
-    for (const input of [yellow,black]) {
+    for (const input of [yellow,white,black]) {
       const quantity=Number(input.value);
       if (!/^\d+$/.test(input.value) || quantity<0 || !Number.isSafeInteger(quantity)) return null;
       if (quantity) items.push({color:input.name,quantity});
@@ -21,8 +21,8 @@
     panel.querySelector('[data-traffic-total]').textContent=s ? money(variants.kitCount(s)*price)+' IVA incluido' : 'Selecciona la cantidad de galones';
     buy.disabled=busy || !s;
   }
-  [yellow,black].forEach(input=>input.addEventListener('input',refresh));
-  function clear() {visit++;yellow.value='0';black.value='0';attempts.clear();status.textContent='';refresh();}
+  [yellow,white,black].forEach(input=>input.addEventListener('input',refresh));
+  function clear() {visit++;yellow.value='0';black.value='0';white.value='0';attempts.clear();status.textContent='';refresh();}
   window.addEventListener('pagehide',clear);
   window.addEventListener('pageshow',e=>{if(e.persisted)clear();});
   function loadSdk() {
@@ -38,7 +38,7 @@
   }
   buy.addEventListener('click',async()=>{
     const selected=selection();if(busy || !selected)return;
-    busy=true;yellow.disabled=black.disabled=true;refresh();const activeVisit=visit;
+    busy=true;yellow.disabled=black.disabled=white.disabled=true;refresh();const activeVisit=visit;
     status.textContent='Preparando tu pedido…';
     try {
       const data=await window.KaementoOrderCustomer.open(selected,async customer=>{
@@ -62,7 +62,7 @@
       catch(_){await new window.BoldCheckout(config).open();}
       status.textContent='Continúa en el pago seguro de Bold.';
     }catch(_){status.textContent='No pudimos abrir el pago. Intenta nuevamente o consulta con KAEMENTO. Si ya pagaste, revisa tu comprobante antes de repetir la compra.';}
-    finally {busy=false;yellow.disabled=black.disabled=false;refresh();}
+    finally {busy=false;yellow.disabled=black.disabled=white.disabled=false;refresh();}
   });
   refresh();
 })();

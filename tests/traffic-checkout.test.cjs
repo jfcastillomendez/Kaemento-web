@@ -14,9 +14,10 @@ const env={VERCEL_ENV:'production',BOLD_CONFIRMATION_ENABLED:'true',BOLD_IDENTIT
 async function invoke(handler,body,id=randomUUID()) {const result={};await handler({method:'POST',headers:{'content-type':'application/json','idempotency-key':id,host:'fixture.invalid',origin:'https://fixture.invalid'},body},{setHeader(){},set statusCode(v){result.status=v;},end(s){result.body=JSON.parse(s);}});return result;}
 test('Traffic prices are final tax-inclusive, strict colors and no commercial quantity cap',()=>{
  assert.equal(variants.trafficPrice,108885);
+ const whiteOrder=orders.checkoutInput({productId:'pintura-trafico',items:[{color:'blanco',quantity:2}],customer,expectedUnitPrice:108885});assert.ok(whiteOrder);assert.equal(orders.record('fixture',whiteOrder.selection,customer).total,217770);
  assert.equal(variants.normalizeTraffic({...selection,items:[{color:'negro',quantity:21}]}).items[0].quantity,21);
  assert.equal(orders.checkoutInput({...selection,customer,expectedUnitPrice:96787}),null);
- for(const items of [[{color:'blanco',quantity:1}],[{color:'azul',quantity:1}],[{color:'negro',quantity:-1}],[{color:'negro',quantity:1.5}],[{color:'negro',quantity:1,price:1}],[{color:'negro',quantity:1},{color:'negro',quantity:2}]])assert.equal(orders.checkoutInput({...selection,items,customer}),null);
+ for(const items of [[{color:'azul',quantity:1}],[{color:'negro',quantity:-1}],[{color:'negro',quantity:1.5}],[{color:'negro',quantity:1,price:1}],[{color:'negro',quantity:1},{color:'negro',quantity:2}]])assert.equal(orders.checkoutInput({...selection,items,customer}),null);
  assert.equal(orders.checkoutInput({...selection,customer,amount:1}),null);
 });
 test('Traffic checkout persists signed totals; webhook alone confirms; retry, emails and Ads remain idempotent',{skip:!process.env.REDIS_SERVER_BIN},async()=>{
@@ -63,16 +64,16 @@ test('Traffic checkout persists signed totals; webhook alone confirms; retry, em
 test('Browser prepares only validated totals, retains retry identity and opens Bold with persisted reference',async()=>{
  const vm=require('node:vm'),fs=require('node:fs'),crypto=require('node:crypto').webcrypto;
  const el=value=>({value,handlers:{},addEventListener(k,fn){this.handlers[k]=fn;}});
- const yellow=el('0'),black=el('0'),buy=el(),status=el(),total=el(),events={},saved=new Map(),requests=[],opens=[];
- yellow.name='amarillo';black.name='negro';
- const panel={querySelector:s=>({'[name="amarillo"]':yellow,'[name="negro"]':black,'[data-traffic-buy]':buy,'[role="status"]':status,'[data-traffic-total]':total})[s]};
+ const yellow=el('0'),black=el('0'),white=el('0'),buy=el(),status=el(),total=el(),events={},saved=new Map(),requests=[],opens=[];
+ yellow.name='amarillo';black.name='negro';white.name='blanco';
+ const panel={querySelector:s=>({'[name="amarillo"]':yellow,'[name="negro"]':black,'[name="blanco"]':white,'[data-traffic-buy]':buy,'[role="status"]':status,'[data-traffic-total]':total})[s]};
  let invalid=false;
  const context={Intl,TextEncoder,Uint8Array,crypto,AbortSignal,location:{origin:'https://fixture.invalid'},sessionStorage:{getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)},document:{getElementById:()=>panel},window:{KaementoBoldConfig:variants,addEventListener:(k,f)=>events[k]=f,KaementoOrderCustomer:{open:async(s,prepare)=>prepare(customer)},BoldCheckout:class{constructor(c){this.config=c;}async open(){opens.push(this.config);}}},fetch:async(url,options)=>{
   requests.push(options);const input=JSON.parse(options.body),s=variants.normalizeTraffic({productId:input.productId,items:input.items});
   return {ok:true,json:async()=>({orderId:'KAE-TRAFICO-1800000000000-1234567890abcdef',amount:invalid?1:variants.kitCount(s)*108885,unitPrice:108885,currency:'COP',tax:'vat-19',apiKey:'fixture',integritySignature:'a'.repeat(64),statusToken:'b'.repeat(64),selection:s,description:'Pintura'})};
  }};
  vm.runInNewContext(fs.readFileSync('pintura-compra.js','utf8'),context);
- assert.equal(buy.disabled,true);yellow.value='21';black.value='2';yellow.handlers.input();assert.equal(buy.disabled,false);
+ assert.equal(buy.disabled,true);yellow.value='20';black.value='2';white.value='1';yellow.handlers.input();assert.equal(buy.disabled,false);
  invalid=true;await buy.handlers.click();assert.equal(opens.length,0);assert.equal(saved.size,0);
  invalid=false;await buy.handlers.click();assert.equal(opens.length,1);assert.equal(opens[0].amount,'2504355');assert.equal(requests[0].headers['Idempotency-Key'],requests[1].headers['Idempotency-Key']);
  assert.ok(saved.has('kaemento-order-access'));assert.ok(!JSON.stringify([...saved]).includes(customer.email));

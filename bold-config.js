@@ -10,16 +10,16 @@
   const trafficPrice = 108885;
   const isTraffic = s => s?.productId === 'pintura-trafico';
   function normalizeTraffic(body) {
-    if (!isTraffic(body) || Object.keys(body).length !== 2 || !Array.isArray(body.items) || !body.items.length || body.items.length > 2) return null;
+    if (!isTraffic(body) || Object.keys(body).length !== 2 || !Array.isArray(body.items) || !body.items.length || body.items.length > 3) return null;
     const counts = new Map();
     for (const item of body.items) {
-      if (!item || Object.keys(item).length !== 2 || !['amarillo','negro'].includes(item.color) || !validQuantity(item.quantity) || counts.has(item.color)) return null;
+      if (!item || Object.keys(item).length !== 2 || !['amarillo','blanco','negro'].includes(item.color) || !validQuantity(item.quantity) || counts.has(item.color)) return null;
       counts.set(item.color,item.quantity);
     }
     const items = [...counts].sort(([a],[b])=>a.localeCompare(b)).map(([color,quantity])=>({color,quantity}));
     return validQuantity(items.reduce((n,x)=>n+x.quantity,0)) ? {productId:'pintura-trafico',items} : null;
   }
-  const trafficColor = color => ({amarillo:'Amarillo',negro:'Negro'})[color];
+  const trafficColor = color => ({amarillo:'Amarillo',blanco:'Blanco',negro:'Negro'})[color];
   function normalize(body) {
     if (!body || typeof body !== 'object' || Array.isArray(body) || body.productId !== 'microcemento-kaemento-launch' ||
         !validQuantity(body.quantity) || !sealers.has(body.sealer)) return null;
