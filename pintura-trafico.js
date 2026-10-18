@@ -5,9 +5,23 @@
   const buttons = [...document.querySelectorAll('[data-traffic-color]')];
   const colorStatus = document.getElementById('traffic-color-status');
   const colorLink = document.getElementById('trafico-color-whatsapp');
+  const preview=document.querySelector('[data-traffic-preview]');
+  const before=document.querySelector('[data-traffic-before]');
+  const captions={amarillo:'bandas y elementos de precaución renovados',blanco:'líneas, flechas y símbolos blancos renovados',negro:'segmentos negros de contraste renovados',azul:'superficie azul de la zona accesible renovada'};
+  let previewColor='amarillo';
+  function renderPreview(showBefore=false){
+    if(!preview)return;
+    preview.src='/assets/pintura-trafico/simulador/parqueadero-'+(showBefore?'before':previewColor)+'.webp';
+    preview.alt=showBefore?'Parqueadero antes de renovar la pintura':'Parqueadero: '+captions[previewColor];
+    document.querySelector('[data-traffic-preview-caption]').textContent=showBefore?'Antes de renovar · demarcaciones con desgaste.':colors[previewColor]+' · '+captions[previewColor]+'.';
+    before.setAttribute('aria-pressed',String(showBefore));
+    before.textContent=showBefore?'Ver renovación':'Ver antes';
+  }
+  before?.addEventListener('click',()=>renderPreview(before.getAttribute('aria-pressed')!=='true'));
   function selectColor(value, updateForm = true) {
     if (!Object.hasOwn(colors,value)) return;
     buttons.forEach(button => button.setAttribute('aria-pressed',String(button.dataset.trafficColor===value)));
+    previewColor=value;renderPreview();
     colorStatus.textContent = colors[value] + ' · Pintura de Tráfico KAEMENTO';
     colorLink.textContent = 'Cotizar ' + colors[value].toLowerCase() + ' ↗';
     colorLink.href = 'https://wa.me/573003671548?text=' + encodeURIComponent('Hola KAEMENTO, quiero cotizar Pintura de Tráfico KAEMENTO, color ' + colors[value] + ', presentación de 1 galón.');
