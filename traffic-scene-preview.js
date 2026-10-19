@@ -15,7 +15,7 @@
     'zonas-comunes-exteriores':{label:'Zonas comunes exteriores',white:[[[0,565],[490,570],[1485,591],[1500,715],[0,654]]],floor:[[0,630],[760,430],[1536,450],[1536,1024],[0,1024]],black:[]},
     parqueadero:{label:'Parqueadero',blue:[[815,545],[1536,505],[1536,725],[1140,780]],white:[[[0,452],[652,442],[730,489],[0,506]],[[267,678],[375,575],[500,674],[439,676],[491,955],[360,973],[347,676]]],yellow:[[0,208,50,35],[100,250,49,24],[154,254,43,24],[195,264,33,20],[550,254,63,22],[688,232,92,34],[860,209,193,39]],floor:[[0,460],[240,315],[410,315],[1536,490],[1536,1024],[0,1024]],black:[[17,315,25,112],[100,300,18,67],[140,298,18,67],[185,292,19,55],[217,287,14,42],[550,295,17,60],[690,310,34,95],[860,326,48,145],[1062,385,80,32],[1190,407,126,34],[1380,436,156,42]]},
     'cocina-industrial':{label:'Cocina industrial',floor:[[600,1024],[980,380],[1150,380],[1536,1024]],black:[[0,410,275,330],[850,270,50,65]]},
-    'columnas-sardineles':{label:'Columnas y sardineles',blue:[[1140,395],[1380,395],[1395,445],[1100,445]],floor:[[0,530],[800,380],[1536,380],[1536,1024],[0,1024]],black:[[70,320,295,330],[810,310,125,150],[1000,305,75,95],[1485,300,51,100],[0,380,825,180]]},
+    'columnas-sardineles':{label:'Columnas y sardineles',white:[[[1170,385],[1235,390],[330,1024],[145,1024]],[[0,620],[710,705],[710,745],[0,660]],[[355,505],[955,545],[955,577],[355,535]],[[0,574],[75,582],[75,605],[0,599]],[[930,378],[1536,378],[1536,470],[930,470]],[[1260,565],[1470,565],[1470,880],[1260,880]]],blue:[[1140,395],[1380,395],[1395,445],[1100,445]],floor:[[0,530],[800,380],[1536,380],[1536,1024],[0,1024]],black:[[70,320,295,330],[810,310,125,150],[1000,305,75,95],[1485,300,51,100],[0,380,825,180]]},
     'bodega-logistica':{label:'Bodega y centro logístico',floor:[[0,775],[610,375],[730,375],[1536,820],[1536,1024],[0,1024]],black:[[0,440,45,290],[125,430,25,240],[355,380,30,140],[500,345,30,120],[1035,345,90,100],[1435,370,45,155],[530,345,80,65],[685,340,30,55],[845,345,55,60]]},
     'fabrica-industrial':{label:'Fábrica industrial',floor:[[0,920],[310,335],[490,335],[1536,735],[1536,1024],[0,1024]],black:[[0,330,150,250],[215,300,85,100],[475,300,100,75],[960,320,135,165]]},
     'taller-industrial':{label:'Taller mecánico',blue:[[1065,605],[1270,605],[1270,680],[1065,680]],floor:[[0,690],[320,390],[465,390],[1000,490],[1260,430],[1536,440],[1536,1024],[0,1024]],black:[[160,365,55,110],[460,355,90,65],[630,365,50,95],[1040,395,200,205],[1225,365,30,105]]},
@@ -60,8 +60,8 @@
         const floor=inside(x,y,scene.floor),black=scene.black.some(([bx,by,w,h])=>x>=bx&&x<bx+w&&y>=by&&y<by+h);
         const yellowArea=scene.yellow?(floor||black||scene.yellow.some(([bx,by,w,h])=>x>=bx&&x<bx+w&&y>=by&&y<by+h)):y>270;
         if(scene.blue&&inside(x,y,scene.blue))layers.azul.push(i);
-        else if(yellowArea&&r>105&&g>75&&b<g*.78&&r>g*.95&&r<g*1.95)layers.amarillo.push(i);
-        else if(scene.white?.some(points=>inside(x,y,points))||(floor&&Math.min(r,g,b)>185&&Math.max(r,g,b)-Math.min(r,g,b)<45))layers.blanco.push(i);
+        if(yellowArea&&r>105&&g>75&&b<g*.78&&r>g*.95&&r<g*1.95)layers.amarillo.push(i);
+        else if((scene.white?.some(points=>inside(x,y,points))&&Math.min(r,g,b)>105&&Math.max(r,g,b)-Math.min(r,g,b)<40)||(floor&&Math.min(r,g,b)>185&&Math.max(r,g,b)-Math.min(r,g,b)<45))layers.blanco.push(i);
         else if(black&&Math.max(r,g,b)<95&&Math.max(r,g,b)-Math.min(r,g,b)<35)layers.negro.push(i);
       }
       layers.blanco=closeHoles(layers.blanco);layers.amarillo=closeHoles(layers.amarillo);

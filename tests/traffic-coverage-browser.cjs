@@ -53,6 +53,18 @@ fs.mkdirSync(output,{recursive:true});
     assert.equal(await preview.getAttribute('data-colors'),'');
     assert.equal(await page.locator('[data-traffic-color][aria-pressed=true]').count(),0);
     assert.equal(await page.locator('[data-traffic-form] select[name=color]').inputValue(),'varios');
+    if(scene==='columnas-sardineles'){
+      await page.locator('.traffic-preview [data-traffic-color=blanco]').click();
+      const mismatch=await preview.evaluate(async canvas=>{
+        const source=new Image();source.src='/assets/pintura-trafico/simulador/columnas-sardineles.webp';await source.decode();
+        const reference=document.createElement('canvas');reference.width=1536;reference.height=1024;reference.getContext('2d').drawImage(source,0,0);
+        const points=[[250,1000],[400,522],[1350,810],[1228,420]];
+        return points.filter(([x,y])=>{const actual=canvas.getContext('2d').getImageData(x,y,1,1).data,expected=reference.getContext('2d').getImageData(x,y,1,1).data;return actual.some((v,i)=>v!==expected[i]);});
+      });
+      assert.deepEqual(mismatch,[],'columnas: complete diagonal, shaded line, arrow and accessible symbol');
+      if(width===1440)await page.locator('.traffic-preview').screenshot({path:path.join(output,'columnas-blanco-corregido.png')});
+      await page.locator('.traffic-preview [data-traffic-color=blanco]').click();
+    }
     for(const color of ['negro','amarillo','blanco','azul'])await page.locator('.traffic-preview [data-traffic-color="'+color+'"]').click();
     assert.equal((await preview.getAttribute('data-colors')).split(',').length,4);
     if(width===1440)await page.locator('.traffic-preview').screenshot({path:path.join(output,'espacio-'+scene+'.png')});
