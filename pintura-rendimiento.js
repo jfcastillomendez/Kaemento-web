@@ -30,7 +30,6 @@ if(typeof document!=='undefined') (()=>{
   const mode=calculator.querySelector('[data-coverage-mode]');
   const inputs=[...calculator.querySelectorAll('[data-coverage-color]')];
   const apply=calculator.querySelector('[data-coverage-apply]');
-  const quote=calculator.querySelector('[data-coverage-quote]');
   const status=calculator.querySelector('[data-coverage-status]');
   const names={amarillo:'Amarillo',blanco:'Blanco',negro:'Negro',azul:'Azul'};
   const format=n=>new Intl.NumberFormat('es-CO',{maximumFractionDigits:3}).format(n);
@@ -44,28 +43,23 @@ if(typeof document!=='undefined') (()=>{
       input.setAttribute('aria-invalid',String(input.validity.badInput || (input.value!=='' && !result)));
       if(input.validity.badInput || (input.value!=='' && !result))valid=false;
       output.textContent=result?format(result.gallons)+(result.gallons===1?' galón':' galones'):'—';
-      if(result){estimates[color]=result;totalArea+=result.area;if(color!=='azul' && result.gallons>0)hasPurchase=true;}
+      if(result){estimates[color]=result;totalArea+=result.area;if(result.gallons>0)hasPurchase=true;}
       calculator.querySelector('[data-coverage-unit="'+color+'"]').textContent=mode.value==='lineal'?'metros lineales':'m² pintados';
     }
-    const blocked=['amarillo','blanco','negro'].some(color=>panel.querySelector('[name="'+color+'"]').disabled);
+    const blocked=['amarillo','blanco','negro','azul'].some(color=>panel.querySelector('[name="'+color+'"]').disabled);
     apply.disabled=!valid || !hasPurchase || blocked;
-    quote.hidden=!valid || !estimates.azul?.gallons;
-    if(!quote.hidden){
-      const blue=estimates.azul;
-      quote.href='https://wa.me/573003671548?text='+encodeURIComponent('Hola KAEMENTO, quiero cotizar pintura de tráfico azul. Calculé '+format(blue.quantity)+(mode.value==='lineal'?' metros lineales de franja de 10 cm':' m² pintados')+': '+blue.gallons+' galón(es), con rendimiento de referencia de 70 m lineales a 10 cm por galón.');
-    }
     status.textContent=!valid?'Revisa las medidas: usa valores positivos o cero, con hasta dos decimales.':totalArea>0?format(totalArea)+' m² de pintura en total. Los galones se redondean hacia arriba por color.':'Ingresa la medida de cada color que necesitas.';
   }
   inputs.forEach(input=>input.addEventListener('input',refresh));
   // Keep the calculator in sync while checkout temporarily locks purchase fields.
   const purchaseState=new MutationObserver(refresh);
-  for(const color of ['amarillo','blanco','negro']){
+  for(const color of ['amarillo','blanco','negro','azul']){
     purchaseState.observe(panel.querySelector('[name="'+color+'"]'),{attributes:true,attributeFilter:['disabled']});
   }
   mode.addEventListener('change',()=>{inputs.forEach(input=>{input.value='';});refresh();});
   apply.addEventListener('click',()=>{
     refresh();if(apply.disabled)return;
-    for(const color of ['amarillo','blanco','negro']){
+    for(const color of ['amarillo','blanco','negro','azul']){
       if(!estimates[color])continue;
       const input=panel.querySelector('[name="'+color+'"]');
       input.value=String(estimates[color].gallons);

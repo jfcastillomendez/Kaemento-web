@@ -82,7 +82,7 @@ function frontend(fetch){
 }
 test('Browser failure keeps details and UUID; success alone emits one quote event; color is shared with form',async()=>{
  let succeed=false;const ui=frontend(async()=>({ok:succeed,status:succeed?200:503,json:async()=>({ok:true})}));
- ui.colors[3].handlers.click();assert.equal(ui.form.elements.color.value,'azul');assert.match(ui.colorLink.href,/Azul/);
+ ui.colors[3].handlers.click();assert.equal(ui.form.elements.color.value,'azul');assert.equal(ui.colorLink.href,'#comprar-trafico');assert.match(ui.colorLink.textContent,/Comprar azul/);
  await ui.submit();assert.equal(ui.events.filter(e=>e[0]==='quote_form_success').length,0);assert.match(ui.status.textContent,/No pudimos confirmar/);
  const id=ui.requests[0].requestId;succeed=true;await ui.submit();assert.equal(ui.requests[1].requestId,id);assert.equal(ui.events.filter(e=>e[0]==='quote_form_success').length,1);assert.match(ui.status.textContent,/Solicitud enviada/);
 });

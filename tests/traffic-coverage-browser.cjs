@@ -20,7 +20,7 @@ fs.mkdirSync(output,{recursive:true});
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_BIN||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
  const errors=[],requests=[],checks=[];
  try{
-  for(const width of [320,390,768,1024,1440]){
+  for(const width of (process.env.TEST_WIDTHS?process.env.TEST_WIDTHS.split(',').map(Number):[320,390,768,1024,1440])){
    const context=await browser.newContext({viewport:{width,height:1000},reducedMotion:'reduce'});
    await context.addInitScript(()=>{window.BoldCheckout=class{constructor(config){window.fixtureBold=config;}open(){return Promise.resolve();}};});
    await context.route('**/*',async r=>{
@@ -32,35 +32,47 @@ fs.mkdirSync(output,{recursive:true});
     if(url.startsWith(origin+'/'))return r.continue();
     return r.fulfill({status:200,body:'',contentType:'application/javascript'});
    });
-   const page=await context.newPage();page.setDefaultTimeout(15000);console.log('Viewport',width);page.on('pageerror',e=>errors.push({width,message:e.message}));
+   const page=await context.newPage();page.setDefaultTimeout(15000);console.log('Viewport',width);page.on('pageerror',e=>{errors.push({width,message:e.message});console.error('Page error',e.message);});
    await page.goto(origin+'/pintura-de-trafico',{waitUntil:'networkidle'});
-   console.log('Loaded',width);const preview=page.locator('[data-traffic-preview]');
-   for(const color of ['amarillo','blanco','negro','azul']){
+   const preview=page.locator('.traffic-preview canvas');
+   await preview.waitFor({state:'visible'});console.log('Unmarked scene loaded',width);
+   assert.equal(await preview.getAttribute('data-colors'),'');
+   await preview.evaluate(canvas=>{window.fixtureUnmarked=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;});
+   if(width===1440)await page.locator('.traffic-preview').screenshot({path:path.join(output,'sin-demarcacion.png')});
+   for(const color of ['negro','amarillo','blanco','azul']){
     await page.locator('.traffic-preview [data-traffic-color="'+color+'"]').click();
-    assert.match(await preview.getAttribute('src'),new RegExp('parqueadero-'+color+'\\.webp$'));
-    assert.equal(await page.locator('[data-traffic-form] select[name=color]').inputValue(),color);
+    const active=(await preview.getAttribute('data-colors')).split(',');assert.ok(active.includes(color));
+    if(color!=='negro')assert.ok(active.includes('negro'),'black remains selected');
     assert.equal(await page.locator('[data-traffic-color="'+color+'"][aria-pressed=true]').count(),2);
-    await page.locator('[data-traffic-before]').click();assert.match(await preview.getAttribute('src'),/parqueadero-before/);
-    await page.locator('[data-traffic-before]').click();assert.match(await preview.getAttribute('src'),new RegExp('parqueadero-'+color));
+    if(color==='negro'){const changed=await preview.evaluate(canvas=>{const pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;let n=0;for(let i=0;i<pixels.length;i++)if(pixels[i]!==window.fixtureUnmarked[i])n++;return n;});assert.ok(changed>3000,'black visibly changes the photo');if(width===1440)await page.locator('.traffic-preview').screenshot({path:path.join(output,'negro-seleccionado.png')});}
    }
-   console.log('Colors passed',width);const calc=page.locator('[data-traffic-calculator]');await calc.locator('summary').click();
+   assert.equal(await page.locator('[data-traffic-form] select[name=color]').inputValue(),'varios');
+   for(const scene of await page.locator('[data-traffic-scene] option').evaluateAll(options=>options.map(o=>o.value))){
+    console.log('Scene',width,scene);await page.locator('[data-traffic-scene]').selectOption(scene);
+    await page.waitForFunction(key=>document.querySelector('.traffic-preview canvas').dataset.scene===key,scene);
+    assert.equal((await preview.getAttribute('data-colors')).split(',').length,4);
+    if(width===1440)await page.locator('.traffic-preview').screenshot({path:path.join(output,'espacio-'+scene+'.png')});
+   }
+   await page.locator('[data-traffic-before]').click();assert.equal(await preview.getAttribute('data-colors'),'');
+   await page.locator('[data-traffic-before]').click();assert.equal((await preview.getAttribute('data-colors')).split(',').length,4);
+   await page.locator('.traffic-preview [data-traffic-color=azul]').click();assert.ok(!(await preview.getAttribute('data-colors')).includes('azul'));assert.ok((await preview.getAttribute('data-colors')).includes('negro'));
+   console.log('Accumulated colors and scenes passed',width);
+   const calc=page.locator('[data-traffic-calculator]');await calc.locator('summary').click();
    const measure=color=>calc.locator('[data-coverage-color="'+color+'"]');
    const purchase=color=>page.locator('#comprar-trafico input[name="'+color+'"]');
    const apply=calc.locator('[data-coverage-apply]');
    await purchase('negro').fill('4');
    await measure('amarillo').fill('70.01');await measure('blanco').fill('140');await measure('azul').fill('70');
    assert.match(await calc.locator('[data-coverage-result=amarillo]').innerText(),/^2 galones$/);
-   assert.equal(await calc.locator('[data-coverage-quote]').isVisible(),true);
-   assert.match(decodeURIComponent(await calc.locator('[data-coverage-quote]').getAttribute('href')),/1 galón/);
    await apply.click();assert.equal(await purchase('amarillo').inputValue(),'2');assert.equal(await purchase('blanco').inputValue(),'2');assert.equal(await purchase('negro').inputValue(),'4');
-   assert.match(await page.locator('[data-traffic-total]').innerText(),/871\.080/);
+   assert.match(await page.locator('[data-traffic-total]').innerText(),/979\.965/);
    await page.locator('[data-traffic-buy]').click();await page.locator('.kae-order-dialog').waitFor();
    assert.equal(await apply.isDisabled(),true);
-   await page.getByRole('button',{name:'Cerrar datos del pedido'}).click();await page.waitForFunction(()=>!document.querySelector('[data-coverage-apply]').disabled);
+   await page.getByRole('button',{name:'Cerrar datos del pedido'}).click();try{await page.waitForFunction(()=>!document.querySelector('[data-coverage-apply]').disabled);}catch(error){console.error('Close diagnostic',await page.evaluate(()=>({dialogs:document.querySelectorAll('dialog').length,quantities:[...document.querySelectorAll('.traffic-purchase-controls input')].map(x=>({name:x.name,disabled:x.disabled,value:x.value})),measures:[...document.querySelectorAll('[data-coverage-color]')].map(x=>({value:x.value,bad:x.validity.badInput})),status:document.querySelector('[data-coverage-status]').textContent})));await page.screenshot({path:path.join(output,'close-diagnostic.png'),fullPage:true});throw error;}
    await calc.locator('[data-coverage-mode]').selectOption('area');assert.equal(await measure('amarillo').inputValue(),'');
-   await measure('amarillo').fill('7');await measure('blanco').fill('7.01');await measure('negro').fill('0');
+   await measure('amarillo').fill('7');await measure('blanco').fill('7.01');await measure('negro').fill('0');await measure('azul').fill('14');
    await apply.click();assert.equal(await purchase('amarillo').inputValue(),'1');assert.equal(await purchase('blanco').inputValue(),'2');assert.equal(await purchase('negro').inputValue(),'0');
-   assert.match(await page.locator('[data-traffic-total]').innerText(),/326\.655/);
+   assert.match(await page.locator('[data-traffic-total]').innerText(),/544\.425/);
    await measure('amarillo').fill('-1');assert.equal(await apply.isDisabled(),true);
    await measure('amarillo').fill('7');
    await page.locator('[data-traffic-buy]').click();
@@ -68,8 +80,8 @@ fs.mkdirSync(output,{recursive:true});
    for(const [name,value] of Object.entries({name:'Cliente de prueba',document:'12345678',email:'prueba@example.com',phone:'3000000000',city:'Bogotá',address:'Calle de prueba 123'}))await dialog.locator('[name="'+name+'"]').fill(value);
    await dialog.locator('[name=documentType]').selectOption('CC');await dialog.locator('[name=privacyAccepted]').check();
    await dialog.locator('button[type=submit]').click();await page.waitForFunction(()=>window.fixtureBold);
-   assert.equal(await page.evaluate(()=>window.fixtureBold.amount),'326655');
-   assert.deepEqual(requests.at(-1).items,[{color:'amarillo',quantity:1},{color:'blanco',quantity:2}]);
+   assert.equal(await page.evaluate(()=>window.fixtureBold.amount),'544425');
+   assert.deepEqual(requests.at(-1).items,[{color:'amarillo',quantity:1},{color:'azul',quantity:2},{color:'blanco',quantity:2}]);
    console.log('Checkout passed',width);await page.locator('.traffic-more-uses summary').click();
    await page.evaluate(async()=>{for(const img of document.images){img.loading='eager';await img.decode().catch(()=>{});}});
    console.log('Images loaded',width);const failed=await page.locator('img').evaluateAll(images=>images.filter(i=>!i.complete||i.naturalWidth===0).map(i=>i.src));assert.deepEqual(failed,[]);

@@ -5,34 +5,26 @@
   const buttons = [...document.querySelectorAll('[data-traffic-color]')];
   const colorStatus = document.getElementById('traffic-color-status');
   const colorLink = document.getElementById('trafico-color-whatsapp');
-  const preview=document.querySelector('[data-traffic-preview]');
-  const before=document.querySelector('[data-traffic-before]');
-  const captions={amarillo:'bandas y elementos de precaución renovados',blanco:'líneas, flechas y símbolos blancos renovados',negro:'segmentos negros de contraste renovados',azul:'superficie azul de la zona accesible renovada'};
-  let previewColor='amarillo';
-  function renderPreview(showBefore=false){
-    if(!preview)return;
-    preview.src='/assets/pintura-trafico/simulador/parqueadero-'+(showBefore?'before':previewColor)+'.webp';
-    preview.alt=showBefore?'Parqueadero antes de renovar la pintura':'Parqueadero: '+captions[previewColor];
-    document.querySelector('[data-traffic-preview-caption]').textContent=showBefore?'Antes de renovar · demarcaciones con desgaste.':colors[previewColor]+' · '+captions[previewColor]+'.';
-    before.setAttribute('aria-pressed',String(showBefore));
-    before.textContent=showBefore?'Ver renovación':'Ver antes';
+  const selected=new Set();
+  function renderSelection(updateForm=true){
+    const values=[...selected];
+    buttons.forEach(button=>button.setAttribute('aria-pressed',String(selected.has(button.dataset.trafficColor))));
+    colorStatus.textContent=values.length?values.map(value=>colors[value]).join(' + ')+' · Pintura de Tráfico KAEMENTO':'Selecciona uno o varios colores';
+    colorLink.textContent=values.length===1?'Comprar '+colors[values[0]].toLowerCase()+' · $108.885':'Comprar colores · $108.885 por galón';
+    colorLink.href='#comprar-trafico';colorLink.removeAttribute('target');
+    if(updateForm)form.elements.color.value=values.length===1?values[0]:'varios';
+    window.KaementoTrafficPreview?.render(values);
   }
-  before?.addEventListener('click',()=>renderPreview(before.getAttribute('aria-pressed')!=='true'));
-  function selectColor(value, updateForm = true) {
-    if (!Object.hasOwn(colors,value)) return;
-    buttons.forEach(button => button.setAttribute('aria-pressed',String(button.dataset.trafficColor===value)));
-    previewColor=value;renderPreview();
-    colorStatus.textContent = colors[value] + ' · Pintura de Tráfico KAEMENTO';
-    colorLink.textContent = 'Cotizar ' + colors[value].toLowerCase() + ' ↗';
-    colorLink.href = 'https://wa.me/573003671548?text=' + encodeURIComponent('Hola KAEMENTO, quiero cotizar Pintura de Tráfico KAEMENTO, color ' + colors[value] + ', presentación de 1 galón.');
-    const purchasable=['amarillo','blanco','negro'].includes(value);
-    if (purchasable) {colorLink.textContent='Comprar '+colors[value].toLowerCase()+' · $108.885';colorLink.href='#comprar-trafico';colorLink.removeAttribute('target');}
-    else colorLink.target='_blank';
-    if (updateForm) form.elements.color.value = value;
-  }
-  selectColor('amarillo',false);
-  buttons.forEach(button => button.addEventListener('click',() => selectColor(button.dataset.trafficColor)));
-  form.elements.color.addEventListener('change',() => selectColor(form.elements.color.value,false));
+  renderSelection(false);
+  buttons.forEach(button=>button.addEventListener('click',()=>{
+    const value=button.dataset.trafficColor;
+    if(selected.has(value))selected.delete(value);else selected.add(value);
+    renderSelection();
+  }));
+  form.elements.color.addEventListener('change',()=>{
+    if(Object.hasOwn(colors,form.elements.color.value)){selected.clear();selected.add(form.elements.color.value);}
+    renderSelection(false);
+  });
   const track = (event, buttonId) => window.kaementoTrack?.(event,{button_id:buttonId,product_id:'pintura-de-trafico'});
   document.querySelector('[data-traffic-distribution]')?.addEventListener('click',() => track('distributor_request','trafico-distribuidor'));
   // Wire only actual published technical documents. A request for a file is not a download.
@@ -69,7 +61,7 @@
       if (result.ok!==true) throw new Error('Unconfirmed');
       track('quote_form_success','trafico-cotizacion');
       status.textContent='Solicitud enviada a KAEMENTO. Nuestro equipo te contactará al teléfono indicado para preparar tu cotización.';
-      form.reset();snapshot='';requestId='';selectColor('amarillo',false);
+      form.reset();snapshot='';requestId='';selected.clear();renderSelection(false);
     } catch (_) {
       status.textContent='No pudimos confirmar el envío. Tus datos siguen aquí; reintenta en un momento o consulta por WhatsApp.';
     } finally {
