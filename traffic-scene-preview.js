@@ -77,7 +77,7 @@
     context.putImageData(new ImageData(pixels,1536,1024),0,0);
     const colors=selected.map(color=>names[color]);
     const absent=selected.filter(color=>current.layers[color].length<300);
-    wrapper.querySelector('[data-scene-applicability]').textContent=absent.length?'En este espacio no hay demarcación de referencia para: '+absent.map(color=>names[color]).join(', ')+'. Tu selección se conserva al cambiar de ambiente.':'';
+    wrapper.querySelector('[data-scene-applicability]').textContent=absent.length?'En este espacio no hay demarcación de referencia para: '+absent.map(color=>names[color]).join(', ')+'.':'';
     const detail=showBefore||!colors.length?'Sin demarcaciones':colors.join(' + ');
     caption.textContent=scenes[select.value].label+' · '+detail+'.';
     canvas.setAttribute('aria-label',caption.textContent);
@@ -88,6 +88,7 @@
     wrapper.removeAttribute('aria-busy');
   }
   async function changeScene(){
+    selected=[];showBefore=false;
     const id=++revision,key=select.value;current=null;wrapper.setAttribute('aria-busy','true');canvas.hidden=true;image.hidden=false;image.src='/assets/pintura-trafico/simulador/'+key+'-sin-marcas.webp';image.alt=scenes[key].label+' sin demarcaciones';
     try{const data=await load(key);if(id!==revision)return;current=data;paint();}
     catch(_){if(id!==revision)return;wrapper.removeAttribute('aria-busy');caption.textContent='No pudimos cargar la simulación. Vuelve a elegir el espacio para reintentar.';}

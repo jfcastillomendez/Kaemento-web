@@ -16,6 +16,7 @@
     window.KaementoTrafficPreview?.render(values);
   }
   renderSelection(false);
+  document.querySelector('[data-traffic-scene]')?.addEventListener('change',()=>{selected.clear();renderSelection();});
   buttons.forEach(button=>button.addEventListener('click',()=>{
     const value=button.dataset.trafficColor;
     if(selected.has(value))selected.delete(value);else selected.add(value);

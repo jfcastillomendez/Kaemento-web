@@ -50,6 +50,10 @@ fs.mkdirSync(output,{recursive:true});
    for(const scene of await page.locator('[data-traffic-scene] option').evaluateAll(options=>options.map(o=>o.value))){
     console.log('Scene',width,scene);await page.locator('[data-traffic-scene]').selectOption(scene);
     await page.waitForFunction(key=>document.querySelector('.traffic-preview canvas').dataset.scene===key,scene);
+    assert.equal(await preview.getAttribute('data-colors'),'');
+    assert.equal(await page.locator('[data-traffic-color][aria-pressed=true]').count(),0);
+    assert.equal(await page.locator('[data-traffic-form] select[name=color]').inputValue(),'varios');
+    for(const color of ['negro','amarillo','blanco','azul'])await page.locator('.traffic-preview [data-traffic-color="'+color+'"]').click();
     assert.equal((await preview.getAttribute('data-colors')).split(',').length,4);
     if(width===1440)await page.locator('.traffic-preview').screenshot({path:path.join(output,'espacio-'+scene+'.png')});
    }
