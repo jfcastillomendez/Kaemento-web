@@ -53,6 +53,12 @@
       renderSelection(selected,data.amount);reference.textContent='Pedido '+data.orderId;reference.hidden=false;
       retry.hidden=true;
       if(data.paymentStatus==='paid') {
+        // Clear only the matching product draft after the server confirms payment.
+        try {
+          const key='kaemento-microcemento-cart-v1',saved=JSON.parse(localStorage.getItem(key)||'null');
+          const draft=saved?.version===2 && variants.restore({items:saved.items});
+          if (draft && JSON.stringify(draft)===JSON.stringify(selected)) localStorage.removeItem(key);
+        } catch (_) { /* Confirmation does not depend on browser storage. */ }
         window.kaementoMeasurePaidOrder?.(orderId,token);
         title.textContent='Pago aprobado';message.textContent='Tu pedido está confirmado. Te enviaremos el detalle por correo y coordinaremos contigo el despacho y el transporte. Conserva tu número de pedido.';complete=true;
       }else if(data.paymentStatus==='refunded') {

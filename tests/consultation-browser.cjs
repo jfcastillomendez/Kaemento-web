@@ -73,25 +73,25 @@ fs.mkdirSync(output,{recursive:true});
         await page.setViewportSize({width,height:1000});await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
         if (!(await area.isVisible())) await summary.click();assert.ok(await area.isVisible(),'calculator '+route+' '+width);
         const fits=await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth);
-        if(!fits){console.log(await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,nodes:[...document.querySelectorAll('body *')].filter(el=>el.getBoundingClientRect().right>innerWidth+1).map(el=>({tag:el.tagName,cls:el.className,text:el.textContent.slice(0,100),right:el.getBoundingClientRect().right,width:el.getBoundingClientRect().width}))})));await page.screenshot({path:path.join(output,'overflow-'+width+'.png')});}
+        if(!fits){console.log(await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,nodes:[...document.querySelectorAll('body *')].filter(el=>el.scrollWidth>el.clientWidth+5 || el.getBoundingClientRect().right>innerWidth+1).map(el=>({tag:el.tagName,cls:el.className,scroll:el.scrollWidth,client:el.clientWidth,text:el.textContent.slice(0,100),right:el.getBoundingClientRect().right,width:el.getBoundingClientRect().width}))})));await page.screenshot({path:path.join(output,'overflow-'+width+'.png')});}
         assert.ok(fits,'overflow '+route+' '+width);
         await area.fill('26');assert.equal(await quantity.inputValue(),'3');
         await summary.click();
         assert.ok(await link.isVisible());checks.push({route,width,scenario:'responsive calculator and consultation'});
       }
-      // The consultation must not turn into a permanent cart.
-      await page.reload({waitUntil:'domcontentloaded'});assert.equal(await panel.locator('[data-cart-count]').innerText(),'0 kits');assert.equal(await quantity.inputValue(),'');
+      // Product choices persist; unfinished simulator controls keep their own lifecycle.
+      await page.reload({waitUntil:'domcontentloaded'});assert.equal(await panel.locator('[data-cart-count]').innerText(),'3 kits');assert.equal(await quantity.inputValue(),'');
       await select('mode','standard');await select('color','arena');await select('sealer','mate');await quantity.fill('1');await panel.locator('[data-cart-add]').click();
       await page.goto(origin+'/servicios/index.html',{waitUntil:'domcontentloaded'});await page.goBack({waitUntil:'domcontentloaded'});
-      assert.equal(await panel.locator('[data-cart-count]').innerText(),'0 kits');
-      checks.push({route,scenario:'normal reload and navigation still clear cart'});
+      assert.equal(await panel.locator('[data-cart-count]').innerText(),'4 kits');
+      checks.push({route,scenario:'normal reload and navigation preserve the cart'});
       await page.evaluate(k=>sessionStorage.setItem(k,JSON.stringify({version:1,path:location.pathname,expiresAt:Date.now()-1,panels:[{cart:{items:[{quantity:1,colorMode:'standard',color:'arena',sealer:'mate'}]}}]})),key);
-      await page.reload({waitUntil:'domcontentloaded'});assert.equal(await panel.locator('[data-cart-count]').innerText(),'0 kits');assert.equal(await page.evaluate(k=>sessionStorage.getItem(k),key),null);
+      await page.reload({waitUntil:'domcontentloaded'});assert.equal(await panel.locator('[data-cart-count]').innerText(),'4 kits');assert.equal(await page.evaluate(k=>sessionStorage.getItem(k),key),null);
       // Storage unavailable: the native new-tab path keeps the current document usable.
       await page.evaluate(()=>{Storage.prototype.setItem=()=>{throw Error('Blocked storage fixture');};});
       await select('mode','standard');await select('color','arena');await select('sealer','mate');await quantity.fill('1');await panel.locator('[data-cart-add]').click();
       const blockedPopup=context.waitForEvent('page');await link.click();const blocked=await blockedPopup;await blocked.close();
-      assert.equal(await panel.locator('[data-cart-count]').innerText(),'1 kit');
+      assert.equal(await panel.locator('[data-cart-count]').innerText(),'5 kits');
       await context.close();
     }
     assert.deepEqual(errors,[]);

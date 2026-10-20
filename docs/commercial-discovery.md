@@ -2,9 +2,9 @@
 
 ## Recorrido
 
-`site.js` carga `commercial-access.js` y su hoja de estilos en páginas comerciales, excluyendo el resultado de pago. La franja permanece debajo de la navegación en escritorio y abajo en pantallas de hasta 900 px. Se oculta ante un diálogo, menú abierto y, en móvil, al escribir en un campo o ver el carrito. WhatsApp conserva un espacio independiente.
+`site.js` carga `commercial-access.js` y su hoja de estilos únicamente donde existe el configurador de Microcemento (Inicio y página del producto). Las demás páginas mantienen el foco en su propia oferta. La franja permanece debajo de la navegación en escritorio y abajo en pantallas de hasta 900 px. Se oculta ante un diálogo, menú abierto y, en móvil, al escribir en un campo o ver el carrito. WhatsApp conserva un espacio independiente.
 
-Home reutiliza el bloque de lanzamiento después del hero institucional. Muestra la oferta disponible y una imagen fija de la sala, sin cambios de tonalidad ni controles sobre la primera imagen. El botón dorado «PRUEBA TU TONALIDAD» conduce al simulador completo con paredes y piso independientes. La franja utiliza el mismo nombre. Las subpáginas llevan al simulador de Producto Microcemento. Los cambios de tonalidad ocurren únicamente dentro del simulador; los accesos no seleccionan productos ni agregan al carrito.
+Home muestra primero el hero institucional y la experiencia real documentada, seguidos del bloque de lanzamiento. Muestra la oferta disponible y una imagen fija de la sala, sin cambios de tonalidad ni controles sobre la primera imagen. El botón dorado «PRUEBA TU TONALIDAD» conduce al simulador completo con paredes y piso independientes. La franja utiliza el mismo nombre. Las subpáginas llevan al simulador de Producto Microcemento. Los cambios de tonalidad ocurren únicamente dentro del simulador; los accesos no seleccionan productos ni agregan al carrito.
 
 El hero institucional y los archivos de las piezas aprobadas se conservan. El precio del servidor se valida atómicamente al persistir el pedido; Bold, Redis y Resend conservan sus integraciones.
 

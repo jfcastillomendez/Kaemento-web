@@ -88,6 +88,8 @@ document.addEventListener('click', event => {
   const params = new URLSearchParams(location.search);
   const key = params.get('producto') || params.get('servicio');
   if (field && Object.hasOwn(choices, key) && !field.value) field.value = choices[key];
+  const context = document.querySelector('[data-quote-context]');
+  if (context && field?.value) { context.textContent='Tu consulta: '+field.value; context.hidden=false; }
 })();
 
 document.querySelectorAll('form:not([data-network-form]):not([data-traffic-form])').forEach(form => {
@@ -106,7 +108,7 @@ document.querySelectorAll('form:not([data-network-form]):not([data-traffic-form]
       data.has('fotografias')?'Enviaré fotografías por WhatsApp.':''
     ] : ['Hola KAEMENTO, quiero solicitar una cotización.','',...[
       ['Nombre','nombre'],['Teléfono','telefono'],['Correo','correo'],['Ciudad','ciudad'],['Servicio o producto','servicio'],['Empresa o copropiedad','empresa'],['Área aproximada (m²)','area'],['Tipo de proyecto','tipo'],['Estado actual','soporte'],['Fecha estimada','fecha'],['Descripción','descripcion']
-    ].map(([label,key])=>`${label}: ${value(key)}`)];
+    ].filter(([,key])=>String(data.get(key)||'').trim()).map(([label,key])=>`${label}: ${value(key)}`)];
     // Personal data is used exclusively to prepare the user-reviewed WhatsApp message.
     const url=`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(lines.join('\n'))}`;
     window.open(url,'_blank','noopener,noreferrer');
@@ -185,8 +187,26 @@ document.querySelectorAll('form:not([data-network-form]):not([data-traffic-form]
 })();
 
 // Persistent commercial entry points, kept separate from navigation and checkout logic.
-if (!location.pathname.startsWith('/pagos/') && !document.querySelector('script[data-kae-discovery]')) {
+if (document.querySelector('[data-bold-purchase]') && !document.querySelector('script[data-kae-discovery]')) {
   const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = '/commercial-access.css?v=3';
   const js = document.createElement('script'); js.src = '/commercial-access.js?v=3'; js.dataset.kaeDiscovery = 'true';
   document.head.append(css,js);
 }
+
+// Enquiries keep the current purchase intact and transmit only after the visitor clicks.
+document.querySelectorAll('[data-shipping-product]').forEach(box => {
+  const city=box.querySelector('[data-shipping-city]'), link=box.querySelector('[data-shipping-link]');
+  function update() {
+    const selection=window.KaementoConsultation?.read(document.querySelector('[data-bold-purchase]'),'cart');
+    const choice=selection?.items?.length ? '\nSelección: '+selection.items.map(item=>item.quantity+' kits · '+window.KaementoBoldConfig.formula(item)).join('; ') : '';
+    const message='Hola KAEMENTO, quiero confirmar costo y plazo de envío antes de pagar.\nProducto: '+box.dataset.shippingProduct+'\nCiudad o municipio: '+(city.value.trim()||'Por definir')+choice;
+    link.href='https://wa.me/'+WHATSAPP+'?text='+encodeURIComponent(message);
+  }
+  city.addEventListener('input',update);link.addEventListener('click',()=>{update();window.KaementoConsultation?.arm();});update();
+});
+document.querySelectorAll('.commercial-boquilla').forEach(box => {
+  const presentation=box.querySelector('[data-boquilla-presentation]'),color=box.querySelector('[data-boquilla-color]'),qty=box.querySelector('[data-boquilla-quantity]'),link=box.querySelector('[data-boquilla-link]');
+  function update(){link.href='https://wa.me/'+WHATSAPP+'?text='+encodeURIComponent('Hola KAEMENTO, quiero cotizar Boquilla Mágica.\nPresentación: '+presentation.value+'\nColor: '+color.value+'\nCantidad de unidades: '+qty.value+'\nQuiero confirmar precio, rendimiento para mis juntas, disponibilidad y envío.');}
+  [presentation,color,qty].forEach(field=>field.addEventListener('input',update));
+  link.addEventListener('click',event=>{if(!qty.reportValidity()){event.preventDefault();return;}update();});update();
+});

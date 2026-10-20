@@ -1,0 +1,31 @@
+/* A short primary menu, clear decisions and optional details. */
+.commercial-footer-links{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;padding:24px;font-size:13px}
+.commercial-details{border:1px solid #b9a48466;padding:18px;margin:20px 0;background:#b9a48408;color:inherit}
+.commercial-details summary{cursor:pointer;font-family:inherit;font-size:15px;font-weight:600;line-height:1.5;letter-spacing:normal;text-transform:none}
+.commercial-details[open] summary{margin-bottom:16px}
+.commercial-details .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.commercial-details label,.commercial-boquilla label{display:flex;flex-direction:column;gap:8px;font-size:14px}
+.commercial-details input,.commercial-boquilla input,.commercial-boquilla select{width:100%;box-sizing:border-box;min-height:46px;padding:10px;border:1px solid #99866b;background:#fff;color:#24221d;font:inherit}
+.commercial-shipping a{display:inline-block;margin-top:15px;text-decoration:underline;text-underline-offset:4px}
+.commercial-small{font-size:13px;line-height:1.5}
+.commercial-context{border-left:3px solid #a88a58;padding:10px 16px;line-height:1.6}
+.commercial-tone-status{display:block;font-size:10px;line-height:1.5;color:inherit;opacity:.8;margin-top:5px}
+.finish-chip{min-width:0}
+.commercial-boquilla .fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:24px 0}
+.commercial-main-actions{display:flex;flex-wrap:wrap;gap:16px}
+#cotizar details .full{grid-column:1/-1}
+@media(max-width:600px){.commercial-details .fields,.commercial-boquilla .fields{grid-template-columns:1fr}.commercial-main-actions a{width:100%;justify-content:space-between}.commercial-details{padding:14px}.commercial-footer-links{gap:16px}}
+
+.commercial-team h2{font-size:clamp(30px,5vw,52px);max-width:900px;overflow-wrap:anywhere}
+@media(max-width:360px){.micro-top h2{font-size:36px}}
+@media(max-width:360px){
+ .services .section-head h2{font-size:32px}
+ .service-list h3{font-size:22px;overflow-wrap:anywhere}
+ .footer-brand{min-width:0}
+ .footer-brand h2{font-size:28px;letter-spacing:.06em}
+}
+.commercial-details>summary{padding:0;min-height:24px;display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none}
+.commercial-details>summary::-webkit-details-marker{display:none}
+.commercial-details>summary::after{content:'+';flex:none;font-size:20px}
+.commercial-details[open]>summary::after{content:'−'}
+.commercial-boquilla label{color:#45413a}

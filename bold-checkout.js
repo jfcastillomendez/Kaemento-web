@@ -69,9 +69,26 @@
     const cartTotal = panel.querySelector('[data-cart-total]');
     const cartMessage = panel.querySelector('[data-cart-message]');
     const storageKey = 'kaemento-microcemento-cart-v1';
-    let items = [], editing = -1, visit = 0;
-    // The draft belongs only to this page visit. Remove carts saved by older releases.
-    try { localStorage.removeItem(storageKey); } catch (_) {}
+    let items = [], editing = -1, visit = 0, storageChanged = false;
+    // Store validated product choices only. Prices and customer/order data are never saved here.
+    const cartLifetime = 7 * 24 * 60 * 60 * 1000;
+    function readCart() {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return null;
+        const saved = raw.length <= 32000 ? JSON.parse(raw) : null;
+        const valid = saved?.version === 2 && saved.expiresAt > Date.now() && saved.expiresAt <= Date.now() + cartLifetime && variants.restore({items:saved.items});
+        if (valid) return valid.items;
+        localStorage.removeItem(storageKey);
+      } catch (_) { /* Storage may be unavailable; the current cart still works. */ }
+      return null;
+    }
+    function saveCart() {
+      try {
+        if (!items.length) localStorage.removeItem(storageKey);
+        else localStorage.setItem(storageKey, JSON.stringify({version:2,expiresAt:Date.now()+cartLifetime,items}));
+      } catch (_) { /* Storage may be unavailable. */ }
+    }
     const button = panel.querySelector('[data-bold-buy]');
     const status = panel.querySelector('[data-bold-status]');
     const total = panel.querySelector('[data-bold-total]');
@@ -138,7 +155,8 @@
       const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting))viewCart();});
       observer.observe(cartList);
     }
-    function renderCart() {
+    function renderCart(persist = true) {
+      if (persist) saveCart();
       cartList.replaceChildren();
       items.forEach((item,index)=>{
         const row=document.createElement('li'); row.className='kae-cart-line';
@@ -211,24 +229,21 @@
       cartMessage.textContent=(wasEditing?'Configuración guardada.':'Kit añadido al carrito.')+' Elige una nueva configuración o continúa al pago.';
       mode.focus({preventScroll:true});
     });
-    function clearDraft() {
-      items = [];
-      viewedCart=false;
-      endEdit();
-      resetSelection();
-      renderCart();
-      cartMessage.textContent = '';
-      status.textContent = '';
-      contact.hidden = true;
-    }
     window.addEventListener('pagehide', () => {
       visit++;
-      if (!window.KaementoConsultation?.keep()) clearDraft();
+      saveCart();
       checkoutAttempts.clear();
     });
-    // Also reset when Back/Forward restores the document from the browser's page cache.
-    window.addEventListener('pageshow', event => { if (event.persisted && !window.KaementoConsultation?.keep()) clearDraft(); });
-    clearDraft();
+    window.addEventListener('pageshow', event => {
+      if (!event.persisted) return;
+      items = readCart() || []; endEdit(); resetSelection(); renderCart();
+    });
+    window.addEventListener('storage', event => {
+      if (event.key !== storageKey && event.key !== null) return;
+      if (preparing) { storageChanged = true; return; }
+      items = readCart() || []; endEdit(); resetSelection(); renderCart(false);
+    });
+    items = readCart() || []; resetSelection(); renderCart();
     window.KaementoConsultation?.register(panel, 'cart', {
       save: () => ({items:items.map(item => ({...item})), viewedCart}),
       restore(value) {
@@ -334,6 +349,9 @@
         // Retain the lock briefly after opening, including the second click of a double-click.
         if (opened) await new Promise(resolve => setTimeout(resolve, 1200));
         preparing = false;
+        if (storageChanged) {
+          storageChanged = false; items = readCart() || []; endEdit(); resetSelection();
+        }
         if (window.KaementoPromotion) updatePrice(window.KaementoPromotion.getState());
         cartControls.forEach(field=>field.disabled=false);
         renderCart();

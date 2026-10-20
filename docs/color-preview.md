@@ -10,7 +10,7 @@ Disponible en los configuradores existentes de Inicio y Producto Microcemento. N
 - Cada superficie muestra también su sellador. Mate mantiene la apariencia difusa de la imagen base; Brillante oscurece ligeramente la apariencia de la superficie, realza la veta existente y añade un reflejo suave orientado hacia la fuente de luz del ambiente. El efecto es independiente por superficie y reversible; no altera los valores RGB de referencia, porcentajes ni el sellador enviado al pedido.
 - «Usar el mismo tono en ambos» enlaza únicamente el color y la proporción. Sellador y kits siguen independientes. Los cambios se añaden al carrito de uno en uno mediante el botón existente.
 - Tras añadir, los controles vuelven a cero. La última selección aceptada de esa superficie permanece como referencia visual marcada «En carrito». Quitar esa configuración elimina su referencia visual. Configuraciones iguales siguen agrupándose con la regla existente del carrito.
-- Durante una edición del carrito o preparación del pago se bloquea el cambio de superficie. La navegación o recarga borra el estado de la vista y del carrito, conservando el comportamiento anterior.
+- Durante una edición del carrito o preparación del pago se bloquea el cambio de superficie. La navegación o recarga borra el borrador de la vista; el carrito de productos se conserva durante siete días en el navegador.
 - Dos eventos locales de presentación (`kaemento:cart-updated`, `kaemento:configuration-added`) comunican las selecciones aceptadas a la vista. No son eventos de analítica y no añaden campos al pedido.
 
 ## Imagen y precisión
