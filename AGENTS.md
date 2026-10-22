@@ -10,7 +10,7 @@ Este proyecto es la web oficial de KAEMENTO. El remoto es `jfcastillomendez/Kaem
 
 Para cambios normales, consultar el estado de Git y el remoto, obtener la última versión de `main` y crear desde ella una rama `codex/<descripcion-corta>`. Conservar cualquier trabajo local existente; no sobrescribirlo ni descartarlo. Realizar los cambios en esa rama y ofrecer una vista previa local antes de publicar.
 
-Iniciar desde la raíz `python3 -m http.server 8000 --bind 127.0.0.1` y proporcionar `http://localhost:8000` al usuario. El trabajo y la publicación deben realizarse con Git y las herramientas disponibles, sin exigir abrir manualmente GitHub Desktop ni Vercel.
+Iniciar desde la raíz `python3 scripts/preview.py` y proporcionar `http://localhost:8000` al usuario. El trabajo y la publicación deben realizarse con Git y las herramientas disponibles, sin exigir abrir manualmente GitHub Desktop ni Vercel.
 
 Después del resumen y de recibir la orden literal **PUBLICAR KAEMENTO**:
 
@@ -42,7 +42,7 @@ KAEMENTO is a Spanish-language static website deployed at the hosting root. Edit
 
 ## Build, Test, and Development Commands
 
-- `python3 -m http.server 8000 --bind 127.0.0.1`: serve the repository root, then offer `http://localhost:8000`. Python 3 is required. HTTP preview preserves root-relative asset paths.
+- `python3 scripts/preview.py`: serve the repository root, then offer `http://localhost:8000`. Python 3 is required. HTTP preview preserves root-relative asset paths and applies the explicit HTML rewrites from vercel.json, including /pintura-de-trafico.
 - `node --check site.js`: check JavaScript syntax when Node.js is available; repeat for other changed scripts.
 - `git diff --check`: catch whitespace errors before committing.
 

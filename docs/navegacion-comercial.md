@@ -1,9 +1,9 @@
 # Navegación y compra — revisión comercial
 
-Vista previa pendiente de aprobación y publicación. Base: 53a10d1.
+Corrección aprobada para publicación. Base: c53d700.
 
-- Menú principal consistente: Inicio, Servicios, Comprar productos, Proyectos y Cotizar. Galería, catálogos y vinculación siguen en el pie.
-- Inicio abre con dos decisiones: comprar productos o cotizar una obra. Los proyectos documentados aparecen después del hero. El bloque de equipo deja de mostrar retratos conceptuales y enlaza a empresa y experiencia real.
+- Corrección tras revisión del usuario: menú completo restaurado con Inicio, Servicios, Productos, Proyectos, Catálogos, Galería, Trabaja con KAEMENTO y Cotizar. Se conserva también el acceso desde el pie.
+- Inicio prioriza cotizar proyectos y conocer los servicios. Se conserva la portada de la escalera. La imagen exterior se utiliza después, en el bloque de arquitectura y obras civiles, junto a fachadas y mantenimiento industrial. Después de las tarjetas de arquitectura, fachadas y bodegas aparece una fila de Microcemento, Pintura de Tráfico y Boquilla Mágica. La presentación institucional y los servicios preceden a proyectos y campaña de Microcemento. El bloque de equipo deja de mostrar retratos conceptuales y enlaza a empresa y experiencia real.
 - Cotización general y de Microcemento: cuatro campos iniciales y detalles opcionales plegados. Se mantiene consentimiento, preparación de WhatsApp y contexto del servicio/producto. El formulario general omite datos opcionales vacíos del mensaje.
 - Carrito de Microcemento en localStorage: versión 2, caducidad de siete días, solo selección normalizada. No almacena clientes, precios ni tokens. Recalcula importes; checkout mantiene revisión del precio y validación del servidor. Un pago confirmado limpia únicamente un carrito coincidente. Los borradores del simulador mantienen su ciclo independiente.
 - Envío: consulta previa por WhatsApp con ciudad y producto, sin tarifas ni fechas inventadas. El usuario confirmó que está preparando la integración de una transportadora; no hay cálculo automático todavía.

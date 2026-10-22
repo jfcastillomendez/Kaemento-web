@@ -13,27 +13,32 @@ const root=path.resolve(__dirname,'..'),output=process.env.TEST_OUTPUT_DIR||'/tm
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
  const browser=await chromium.launch({headless:true,args:['--disable-gpu','--disable-dev-shm-usage'],executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'}),errors=[],checks=[];
  try{
-  for(const width of [320,390,1440]){
+  for(const width of [320,390,768,1024,1440]){
    const context=await browser.newContext({viewport:{width,height:1000},reducedMotion:'reduce'});
    await context.addInitScript(()=>{window.open=url=>{window.fixturePreparedMessage=url;return null;};});
    await context.route('**/*',r=>r.request().url().startsWith(origin+'/')&&r.request().method()==='GET'?r.continue():r.fulfill({status:200,body:'',contentType:'text/javascript'}));
    const page=await context.newPage();page.on('pageerror',e=>errors.push({width,error:e.message}));
    await page.goto(origin+'/');
-   assert.equal((await page.locator('.hero a').first().innerText()).replace(/\s+/g,' '),'COMPRAR PRODUCTOS ↗');
-   assert.equal(await page.locator('header.nav nav > a, header.nav nav > .nav-group').count(),5);
-   assert.equal(await page.locator('header.nav a').filter({hasText:'Trabaja con'}).count(),0);
+   assert.equal((await page.locator('.hero a').first().innerText()).replace(/\s+/g,' '),'COTIZAR MI PROYECTO ↗');
+   assert.equal(await page.locator('header.nav nav > a, header.nav nav > .nav-group').count(),8);
+   assert.equal(await page.locator('header.nav a').filter({hasText:'Trabaja con'}).count(),1);
    assert.ok(await page.locator('footer a').filter({hasText:'Trabaja con'}).count());
-   assert.ok(await page.locator('#proyectos').evaluate(el=>el.previousElementSibling.id==='inicio'));
+   assert.ok(await page.locator('.home-service-front').evaluate(el=>el.previousElementSibling.id==='inicio'));
    const form=page.locator('#quote-form');await form.waitFor({state:'visible'});
    assert.equal(await form.locator('.fields').first().locator('input,select,textarea').count(),4);
    assert.equal(await form.locator('details[open]').count(),0);
    if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))console.log(await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(el=>el.scrollWidth>el.clientWidth+5).map(el=>({tag:el.tagName,cls:el.className,scroll:el.scrollWidth,client:el.clientWidth,text:el.textContent.slice(0,90)}))));
    assert.ok(!(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)),'home overflow');
-   await page.locator('.hero').screenshot({path:path.join(output,'inicio-'+width+'.png')});
+   await page.screenshot({path:path.join(output,'inicio-'+width+'.png')});
+   assert.equal(await page.locator('.home-service-front .home-service-visuals img').count(),3);await page.locator('.home-service-front').screenshot({path:path.join(output,'servicios-'+width+'.png')});
+   assert.ok(await page.locator('#productos-destacados').evaluate(el=>el.previousElementSibling.classList.contains('home-service-front')));
+   assert.equal(await page.locator('.home-product-visuals>a').count(),3);
+   const overflow=await page.locator('.home-service-visuals h3').evaluateAll(nodes=>nodes.filter(el=>el.scrollWidth>el.clientWidth+1).map(el=>el.textContent));assert.deepEqual(overflow,[],'card headings stay inside margins');
+   await page.locator('#productos-destacados').screenshot({path:path.join(output,'productos-'+width+'.png')});
    await form.scrollIntoViewIfNeeded();await form.screenshot({path:path.join(output,'consulta-'+width+'.png')});
    await form.locator('[name=nombre]').fill('Prueba local');await form.locator('[name=telefono]').fill('3000000000');await form.locator('[name=ciudad]').fill('Bogotá');await form.locator('[name=descripcion]').fill('Necesito renovar mi piso');await form.locator('[name=privacidad]').check();await form.locator('button[type=submit]').click();
    const prepared=await page.evaluate(()=>window.fixturePreparedMessage);assert.match(decodeURIComponent(prepared),/Necesito renovar mi piso/);assert.ok(!decodeURIComponent(prepared).includes('Correo:'));
-   if(width<1101){await page.locator('header .menu').click();assert.equal(await page.locator('header .menu').getAttribute('aria-expanded'),'true');await page.locator('header nav > .nav-group > a').filter({hasText:'Comprar productos'}).click();assert.ok(page.url().includes('/productos/index.html'));}
+   if(width<1101){await page.locator('header .menu').click();assert.equal(await page.locator('header .menu').getAttribute('aria-expanded'),'true');await page.locator('header nav > .nav-group > a').filter({hasText:'Productos'}).click();assert.ok(page.url().includes('/productos/index.html'));}
 
    await page.goto(origin+'/index.html?servicio=garajes#cotizar');await page.waitForFunction(()=>document.querySelector('#quote-form select[name=servicio]').value==='Garajes y sótanos');
    assert.match(await page.locator('[data-quote-context]').innerText(),/Garajes/);
