@@ -1,0 +1,24 @@
+/* Approved packaging artwork stays complete at every viewport width. */
+.product-label-hero {background:#111310}
+.product-labels-intro {max-width:700px;line-height:1.7;margin:20px 0 32px}
+.product-labels-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.product-labels-grid figure {margin:0;min-width:0}
+.product-labels-grid a {display:block;background:#111310;border-radius:8px;overflow:hidden}
+.product-labels-grid a:focus-visible {outline:3px solid #a67832;outline-offset:5px}
+.product-labels-grid img {display:block;width:100%;height:auto;object-fit:contain}
+.product-labels-grid figcaption {display:flex;justify-content:space-between;gap:16px;padding:16px 0;font-weight:600}
+.product-labels-note {font-size:13px;line-height:1.7;max-width:850px;color:#636059;margin:20px 0 0}
+@media(max-width:760px){.product-labels-grid {grid-template-columns:1fr;gap:24px}}
+
+/* The new front label leads the page; the earlier artwork follows as support. */
+.detail-hero.label-led-hero:has(> .product-sheet) {display:flex;flex-direction:column;height:auto;min-height:0;padding:0}
+.label-led-hero > .detail-image.product-sheet.product-label-hero {order:-1;display:block;width:100%;height:auto;min-height:0;padding:clamp(16px,3vw,44px);margin:0;background:#111310}
+.label-led-hero > .detail-image.product-sheet.product-label-hero img {display:block;width:100%;max-width:1200px;height:auto;max-height:none;margin:0 auto;object-fit:contain}
+.detail-hero.label-led-hero:has(> .product-sheet) .detail-copy {width:100%;max-width:1200px;min-height:0;margin:0 auto;padding:40px clamp(24px,4vw,56px) 48px}
+.detail-hero.label-led-hero:has(> .product-sheet) .detail-copy h1 {font-size:clamp(30px,4vw,52px)}
+.product-original figure {margin:30px auto 0;max-width:1200px;text-align:center}
+.product-original img {display:block;width:auto;max-width:100%;height:auto;max-height:800px;margin:auto;object-fit:contain}
+@media(max-width:720px){
+ .label-led-hero > .detail-image.product-sheet.product-label-hero {padding:12px}
+ .detail-hero.label-led-hero:has(> .product-sheet) .detail-copy {padding:28px 24px 36px}
+}
