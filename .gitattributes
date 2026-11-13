@@ -1,0 +1,2 @@
+# Keep the approved label PDFs byte-identical; these are downloadable binary assets.
+documentos/boquilla-magica/*.pdf binary
