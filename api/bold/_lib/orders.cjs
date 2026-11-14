@@ -25,22 +25,24 @@ function customerData(body) {
 function checkoutInput(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
   const {customer, expectedUnitPrice, ...configuration} = body;
-  if (Object.hasOwn(body, 'expectedUnitPrice') && !(variants.isTraffic(configuration) ? [variants.trafficPrice] : [campaign.launchPrice,campaign.regularPrice]).includes(expectedUnitPrice)) return null;
+  if (Object.hasOwn(body, 'expectedUnitPrice') && !variants.allowedPrices(configuration).includes(expectedUnitPrice)) return null;
   const selection = variants.normalizeOrder(configuration), buyer = customerData(customer);
   return selection && buyer ? {selection, customer:buyer, ...(expectedUnitPrice !== undefined ? {expectedUnitPrice} : {})} : null;
 }
 function record(orderId, selection, customer, now = Date.now()) {
   const buyer = customerData(customer);
   if (!buyer) throw new Error('Invalid customer');
-  const traffic = variants.isTraffic(selection), price = traffic ? variants.trafficPrice : UNIT_PRICE;
+  const traffic = variants.isTraffic(selection), boquilla = variants.isBoquilla(selection), price = boquilla ? variants.boquillaPrice : traffic ? variants.trafficPrice : UNIT_PRICE;
+  const productId = boquilla ? 'boquilla-magica' : traffic ? 'pintura-trafico' : 'microcemento-kaemento-launch';
+  const productName = boquilla ? 'Boquilla Mágica KAEMENTO · Kit 1 kg' : traffic ? 'Pintura de Tráfico KAEMENTO' : 'Microcemento KAEMENTO';
   return {
     schemaVersion:selection.items ? 3 : 2, orderId, createdAt:now, updatedAt:now,
-    productId:traffic ? 'pintura-trafico' : 'microcemento-kaemento-launch', productName:traffic ? 'Pintura de Tráfico KAEMENTO' : 'Microcemento KAEMENTO', quantity:variants.kitCount(selection),
+    productId, productName, quantity:variants.kitCount(selection),
     colorMode:selection.colorMode, standardColor:selection.colorMode === 'standard' ? selection.color : null,
     color1:selection.color1 || null, color1Percentage:selection.percentage1 || null,
     color2:selection.color2 || null, color2Percentage:selection.percentage2 || null, sealer:selection.sealer,
     ...(selection.surface ? {surface:selection.surface} : {}),
-    ...(selection.items ? {items:selection.items.map(item=>({...item,productId:traffic ? 'pintura-trafico' : 'microcemento-kaemento-launch',productName:traffic ? 'Pintura de Tráfico KAEMENTO' : 'Microcemento KAEMENTO',unitPrice:price,subtotal:price*item.quantity}))} : {}),
+    ...(selection.items ? {items:selection.items.map(item=>({...item,productId,productName,unitPrice:price,subtotal:price*item.quantity}))} : {}),
     unitPrice:price, subtotal:price * variants.kitCount(selection), total:price * variants.kitCount(selection), currency:'COP',
     customerName:buyer.name, customerDocumentType:buyer.documentType, customerDocument:buyer.document,
     customerEmail:buyer.email, customerPhone:buyer.phone, shippingCity:buyer.city, shippingAddress:buyer.address,
@@ -48,7 +50,7 @@ function record(orderId, selection, customer, now = Date.now()) {
     orderStatus:'created', paymentStatus:'pending', fulfillmentStatus:'pending', invoiceStatus:'pending',
     invoiceNumber:null, cufe:null, invoicePdfUrl:null, invoiceXmlUrl:null,
     emailStatus:'pending', paidAt:null, boldPaymentId:null, boldStatus:null, paymentMethod:null,
-    source:'kaemento-web', promotion:traffic ? 'pintura_trafico_launch_20' : 'microcemento_kaemento_launch_2026'
+    source:'kaemento-web', promotion:boquilla ? 'boquilla_magica_launch_15' : traffic ? 'pintura_trafico_launch_20' : 'microcemento_kaemento_launch_2026'
   };
 }
 module.exports = {UNIT_PRICE, customerData, checkoutInput, record};

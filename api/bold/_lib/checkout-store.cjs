@@ -16,6 +16,8 @@ local active = ARGV[9] == 'true' and tonumber(ARGV[4]) >= tonumber(ARGV[5]) and 
 local price = active and tonumber(ARGV[10]) or tonumber(ARGV[11])
 local traffic = ARGV[13] == 'true'
 if traffic then price = tonumber(ARGV[14]) end
+local boquilla = ARGV[15] == 'true'
+if boquilla then price = tonumber(ARGV[16]) end
 if price ~= tonumber(ARGV[12]) then return cjson.encode({status='price_changed',unitPrice=price}) end
 local count = redis.call('INCR', KEYS[3])
 if count == 1 then redis.call('EXPIRE', KEYS[3], 3600) end
@@ -28,6 +30,7 @@ order.amount = order.total
 order.promotion = active and 'microcemento_kaemento_launch_2026' or cjson.null
 order.campaign = order.promotion
 if traffic then order.promotion = 'pintura_trafico_launch_20'; order.campaign = order.promotion end
+if boquilla then order.promotion = 'boquilla_magica_launch_15'; order.campaign = order.promotion end
 if order.items then
   for _,item in ipairs(order.items) do item.unitPrice = price; item.subtotal = price * item.quantity end
 end
@@ -43,7 +46,7 @@ function checkoutStore(command, prefix, clock = Date.now) {
         prefix+'checkout-rate:'+ipHash,prefix+'campaign:confirmed-orders',fingerprint,JSON.stringify(order),prefix+'order:',
         String(clock()),String(Date.parse(campaign.startsAt)),String(Date.parse(campaign.endsAt)),
         String(campaign.historicalOrders),String(campaign.maxOrders),String(campaign.enabled),
-        String(campaign.launchPrice),String(campaign.regularPrice),String(expectedUnitPrice),String(order.productId === 'pintura-trafico'),String(variants.trafficPrice)]));
+        String(campaign.launchPrice),String(campaign.regularPrice),String(expectedUnitPrice),String(order.productId === 'pintura-trafico'),String(variants.trafficPrice),String(order.productId === 'boquilla-magica'),String(variants.boquillaPrice)]));
     }
   };
 }

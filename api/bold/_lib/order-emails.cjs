@@ -5,8 +5,8 @@ const date = value => new Intl.DateTimeFormat('es-CO', {dateStyle:'long',timeSty
 
 function emailContent(order, role) {
   if (order.paymentStatus !== 'paid' || ![2,3].includes(order.schemaVersion) || !order.paidAt) throw new Error('Order not confirmed');
-  const traffic = order.productId === 'pintura-trafico';
-  const product = traffic ? 'Pintura de Tráfico KAEMENTO' : 'Microcemento KAEMENTO';
+  const traffic = order.productId === 'pintura-trafico', boquilla = order.productId === 'boquilla-magica';
+  const product = boquilla ? 'Boquilla Mágica KAEMENTO · Kit 1 kg' : traffic ? 'Pintura de Tráfico KAEMENTO' : 'Microcemento KAEMENTO';
   const sales = role === 'sales';
   if (!sales && role !== 'customer') throw new Error('Invalid email role');
   const subject = sales ? `NUEVA VENTA ONLINE — KAEMENTO — ${order.orderId}` : `Tu pedido KAEMENTO está confirmado — ${order.orderId}`;
@@ -18,7 +18,7 @@ function emailContent(order, role) {
       `Producto${order.schemaVersion === 3 ? ' ' + (index+1) : ''}`,
       [['Producto',product],['Cantidad',`${item.quantity} ${traffic ? 'galón(es) de 3,785 L' : item.quantity === 1 ? 'kit' : 'kits'}`],
        ...(item.surface ? [['Aplicación',variants.surfaces.get(item.surface)]] : []),
-       ...(traffic ? [['Color',variants.trafficColor(item.color)]] : [['Color / mezcla',variants.formula(item)],['Sellador',variants.sealers.get(item.sealer)]]),
+       ...(boquilla ? [['Color',variants.boquillaColors.get(item.color)],['Contenido','1 kg de producto, espátula plástica y toalla de microfibra']] : traffic ? [['Color',variants.trafficColor(item.color)]] : [['Color / mezcla',variants.formula(item)],['Sellador',variants.sealers.get(item.sealer)]]),
        ['Precio unitario',money(order.unitPrice)],['Subtotal',money(order.unitPrice*item.quantity)]]]),
     ['Total del pedido', [['Cantidad total',`${order.quantity} ${traffic ? 'galones' : 'kits'}`],['Total',money(order.total)]]],
     ...(sales ? [['Cliente', [['Nombre / Razón social',order.customerName],['Identificación / NIT',`${order.customerDocumentType} ${order.customerDocument}`],
@@ -26,7 +26,7 @@ function emailContent(order, role) {
     ['Entrega', [['Ciudad',order.shippingCity],['Dirección',order.shippingAddress]]],
     ...(sales ? [['Pago', [['Payment ID Bold',order.boldPaymentId],['Medio de pago',order.paymentMethod || 'No informado por Bold'],['Estado Bold',order.boldStatus]]]] : [])
   ];
-  const notes = sales ? [] : [traffic ? 'Coordinaremos contigo el despacho de tu pintura. Compra de material; no incluye aplicación.' : 'Despacho máximo: 48 horas hábiles.', 'Envíos a todo Colombia.',
+  const notes = sales ? [] : [boquilla ? 'Coordinaremos contigo el despacho de tu kit. Compra de material; no incluye aplicación.' : traffic ? 'Coordinaremos contigo el despacho de tu pintura. Compra de material; no incluye aplicación.' : 'Despacho máximo: 48 horas hábiles.', 'Envíos a todo Colombia.',
     'El transporte no está incluido y su valor es asumido por el cliente.', 'Conserva tu número de pedido para cualquier consulta.'];
   const text = [title,intro,...sections.flatMap(([heading,rows])=>[heading,...rows.map(([k,v])=>`${k}: ${v}`)]),...notes,
     'KAEMENTO S.A.S. · kaemento@gmail.com · +57 300 367 1548', 'https://www.kaemento.com'].join('\n\n');

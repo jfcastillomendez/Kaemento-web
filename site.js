@@ -206,7 +206,7 @@ document.querySelectorAll('[data-shipping-product]').forEach(box => {
 });
 document.querySelectorAll('.commercial-boquilla').forEach(box => {
   const presentation=box.querySelector('[data-boquilla-presentation]'),color=box.querySelector('[data-boquilla-color]'),qty=box.querySelector('[data-boquilla-quantity]'),link=box.querySelector('[data-boquilla-link]');
-  function update(){link.href='https://wa.me/'+WHATSAPP+'?text='+encodeURIComponent('Hola KAEMENTO, quiero cotizar Boquilla Mágica.\nPresentación: '+presentation.value+'\nColor: '+color.value+'\nCantidad de unidades: '+qty.value+'\nQuiero confirmar precio, rendimiento para mis juntas, disponibilidad y envío.');}
+  function update(){link.href='https://wa.me/'+WHATSAPP+'?text='+encodeURIComponent('Hola KAEMENTO, quiero cotizar Boquilla Mágica.\nPresentación: '+presentation.value+'\nColor: '+color.options[color.selectedIndex].text+'\nCantidad de unidades: '+qty.value+'\nQuiero confirmar precio, rendimiento para mis juntas, disponibilidad y envío.');}
   [presentation,color,qty].forEach(field=>field.addEventListener('input',update));
   link.addEventListener('click',event=>{if(!qty.reportValidity()){event.preventDefault();return;}update();});update();
 });

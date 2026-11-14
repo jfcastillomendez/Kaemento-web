@@ -24,3 +24,34 @@
 @media(max-width:1000px) and (min-width:761px){.boquilla-hero-copy{width:46%;padding:24px}.boquilla-hero h1{font-size:36px}.boquilla-hero .actions a{font-size:9px;padding:13px}.boquilla-hero-copy>p:not(.eyebrow){font-size:13px}}
 @media(max-width:760px){.boquilla-hero{display:flex;flex-direction:column}.boquilla-hero-copy{order:-1;position:static;width:100%;padding:26px 24px;background:#f5f0e8}.boquilla-hero .eyebrow{margin-bottom:14px}.boquilla-hero h1{font-size:38px;margin-bottom:16px}.boquilla-hero-copy>p:not(.eyebrow){margin-bottom:20px}.boquilla-hero .actions a{font-size:10px;padding:14px}.boquilla-hero-visual figcaption{max-width:100%;font-size:8px}.boquilla-kit-layout{grid-template-columns:1fr;gap:28px}.boquilla-kit-image{max-width:520px;margin:auto}.boquilla-kit-options .fields{grid-template-columns:1fr}}
 @media(max-width:600px){.product-labels .actions a{width:100%;justify-content:space-between}}
+
+.boquilla-price{margin:22px 0;display:grid;gap:7px;color:#635a4e;font-size:12px}
+.boquilla-price strong{color:#183c70;font-size:36px;font-weight:600;line-height:1.2}
+.boquilla-price small{font-size:13px;font-weight:400}.boquilla-price del{margin-left:8px}
+.boquilla-kit-options>button,.boquilla-cart>.button{margin-top:18px;width:100%;justify-content:center;cursor:pointer}
+.boquilla-cart{margin:24px 0 18px;padding:20px;border:1px solid var(--line);background:#fffefa}
+.boquilla-cart h3{font-size:23px;margin:0 0 14px}.boquilla-cart ul{list-style:none;padding:0;margin:0 0 16px}
+.boquilla-cart li{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.boquilla-cart li label{display:flex;align-items:center;gap:8px}.boquilla-cart input{width:72px;padding:8px;border:1px solid var(--line)}
+.boquilla-cart li button{background:none;border:0;text-decoration:underline;cursor:pointer;padding:8px;font-size:12px}
+.boquilla-cart [role=status]{font-size:12px;line-height:1.6}.boquilla-cart .button:disabled{opacity:.5;cursor:not-allowed}
+.boquilla-advice{display:inline-block;font-size:12px;border-bottom:1px solid var(--line);padding-bottom:6px}
+@media(max-width:450px){.boquilla-cart{padding:14px}.boquilla-cart li{flex-wrap:wrap}.boquilla-price strong{font-size:32px}}
+
+/* Campaign copy supplied by KAEMENTO; keep both purchase and simulator actions visible. */
+.boquilla-hero h1.boquilla-slogan{font-size:clamp(26px,2.75vw,44px);line-height:1.12;margin-bottom:20px;letter-spacing:-.02em}
+.boquilla-slogan>strong,.boquilla-slogan>em{display:block}.boquilla-slogan>em{margin-top:12px}
+.boquilla-slogan strong{font-weight:500}
+.boquilla-hero-copy>p.boquilla-campaign-product{font-size:16px;line-height:1.4;margin-bottom:9px}
+.boquilla-hero-copy>p.boquilla-campaign-line{font-size:14px;line-height:1.6;margin-bottom:14px}
+.boquilla-hero-copy>p.boquilla-campaign-close{font-size:12px;line-height:1.5;margin-bottom:24px;color:#76592f}
+@media(min-width:761px) and (max-width:1000px){.boquilla-hero .eyebrow{margin-bottom:12px}.boquilla-hero h1.boquilla-slogan{font-size:26px;margin-bottom:12px}.boquilla-slogan>em{margin-top:8px}.boquilla-hero-copy>p.boquilla-campaign-product{font-size:14px}.boquilla-hero-copy>p.boquilla-campaign-line{font-size:12px;margin-bottom:10px}.boquilla-hero-copy>p.boquilla-campaign-close{font-size:11px;margin-bottom:16px}}
+@media(max-width:760px){.boquilla-hero h1.boquilla-slogan{font-size:30px;max-width:480px}.boquilla-hero-copy>p.boquilla-campaign-close{margin-bottom:20px}}
+
+/* Product identity uses the approved label artwork without redrawing the wordmark. */
+.boquilla-brand-banner{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:18px max(24px,calc((100vw - 1240px)/2));background:#fbf4eb;border-bottom:1px solid #ddd4c5}
+.boquilla-brand-mark{display:block;width:260px;flex-shrink:0}.boquilla-brand-mark svg{display:block;width:100%;height:auto}
+.boquilla-brand-banner p{margin:0;font-size:15px;line-height:1.7;color:#183c70}.boquilla-brand-banner .button{font-size:11px;white-space:nowrap}
+@media(min-width:1001px){.boquilla-kit-layout{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:32px;align-items:start}.boquilla-kit-image{position:sticky;top:120px;padding-top:30px}.boquilla-kit-options .fields{grid-template-columns:1fr 1fr}.boquilla-kit-options .fields>label:first-child{grid-column:1/-1}}
+@media(max-width:760px){.boquilla-brand-banner{flex-wrap:wrap;gap:12px;padding:18px 24px}.boquilla-brand-mark{width:220px;max-width:100%}.boquilla-brand-banner p{font-size:12px}.boquilla-brand-banner .button{font-size:10px;padding:12px}.boquilla-kit-image{width:100%;max-width:none}}
+@media(max-width:760px){.boquilla-brand-banner{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);padding:14px 20px;gap:14px}.boquilla-brand-mark{width:100%}.boquilla-brand-banner p{font-size:11px;line-height:1.6}.boquilla-brand-banner>.button{display:none}}

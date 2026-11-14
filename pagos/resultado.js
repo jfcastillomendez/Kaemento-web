@@ -9,6 +9,12 @@
   const money=amount=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(amount);
   let token, timer, tries=0, busy=false, complete=false;
   function renderSelection(selected,amount) {
+    if (variants.isBoquilla(selected)) {
+      document.querySelector('main .eyebrow').textContent='BOQUILLA MÁGICA KAEMENTO';
+      retry.href='/productos/boquilla-magica.html#consultar-boquilla';
+      const back=document.getElementById('payment-back');back.href='/productos/boquilla-magica.html';back.textContent='Volver a Boquilla Mágica ↗';
+      document.querySelector('a.whatsapp').href='https://wa.me/573003671548?text='+encodeURIComponent('Hola KAEMENTO, quiero consultar mi pedido de Boquilla Mágica.');
+    }
     if (variants.isTraffic(selected)) {
       document.querySelector('main .eyebrow').textContent='PINTURA DE TRÁFICO KAEMENTO';
       retry.href='/pintura-de-trafico#comprar-trafico';
@@ -18,7 +24,7 @@
     const list=document.getElementById('payment-items');list.replaceChildren();
     for(const item of variants.lines(selected)) {
       const row=document.createElement('li');
-      row.textContent=variants.isTraffic(selected) ? `${item.quantity} galón(es) · Pintura de Tráfico KAEMENTO · ${variants.trafficColor(item.color)}` : `${item.quantity} ${item.quantity===1?'kit':'kits'} · ${item.surface ? variants.surfaces.get(item.surface)+' · ' : ''}${variants.formula(item)} · Sellador ${variants.sealers.get(item.sealer)}`;
+      row.textContent=variants.isBoquilla(selected) ? `${item.quantity} kit(s) de 1 kg · Boquilla Mágica KAEMENTO · ${variants.boquillaColors.get(item.color)}` : variants.isTraffic(selected) ? `${item.quantity} galón(es) · Pintura de Tráfico KAEMENTO · ${variants.trafficColor(item.color)}` : `${item.quantity} ${item.quantity===1?'kit':'kits'} · ${item.surface ? variants.surfaces.get(item.surface)+' · ' : ''}${variants.formula(item)} · Sellador ${variants.sealers.get(item.sealer)}`;
       list.append(row);
     }
     document.getElementById('payment-total').textContent=Number.isSafeInteger(amount) ? money(amount)+' IVA incluido' : 'Consultando total del pedido…';
@@ -26,7 +32,7 @@
     document.getElementById('payment-selection-unavailable').hidden=true;
   }
   try {
-    if(/^KAE-(?:MICRO|TRAFICO)-\d{13}-[a-f0-9]{16}$/.test(orderId||'')) {
+    if(/^KAE-(?:MICRO|TRAFICO|BOQUILLA)-\d{13}-[a-f0-9]{16}$/.test(orderId||'')) {
       const selected=variants.restore(JSON.parse(sessionStorage.getItem('kaemento-bold-selections')||'{}')[orderId]);
       if(selected)renderSelection(selected,null);
       token=JSON.parse(sessionStorage.getItem('kaemento-order-access')||'{}')[orderId];
@@ -55,6 +61,10 @@
       if(data.paymentStatus==='paid') {
         // Clear only the matching product draft after the server confirms payment.
         try {
+          if(variants.isBoquilla(selected)) {
+            const key='kaemento-boquilla-cart-v1';
+            if(JSON.stringify(variants.restore(JSON.parse(localStorage.getItem(key)||'null')))===JSON.stringify(selected)) localStorage.removeItem(key);
+          }
           const key='kaemento-microcemento-cart-v1',saved=JSON.parse(localStorage.getItem(key)||'null');
           const draft=saved?.version===2 && variants.restore({items:saved.items});
           if (draft && JSON.stringify(draft)===JSON.stringify(selected)) localStorage.removeItem(key);

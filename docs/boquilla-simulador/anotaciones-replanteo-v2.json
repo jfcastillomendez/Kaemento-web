@@ -1,0 +1,86 @@
+[
+  {
+    "name": "cocina",
+    "asset": "cocina-replanteo-v2",
+    "path": "/Users/juancastillo/.codex/generated_images/01a09757-ddfc-7e60-b870-7a49ed7c8162/exec-18a20525-13b5-411f-bfa2-7665cbecf535.png",
+    "prompt": "Use case: precise-object-edit. EDIT TARGET attached kitchen. Technical grout annotation, NOT a redesign. Preserve the EXACT new tile installation, every tile edge, floor grid, brick-bond backsplash, camera and every architectural object. Change ONLY existing between-tile grout to pure saturated magenta #FF00FF, thin and continuous through all intersections, preserving physical seam widths. Trace exactly the current seams; do not reposition, redraw, simplify, add or straighten them. Cover all actual grout in backsplash and floor, including small cuts behind chair legs and close to cabinets. Crucial exclusions: leave perimeter movement/sealant joints along plinths and countertop junctions UNCHANGED neutral; leave cabinet joints, tile faces, furniture, metal, window seals and plants untouched. Fill the entire between-tile joint area, including its rough worn edges, without spilling onto tile faces. No pink glow. Maintain magenta enough saturation even in shadows for extraction. Return same full 1536x1024 photograph with technical magenta annotations, no text, borders or overlays.",
+    "exclusions": [
+      {
+        "points": [
+          [
+            140,
+            278
+          ],
+          [
+            1070,
+            278
+          ],
+          [
+            1474,
+            286
+          ]
+        ],
+        "radius": 3
+      }
+    ]
+  },
+  {
+    "name": "bano",
+    "asset": "bano-replanteo-v2",
+    "path": "/Users/juancastillo/.codex/generated_images/01a09757-ddfc-7e60-b870-7a49ed7c8162/exec-ea61fb0b-8cfe-4684-9ab6-e6a66e9d06b3.png",
+    "prompt": "Use case: precise-object-edit. EDIT TARGET attached bathroom. This is an exact-geometry technical grout annotation, NOT a redesign. Keep exactly the same 1536x1024 image crop, lens, fixtures and tile grid. The new tile installation was carefully corrected: existing back-wall vertical grout at x~637,842,1044 meets the SAME floor column joints at y~762; horizontal wall courses at y~158,348,550 provide a full-height lowest course. NEVER move, add, remove or redraw any tile seam or grout intersection. Trace ONLY existing tile grout with saturated pure magenta #FF00FF, complete to its edges, including floor and walls, with no glow and no painting tile faces. Occlude correctly behind vanity, bottles, plants, shower fixtures, glass clamps and drain. Crucial: do NOT annotate flexible sealant at floor-wall changes of plane, inside vertical wall corners, vanity junctions, shower glass seals or around the linear drain; these must remain neutral and unchanged. The interior niche: annotate only visible real between-tile joints, not all its perimeter sealant. Preserve the original aligned grid perfectly, even if a seam is slightly imperfect. No stylization, no labels, no diagrams, no resized objects. Return the full photograph with the technical magenta between-tile grout.",
+    "exclusions": [
+      {
+        "points": [
+          [
+            500,
+            762
+          ],
+          [
+            1271,
+            762
+          ],
+          [
+            1453,
+            919
+          ]
+        ],
+        "radius": 3
+      },
+      {
+        "points": [
+          [
+            1271,
+            0
+          ],
+          [
+            1271,
+            762
+          ]
+        ],
+        "radius": 2
+      },
+      {
+        "points": [
+          [
+            1044,
+            230
+          ],
+          [
+            1221,
+            230
+          ],
+          [
+            1221,
+            348
+          ],
+          [
+            1044,
+            348
+          ]
+        ],
+        "radius": 2
+      }
+    ]
+  }
+]

@@ -1,0 +1,112 @@
+[
+  {
+    "name": "cocina",
+    "asset": "cocina-replanteo-v2",
+    "path": "/Users/juancastillo/.codex/generated_images/01a09757-ddfc-7e60-b870-7a49ed7c8162/exec-18a20525-13b5-411f-bfa2-7665cbecf535.png",
+    "prompt": "Use case: precise-object-edit. EDIT TARGET attached kitchen. Technical grout annotation, NOT a redesign. Preserve the EXACT new tile installation, every tile edge, floor grid, brick-bond backsplash, camera and every architectural object. Change ONLY existing between-tile grout to pure saturated magenta #FF00FF, thin and continuous through all intersections, preserving physical seam widths. Trace exactly the current seams; do not reposition, redraw, simplify, add or straighten them. Cover all actual grout in backsplash and floor, including small cuts behind chair legs and close to cabinets. Crucial exclusions: leave perimeter movement/sealant joints along plinths and countertop junctions UNCHANGED neutral; leave cabinet joints, tile faces, furniture, metal, window seals and plants untouched. Fill the entire between-tile joint area, including its rough worn edges, without spilling onto tile faces. No pink glow. Maintain magenta enough saturation even in shadows for extraction. Return same full 1536x1024 photograph with technical magenta annotations, no text, borders or overlays.",
+    "exclusions": [
+      {
+        "points": [
+          [
+            140,
+            278
+          ],
+          [
+            1070,
+            278
+          ],
+          [
+            1474,
+            286
+          ]
+        ],
+        "radius": 3
+      }
+    ]
+  },
+  {
+    "name": "bano",
+    "asset": "bano-replanteo-v2",
+    "path": "/Users/juancastillo/.codex/generated_images/01a09757-ddfc-7e60-b870-7a49ed7c8162/exec-ea61fb0b-8cfe-4684-9ab6-e6a66e9d06b3.png",
+    "prompt": "Use case: precise-object-edit. EDIT TARGET attached bathroom. This is an exact-geometry technical grout annotation, NOT a redesign. Keep exactly the same 1536x1024 image crop, lens, fixtures and tile grid. The new tile installation was carefully corrected: existing back-wall vertical grout at x~637,842,1044 meets the SAME floor column joints at y~762; horizontal wall courses at y~158,348,550 provide a full-height lowest course. NEVER move, add, remove or redraw any tile seam or grout intersection. Trace ONLY existing tile grout with saturated pure magenta #FF00FF, complete to its edges, including floor and walls, with no glow and no painting tile faces. Occlude correctly behind vanity, bottles, plants, shower fixtures, glass clamps and drain. Crucial: do NOT annotate flexible sealant at floor-wall changes of plane, inside vertical wall corners, vanity junctions, shower glass seals or around the linear drain; these must remain neutral and unchanged. The interior niche: annotate only visible real between-tile joints, not all its perimeter sealant. Preserve the original aligned grid perfectly, even if a seam is slightly imperfect. No stylization, no labels, no diagrams, no resized objects. Return the full photograph with the technical magenta between-tile grout.",
+    "exclusions": [
+      {
+        "points": [
+          [
+            500,
+            762
+          ],
+          [
+            1271,
+            762
+          ],
+          [
+            1453,
+            919
+          ]
+        ],
+        "radius": 3
+      },
+      {
+        "points": [
+          [
+            1271,
+            0
+          ],
+          [
+            1271,
+            762
+          ]
+        ],
+        "radius": 2
+      },
+      {
+        "points": [
+          [
+            1044,
+            230
+          ],
+          [
+            1221,
+            230
+          ],
+          [
+            1221,
+            348
+          ],
+          [
+            1044,
+            348
+          ]
+        ],
+        "radius": 2
+      }
+    ]
+  },
+  {
+    "name": "balcon",
+    "path": "/Users/juancastillo/.codex/generated_images/01a09757-ddfc-7e60-b870-7a49ed7c8162/exec-c8f049bb-c89f-47da-8fbf-2cc1f32f537f.png",
+    "prompt": "Use case: precise-object-edit. EDIT TARGET: attached balcon photograph. Asset type: exact-geometry grout segmentation and renovation working plate for a browser color simulator. Keep the photograph pixel-aligned: identical camera, crop, dimensions, furniture, plants, water, tile faces, tile edges, tile color and lighting. Change ONLY the grout between ceramic tiles: remove stains and damaged grout and fill every grout joint uniformly with highly saturated pure MAGENTA #FF00FF colored matte grout. Magenta is a technical selection color, not a final product. Paint ALL tile grout in floor and tiled walls (or all six sample boards), but NEVER tile faces, wood cabinet joints, bricks/mortar, furniture, coping, drain hardware, glass or plants. Keep seam thickness physically realistic and consistent. Grout magenta must be saturated enough for reliable chroma selection; no magenta glow or spill onto tiles. Preserve illumination in grout, but use near-pure magenta with low green channel. Absolutely do not redraw architecture or change tile grid. No text or overlays. Output a full photograph, NOT a black/white mask."
+  },
+  {
+    "name": "piscina",
+    "path": "/Users/juancastillo/.codex/generated_images/01a09757-ddfc-7e60-b870-7a49ed7c8162/exec-56c9de03-b0cb-4ffa-982f-01875abff4ef.png",
+    "prompt": "Use case: precise-object-edit. EDIT TARGET: attached piscina photograph. Asset type: exact-geometry grout segmentation and renovation working plate for a browser color simulator. Keep the photograph pixel-aligned: identical camera, crop, dimensions, furniture, plants, water, tile faces, tile edges, tile color and lighting. Change ONLY the grout between ceramic tiles: remove stains and damaged grout and fill every grout joint uniformly with highly saturated pure MAGENTA #FF00FF colored matte grout. Magenta is a technical selection color, not a final product. Paint ALL tile grout in floor and tiled walls (or all six sample boards), but NEVER tile faces, wood cabinet joints, bricks/mortar, furniture, coping, drain hardware, glass or plants. Keep seam thickness physically realistic and consistent. Grout magenta must be saturated enough for reliable chroma selection; no magenta glow or spill onto tiles. Preserve illumination in grout, but use near-pure magenta with low green channel. Absolutely do not redraw architecture or change tile grid. No text or overlays. Output a full photograph, NOT a black/white mask."
+  },
+  {
+    "name": "jacuzzi",
+    "asset": "jacuzzi-azul-v2",
+    "base": "/Users/juancastillo/.codex/generated_images/01a09757-ddfc-7e60-b870-7a49ed7c8162/exec-4ec0381a-c7d8-4b59-87d4-440c686c5e5e.png",
+    "path": "/Users/juancastillo/.codex/generated_images/01a09757-ddfc-7e60-b870-7a49ed7c8162/exec-ad71e554-b9ab-4b9f-bd7a-bebec116562c.png",
+    "prompt": "Precise technical grout annotation edit of this exact cobalt blue mosaic jacuzzi photograph. Preserve identical 1536x1024 crop, camera, tile grid, all blue tile faces, beige terrace tiles, foliage, jets and drain. Change ONLY every existing between-tile grout seam to highly saturated pure magenta #FF00FF matte grout, filling full joint width cleanly, continuous through all intersections. Include ALL mosaic grout on the rim, curved inside walls, seat, floor AND terrace floor grout. Exclude plants, metal, doorframe, white wall and tile faces. No glow, no pink spill. Do not redraw or shift tile geometry. Output same complete photograph with technical magenta grout, not a mask.",
+    "basePrompt": "Precise photograph edit. Change ONLY all the pale blue ceramic mosaic tile faces of the round empty jacuzzi into rich medium cobalt blue glazed ceramic mosaic, unmistakably BLUE, with realistic subtle glaze highlights. Preserve EXACT camera, framing, every joint location and width, every tile edge and mosaic grid, worn dirty grout unchanged, all beige terrace floor tile faces, plants, pots, metal jets and drain unchanged. No water added. No text. The photograph is for a grout recoloring simulator; the grout geometry must remain identical. Landscape 1536x1024."
+  },
+  {
+    "name": "seis-estilos",
+    "asset": "seis-estilos-azul-v2",
+    "base": "/Users/juancastillo/.codex/generated_images/01a09757-ddfc-7e60-b870-7a49ed7c8162/exec-daf8efab-7a98-4156-b5a1-d742d841cccb.png",
+    "path": "/Users/juancastillo/.codex/generated_images/01a09757-ddfc-7e60-b870-7a49ed7c8162/exec-5438b2fa-7cf1-457a-9aa9-ea2f8ce62e04.png",
+    "prompt": "Technical grout annotation edit of this exact six ceramic sample panels photograph. Preserve identical camera, crop, all tile edges/grid positions and blue/white/beige/dark/terracotta/terrazzo tile faces. Change ONLY existing between-tile worn grout across all SIX panels into highly saturated pure magenta #FF00FF matte grout, covering the FULL seam width continuously including intersections and rough edges. Do NOT color gaps between the six separate sample boards, outside margins, or tile faces. Keep original joints exactly aligned. No redesign, no glow, no text. Return same full 1536x1024 photograph, not a binary mask.",
+    "basePrompt": "Edit this exact six tile sample panel photograph for a grout recoloring simulator. Change ONLY the turquoise small square ceramic tiles in the BOTTOM RIGHT panel to a clear medium cobalt BLUE glazed ceramic tile, a rich unmistakably blue not turquoise. Preserve all six panel positions, exact joint grid geometry, dirty worn grout, shadows, lighting, crop, other five tile materials and every other detail. No text, no logos. Photorealistic ceramic product sample photography. Output same landscape 3:2 framing."
+  }
+]
