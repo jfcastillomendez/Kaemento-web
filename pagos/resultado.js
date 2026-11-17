@@ -24,7 +24,7 @@
     const list=document.getElementById('payment-items');list.replaceChildren();
     for(const item of variants.lines(selected)) {
       const row=document.createElement('li');
-      row.textContent=variants.isBoquilla(selected) ? `${item.quantity} kit(s) de 1 kg · Boquilla Mágica KAEMENTO · ${variants.boquillaColors.get(item.color)}` : variants.isTraffic(selected) ? `${item.quantity} galón(es) · Pintura de Tráfico KAEMENTO · ${variants.trafficColor(item.color)}` : `${item.quantity} ${item.quantity===1?'kit':'kits'} · ${item.surface ? variants.surfaces.get(item.surface)+' · ' : ''}${variants.formula(item)} · Sellador ${variants.sealers.get(item.sealer)}`;
+      row.textContent=variants.isBoquilla(selected) ? `${item.quantity} kit(s) de 1 kg + aditivo 30 ml · Boquilla Mágica KAEMENTO · ${variants.boquillaColors.get(item.color)}` : variants.isTraffic(selected) ? `${item.quantity} galón(es) · Pintura de Tráfico KAEMENTO · ${variants.trafficColor(item.color)}` : `${item.quantity} ${item.quantity===1?'kit':'kits'} · ${item.surface ? variants.surfaces.get(item.surface)+' · ' : ''}${variants.formula(item)} · Sellador ${variants.sealers.get(item.sealer)}`;
       list.append(row);
     }
     document.getElementById('payment-total').textContent=Number.isSafeInteger(amount) ? money(amount)+' IVA incluido' : 'Consultando total del pedido…';

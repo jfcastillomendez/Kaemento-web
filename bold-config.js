@@ -90,8 +90,8 @@
   }
   function orderDescription(selection) {
     if (isBoquilla(selection)) {
-      const detail='Boquilla Mágica KAEMENTO | '+selection.items.map(x=>x.quantity+' kit '+boquillaColors.get(x.color)).join(' + ');
-      return detail.length<=100 ? detail : `Boquilla Mágica KAEMENTO | ${kitCount(selection)} kits de 1 kg | ${selection.items.length} colores`;
+      const detail='Boquilla Mágica KAEMENTO + aditivo 30 ml | '+selection.items.map(x=>x.quantity+' kit '+boquillaColors.get(x.color)).join(' + ');
+      return detail.length<=100 ? detail : `Boquilla Mágica KAEMENTO | ${kitCount(selection)} kits de 1 kg + aditivo 30 ml | ${selection.items.length} colores`;
     }
     if (isTraffic(selection)) return 'Pintura Tráfico KAEMENTO | '+selection.items.map(x=>x.quantity+' gal '+trafficColor(x.color)).join(' + ');
     if (!selection.items) {

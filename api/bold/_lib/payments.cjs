@@ -41,7 +41,7 @@ function purchaseEvent(order) {
       !EVENT_ID.test(order.paymentId || '') || order.currency !== 'COP' || !variants.allowedPrices(selection).includes(unitPrice)) return null;
   // This is an outbox payload, not a browser event and not an HTTP request to GA4.
   return { name:'purchase', params:{ transaction_id:order.orderId, currency:'COP', value:order.amount,
-    items:variants.isBoquilla(selection) ? selection.items.map(x=>({item_id:'boquilla-magica',item_name:'Boquilla Mágica KAEMENTO · Kit 1 kg',item_variant:x.color,quantity:x.quantity,price:unitPrice})) : variants.isTraffic(selection) ? selection.items.map(x=>({item_id:'pintura-trafico',item_name:'Pintura de Tráfico KAEMENTO',item_variant:x.color,quantity:x.quantity,price:unitPrice})) : variants.analyticsItems(selection,unitPrice) } };
+    items:variants.isBoquilla(selection) ? selection.items.map(x=>({item_id:'boquilla-magica',item_name:'Boquilla Mágica KAEMENTO · Kit 1 kg + aditivo 30 ml',item_variant:x.color,quantity:x.quantity,price:unitPrice})) : variants.isTraffic(selection) ? selection.items.map(x=>({item_id:'pintura-trafico',item_name:'Pintura de Tráfico KAEMENTO',item_variant:x.color,quantity:x.quantity,price:unitPrice})) : variants.analyticsItems(selection,unitPrice) } };
 }
 
 // One Redis transaction checks and changes all state. It survives restarts and concurrent Functions.

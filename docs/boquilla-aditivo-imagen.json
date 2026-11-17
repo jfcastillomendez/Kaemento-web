@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-17",
+  "sourceLabels": [
+    "Etiqueta-Boquilla-Magica-Frontal-13x8cm-Aditivo-Con-Tapa.pdf",
+    "Etiqueta-Boquilla-Magica-Trasera-13x8cm-Aditivo-30ml.pdf",
+    "Etiqueta-KAEMENTO-Aditivo-Boquilla-Magica-30ml-7-5x4-5cm.pdf"
+  ],
+  "generation": {
+    "path": "/Users/juancastillo/.codex/generated_images/01a09757-ddfc-7e60-b870-7a49ed7c8162/exec-003c090b-1096-449c-b33f-d904745cb05f.png",
+    "prompt": "Create a highly realistic premium studio product photograph for KAEMENTO website using these references. Reference 1 is the physical white 1kg bucket shape ONLY (do not use its old label). Reference 2 is the NEW official FRONT bucket label: faithfully apply that exact supplied artwork with correct logo, blue BOQUILLA MÁGICA lettering, pool, before/after, and inclusion of 30ml additive. Reference 3 is the NEW rear label for factual consistency. Reference 4 is the EXACT official additive bottle label. Composition: ONE closed white plastic 1kg bucket front facing and dominant, next to ONE SMALL closed white 30ml additive bottle at foreground right, plus white plastic spatula and neatly folded light microfiber towel at foreground left. Bottle height about 45% of bucket height, never a giant bottle. Preserve official label artwork as faithfully as possible, do not invent typography or claims. Elegant neutral warm light background, subtle real contact shadows, complete product edges, no hands, no added floating text, no price badge. Product group fills almost the full frame, with bucket the unmistakable protagonist. Landscape 1536x1024. Packaging photograph, commercially polished but realistic."
+  },
+  "final": {
+    "path": "/Users/juancastillo/.codex/generated_images/01a09757-ddfc-7e60-b870-7a49ed7c8162/exec-0ae7915e-d488-4151-9ab3-1d2c98d0b7dc.png",
+    "prompt": "Make ONE precise correction to this product photograph. On the MAIN BUCKET front label lower left, beneath KIT 1 kg, replace the small inclusion text with exactly: 'Incluye aditivo de 30 ml, espátula plástica y toalla de microfibra.' Use the supplied official label reference 2 to faithfully match this exact wording and layout. This inclusion of the additive in text is essential. Keep the rest of the product image unchanged: bucket, additive bottle label, towel, spatula, lighting, camera, colors, background and arrangement. No extra text outside packaging. Keep same1536x1024 landscape."
+  }
+}

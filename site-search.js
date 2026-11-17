@@ -12,7 +12,7 @@
     ['Manual de Aplicación Microcemento KAEMENTO', 'Documento PDF', '/catalogos/manual-aplicacion-microcemento-kaemento.pdf', 'Consulta el paso a paso de aplicación del sistema.', 'descarga instrucciones capas preparacion mezclado sellado'],
     ['Manual Técnico Comercial Microcemento KAEMENTO', 'Documento PDF', '/catalogos/manual-tecnico-comercial-microcemento-kaemento.pdf', 'Información técnica y comercial del microcemento.', 'descarga ficha componentes rendimiento cuidados mantenimiento'],
     ['Catálogo comercial de Microcemento KAEMENTO', 'Documento PDF', '/catalogos/catalogo-comercial-microcemento-kaemento-2026.pdf', 'Presentación del sistema de microcemento.', 'descarga kit catalogo'],
-    ['Boquilla Mágica', 'Producto', '/productos/boquilla-magica.html', 'Renovación de boquillas y juntas.', 'boquilla magica juntas baldosa enchape blanco beige chocolate negro'],
+    ['Boquilla Mágica', 'Producto', '/productos/boquilla-magica.html', 'Kit de 1 kg con aditivo de 30 ml, espátula y microfibra para renovar juntas.', 'boquilla magica aditivo 30 ml kit juntas baldosa enchape blanco beige chocolate negro gris'],
     ['Roof & Planter System', 'Producto', '/productos/roof-planter-system.html', 'Sistema para cubiertas, terrazas y jardineras.', 'impermeabilizacion techo cubierta jardinera terraza'],
     ['Garage System', 'Producto', '/productos/garage-system.html', 'Sistema para garajes y sótanos.', 'garaje parqueadero sotano piso'],
     ['Facade Protect', 'Producto', '/productos/facade-protect.html', 'Protección de fachadas.', 'fachada fachada protect hidrofugo'],

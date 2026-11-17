@@ -38,7 +38,7 @@ test('Boquilla checkout persists signed totals; webhook alone confirms; retry, e
   const {createStatus}=require('../api/bold/status.js');
   const result=await invoke(createStatus(env,factory),{orderId:out.orderId,token:out.statusToken});assert.equal(result.body.paymentStatus,'paid');assert.deepEqual(result.body.selection,selection);assert.ok(!JSON.stringify(result.body).includes(customer.email));
   const paid=await factory().readOrder(out.orderId);assert.equal(paid.paymentStatus,'paid');assert.equal(await factory().confirmedCampaignOrders(),40);
-  for(const role of ['customer','sales']) {const mail=emailContent(paid,role);assert.match(mail.text,/Boquilla Mágica KAEMENTO/);assert.match(mail.text,/Beige/);assert.match(mail.text,/Negra/);assert.doesNotMatch(mail.text,/Sellador|Microcemento|48 horas|undefined/);}
+  for(const role of ['customer','sales']) {const mail=emailContent(paid,role);assert.match(mail.text,/Boquilla Mágica KAEMENTO/);assert.match(mail.text,/Beige/);assert.match(mail.text,/Negra/);assert.match(mail.text,/aditivo de 30 ml/);assert.doesNotMatch(mail.text,/Sellador|Microcemento|48 horas|undefined/);}
   const prepared=await prepare();assert.equal(prepared.body.status,'prepared');
   const results=await Promise.all(Array.from({length:10},()=>invoke(conversion,{action:'consume',orderId:out.orderId,ticket:prepared.body.ticket})));
   assert.equal(results.filter(x=>x.body.status==='authorized').length,1);assert.equal(results.find(x=>x.body.status==='authorized').body.conversion.value,880000);

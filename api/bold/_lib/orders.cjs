@@ -34,7 +34,7 @@ function record(orderId, selection, customer, now = Date.now()) {
   if (!buyer) throw new Error('Invalid customer');
   const traffic = variants.isTraffic(selection), boquilla = variants.isBoquilla(selection), price = boquilla ? variants.boquillaPrice : traffic ? variants.trafficPrice : UNIT_PRICE;
   const productId = boquilla ? 'boquilla-magica' : traffic ? 'pintura-trafico' : 'microcemento-kaemento-launch';
-  const productName = boquilla ? 'Boquilla Mágica KAEMENTO · Kit 1 kg' : traffic ? 'Pintura de Tráfico KAEMENTO' : 'Microcemento KAEMENTO';
+  const productName = boquilla ? 'Boquilla Mágica KAEMENTO · Kit 1 kg + aditivo 30 ml' : traffic ? 'Pintura de Tráfico KAEMENTO' : 'Microcemento KAEMENTO';
   return {
     schemaVersion:selection.items ? 3 : 2, orderId, createdAt:now, updatedAt:now,
     productId, productName, quantity:variants.kitCount(selection),
