@@ -8,9 +8,18 @@
     return;
   }
   const money = value => '$' + new Intl.NumberFormat('es-CO').format(value);
-  for (const [key, value] of Object.entries({regular: money(campaign.regularPrice), price: money(campaign.launchPrice), discount: campaign.discount, customers: campaign.maxCustomers, days: campaign.durationDays})) {
+  for (const [key, value] of Object.entries({regular: money(campaign.regularPrice), discount: campaign.discount, customers: campaign.maxCustomers, days: campaign.durationDays})) {
     document.querySelectorAll('[data-launch-' + key + ']').forEach(el => { el.textContent = value; });
   }
+  // A discount is shown only after live confirmation, never from stale HTML.
+  function showOffer(data) {
+    const active = data.state === 'active' && Date.now() < Date.parse(campaign.endsAt);
+    document.querySelectorAll('[data-launch-block]').forEach(el => {el.hidden = !active;});
+    document.querySelectorAll('[data-launch-price]').forEach(el => {el.textContent = money(active ? campaign.launchPrice : campaign.regularPrice);});
+  }
+  showOffer({state:'unknown'});
+  if (window.KaementoPromotion) window.KaementoPromotion.subscribe(showOffer);
+  else window.addEventListener('kaemento:promotion-ready',() => window.KaementoPromotion.subscribe(showOffer),{once:true});
   const promotion = {promotion_name: 'microcemento_kaemento_launch_2026'};
   document.querySelectorAll('[data-launch-cta]').forEach(link => link.addEventListener('click', event => {
     if (window.KaementoPromotion?.getState().state === 'active') {

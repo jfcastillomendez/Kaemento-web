@@ -118,7 +118,8 @@ test('Durable atomic confirmation with real Redis', {skip:!redisBin}, async t=>{
     assert.equal(await redis(['GET',prefix+'purchase:'+record.orderId]),null);
   });
   await t.test('Checkout persists before returning its signature and fails closed on storage failure',async()=>{
-    const checkout=require('../api/bold/checkout.js'),oldFetch=global.fetch,oldEnv={...process.env};
+    const {createCheckout}=require('../api/bold/checkout.js'),oldFetch=global.fetch,oldEnv={...process.env};
+    const checkout=createCheckout(process.env,(settings)=>payments.createStore(settings,undefined,()=>Date.parse('2026-10-10T12:00:00Z')));
     Object.assign(process.env,env,{BOLD_IDENTITY_KEY:randomBytes(16).toString('hex')});global.fetch=transport;
     async function invoke(){const out={};await checkout({method:'POST',headers:{'content-type':'application/json'},body:{productId:'microcemento-kaemento-launch',...selection,customer}},
       {setHeader(){},set statusCode(x){out.status=x;},end(x){out.body=JSON.parse(x);}});return out;}

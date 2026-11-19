@@ -16,9 +16,9 @@ class Element {
  focus(){}
  querySelectorAll(selector){const nodes=this.children.flatMap(child=>[child,...child.querySelectorAll('*')]);return selector==='*'?nodes:nodes.filter(n=>selector.split(',').includes(n.tag));}
 }
-function fixture({customerStep,storage=new Map()}={}) {
+function fixture({customerStep,storage=new Map(),initialPromotion='active'}={}) {
  const controls=new Map(),events={},removed=[],opened=[],tracked=[],requests=[],uiEvents=[];
- let notifyPromotion, promotionState = {state:'unknown'};
+ let notifyPromotion, promotionState = {state:initialPromotion};
  const session=new Map([['kaemento-order-access','{"previous":"retained-token"}'],['kaemento-bold-selections','{"previous":{"quantity":1}}']]);
  const panel={dispatchEvent(event){uiEvents.push(event);},querySelector(selector){if(!controls.has(selector))controls.set(selector,new Element());return controls.get(selector);},querySelectorAll(selector){assert.equal(selector,'[data-bold-unit]');return [this.querySelector(selector)];}};
  const control=name=>panel.querySelector(`[data-${name}]`);
@@ -36,8 +36,8 @@ function fixture({customerStep,storage=new Map()}={}) {
  return {control,add,event,removed,storage,session,opened,tracked,requests,result,uiEvents,promotion:state=>{promotionState={state};notifyPromotion(promotionState);}};
 }
 test('Finished-material reference follows the current kit price while cart totals remain whole-kit totals',async()=>{
- const f=fixture();
- assert.match(f.control('bold-unit-area').textContent,/36\.550/);
+ const f=fixture({initialPromotion:'unknown'});
+ assert.match(f.control('bold-unit-area').textContent,/43\.000/);
  await f.add('extra-blanco');await f.add('arena',2,'brillante');
  f.control('bold-quantity').value='2';
  for(const state of ['ended','sold_out','upcoming','unknown']) {

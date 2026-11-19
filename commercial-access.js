@@ -12,7 +12,7 @@
   const promotion = {promotion_name:'microcemento_kaemento_launch_2026'};
   const bar = document.createElement('aside');
   bar.className = 'kae-access'; bar.setAttribute('aria-label','Descubre Microcemento KAEMENTO');
-  bar.innerHTML = `<a class="kae-access-promo" href="${promotionHref}" data-discovery-promo id="discovery-promotion"><span data-discovery-label>MICROCEMENTO KAEMENTO</span><strong data-discovery-action>Ver promoción <span aria-hidden="true">↗</span></strong></a><a class="kae-access-simulator" href="${simulatorHref}" data-discovery-simulator id="discovery-simulator"><span>IMAGINA TU ESPACIO</span><strong>Prueba tu tonalidad <span aria-hidden="true">↗</span></strong></a>`;
+  bar.innerHTML = `<a class="kae-access-promo" href="${promotionHref}" data-discovery-promo id="discovery-promotion"><span data-discovery-label>MICROCEMENTO KAEMENTO</span><strong data-discovery-action>Configura tu kit <span aria-hidden="true">↗</span></strong></a><a class="kae-access-simulator" href="${simulatorHref}" data-discovery-simulator id="discovery-simulator"><span>IMAGINA TU ESPACIO</span><strong>Prueba tu tonalidad <span aria-hidden="true">↗</span></strong></a>`;
   document.body.append(bar); document.body.classList.add('has-kae-discovery');
   const sizeHeader = () => document.documentElement.style.setProperty('--kae-header-height',header.getBoundingClientRect().height+'px');
   new ResizeObserver(sizeHeader).observe(header); sizeHeader();
@@ -31,10 +31,11 @@
   }
   function present(data) {
     const campaign = window.KaementoLaunchCampaign;
-    const active = data.state === 'active' && campaign?.enabled;
+    const expired = campaign && Date.now() >= Date.parse(campaign.endsAt);
+    const active = data.state === 'active' && campaign?.enabled && !expired;
     currentState = active ? 'active' : data.state === 'active' ? 'ended' : data.state;
     const label = active ? `LANZAMIENTO · ${campaign.discount}%` : 'MICROCEMENTO KAEMENTO';
-    const regular = ['ended','sold_out','upcoming'].includes(data.state);
+    const regular = !active;
     const action = regular ? 'Configura tu kit ↗' : 'Ver promoción ↗';
     bar.querySelector('[data-discovery-label]').textContent = label;
     bar.querySelector('[data-discovery-action]').textContent = action;
@@ -45,6 +46,7 @@
     const buy = document.querySelector('[data-discovery-buy]');
     if (buy) buy.textContent = active ? 'COMPRAR CON DESCUENTO ↗' : 'CONFIGURA TU KIT ↗';
     document.body.classList.toggle('kae-regular-sale',regular);
+    document.querySelectorAll('.micro-current-price strong').forEach(el=>{el.textContent='$'+new Intl.NumberFormat('es-CO').format(active?campaign.launchPrice:430000)+' COP';});
     // Keep the approved campaign artwork intact; show the existing kit asset after its validity.
     document.querySelectorAll('.campaign-art').forEach(art => {
       if (!regular || art.nextElementSibling?.classList.contains('campaign-standard-art')) return;

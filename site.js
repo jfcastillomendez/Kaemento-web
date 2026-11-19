@@ -189,7 +189,7 @@ document.querySelectorAll('form:not([data-network-form]):not([data-traffic-form]
 // Persistent commercial entry points, kept separate from navigation and checkout logic.
 if (document.querySelector('[data-bold-purchase]') && !document.querySelector('script[data-kae-discovery]')) {
   const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = '/commercial-access.css?v=3';
-  const js = document.createElement('script'); js.src = '/commercial-access.js?v=3'; js.dataset.kaeDiscovery = 'true';
+  const js = document.createElement('script'); js.src = '/commercial-access.js?v=4'; js.dataset.kaeDiscovery = 'true';
   document.head.append(css,js);
 }
 

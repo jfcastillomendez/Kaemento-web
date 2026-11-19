@@ -54,7 +54,7 @@
     return sdkPromise;
   }
   document.querySelectorAll('[data-bold-purchase]').forEach(panel => {
-    let unitAmount = variants.unitPrice;
+    let unitAmount = window.KaementoPromotion?.getState().state === 'active' ? variants.unitPrice : variants.regularPrice;
     const input = panel.querySelector('[data-bold-quantity]');
     const colorInput = panel.querySelector('[data-bold-color]');
     const mode = panel.querySelector('[data-bold-mode]');
@@ -254,7 +254,7 @@
       }
     });
     function updatePrice(data) {
-      if (preparing || !['active','ended','sold_out','upcoming'].includes(data.state)) return;
+      if (preparing || !['active','ended','sold_out','upcoming','unknown'].includes(data.state)) return;
       const price = data.state === 'active' ? variants.unitPrice : variants.regularPrice;
       unitAmount = price;
       panel.querySelectorAll('[data-bold-unit]').forEach(el => {el.textContent = format(price);});
